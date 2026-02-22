@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Filament\Resources\ProductResource\Pages;
+
+use App\Filament\Resources\ProductResource;
+use Filament\Resources\Pages\EditRecord;
+
+class EditProduct extends EditRecord
+{
+    protected static string $resource = ProductResource::class;
+
+    public function getMaxContentWidth(): string|null
+    {
+        return 'full';
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\DeleteAction::make(),
+        ];
+    }
+}

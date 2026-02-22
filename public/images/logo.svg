@@ -1,0 +1,10 @@
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Icon part: Stylized D and tech elements -->
+    <rect x="5" y="5" width="40" height="40" rx="8" fill="#F59E0B" />
+    <path d="M15 15H35V35H25L15 25V15Z" fill="white" fill-opacity="0.3" />
+    <circle cx="25" cy="25" r="8" stroke="white" stroke-width="3" />
+    <path d="M25 17V21M25 29V33M17 25H21M29 25H33" stroke="white" stroke-width="2" stroke-linecap="round" />
+    
+    <!-- Text part: Delta Mas Tech -->
+    <text x="55" y="32" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="20" fill="#111827">Delta Mas <tspan fill="#F59E0B">Tech</tspan></text>
+</svg>

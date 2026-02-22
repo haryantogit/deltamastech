@@ -1,0 +1,1 @@
+@livewire('account-transactions-table', ['accountId' => $record->id])

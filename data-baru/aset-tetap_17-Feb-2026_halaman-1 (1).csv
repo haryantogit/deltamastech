@@ -1,0 +1,3 @@
+"*Nama Aset","*Nomor Aset","*Tanggal Pembelian (dd/mm/yyyy)","Harga Beli","Kode Akun Aset Tetap","*Kode Akun Pengkreditan","Deskripsi","Referensi","*Tanpa Penyusutan (Ya / Tidak)","Kode Akun Akumulasi Penyusutan","Kode Akun Penyusutan","Nilai Penyusutan Per Tahun (Persen)","Masa Manfaat (Tahun)","Metode Penyusutan","Tanggal Mulai Penyusutan (dd/mm/yyyy)","Akumulasi Penyusutan","Batas Biaya","Nilai Residu","Tag (Beberapa Tag Dipisah Dengan Koma)"
+"MESIN COUNTER PRODUK","","15/06/2025","7000000","","1-10704","","","Tidak","","","","","","","0","","0","BCA Operasional"
+"BNL VERTICAL MIXER","","07/07/2025","16500000","","1-10704","","","Tidak","","","","","","","0","","0","BNL VERTICAL MIXER"

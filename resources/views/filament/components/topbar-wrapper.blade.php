@@ -1,0 +1,5 @@
+@props([
+    'navigation' => [],
+])
+
+{{ $slot }}

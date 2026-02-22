@@ -1,0 +1,344 @@
+/* Import Inter Font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+    /* Set Inter as the default font */
+    body {
+        font-family: 'Inter', sans-serif;
+        @apply antialiased;
+    }
+
+    /* Improve number rendering */
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+@layer components {
+
+    /* Custom Soft Shadow */
+    .shadow-soft {
+        box-shadow: 0 4px 20px -1px rgba(0, 0, 0, 0.05), 0 2px 10px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Enhanced Card Styling */
+    .card-premium {
+        @apply rounded-2xl shadow-soft bg-white border border-gray-100/50;
+    }
+
+    /* Gradient Backgrounds for Stats */
+    .stat-success {
+        @apply bg-gradient-to-br from-green-50 to-emerald-50 border-green-100;
+    }
+
+    .stat-warning {
+        @apply bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-100;
+    }
+
+    .stat-danger {
+        @apply bg-gradient-to-br from-red-50 to-rose-50 border-red-100;
+    }
+
+    .stat-info {
+        @apply bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100;
+    }
+
+    .stat-primary {
+        @apply bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-100;
+    }
+
+    .stat-gray {
+        @apply bg-gradient-to-br from-gray-50 to-slate-50 border-gray-100;
+    }
+
+    /* Modern Table Styling */
+    .table-modern {
+        @apply rounded-xl overflow-hidden shadow-soft;
+    }
+
+    .table-header-modern {
+        @apply uppercase tracking-wider font-bold text-xs bg-gray-800 text-white sticky top-0 z-10;
+    }
+
+    .table-row-modern {
+        @apply transition-colors duration-200 hover:bg-blue-50/40;
+    }
+
+    .table-striped-modern tbody tr:nth-child(even) {
+        @apply bg-gray-50/30;
+    }
+
+    /* Warehouse Column Dividers */
+    .warehouse-divider {
+        @apply border-r border-gray-200;
+    }
+
+    /* Product Image Frame */
+    .product-image-frame {
+        @apply ring-2 ring-gray-100 transition-all duration-300 hover:ring-blue-200 hover:scale-105;
+    }
+
+    /* Financial Data Emphasis */
+    .financial-data {
+        @apply font-semibold tabular-nums;
+    }
+
+    /* Interactive Button Effects */
+    .btn-premium {
+        @apply transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md;
+    }
+
+    .btn-floating {
+        @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200;
+    }
+
+    /* Stat Card Hover Effect */
+    .stat-card-hover {
+        @apply transition-transform duration-300 hover:scale-105;
+    }
+
+    /* Empty State Styling */
+    .empty-state {
+        @apply flex flex-col items-center justify-center py-12 px-6 text-center;
+    }
+
+    .empty-state-icon {
+        @apply w-16 h-16 text-gray-300 mb-4;
+    }
+
+    .empty-state-title {
+        @apply text-lg font-semibold text-gray-700 mb-2;
+    }
+
+    .empty-state-description {
+        @apply text-sm text-gray-500 max-w-md;
+    }
+}
+
+@layer utilities {
+
+    /* Custom Spacing */
+    .spacing-premium {
+        @apply p-6 gap-6;
+    }
+
+    /* Smooth Transitions */
+    .transition-smooth {
+        @apply transition-all duration-300 ease-in-out;
+    }
+
+    /* Focus States */
+    .focus-premium {
+        @apply focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none;
+    }
+
+    /* Gradient Text */
+    .text-gradient-success {
+        @apply bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent;
+    }
+
+    .text-gradient-primary {
+        @apply bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
+    }
+}
+
+/* Filament-specific Overrides */
+.fi-wi-stats-overview-stat {
+    @apply card-premium stat-card-hover !important;
+}
+
+.fi-ta-table {
+    @apply table-modern !important;
+}
+
+.fi-ta-header-cell {
+    @apply table-header-modern !important;
+}
+
+.fi-ta-row {
+    @apply table-row-modern !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full hover:bg-gray-400;
+}
+
+/* Improve form inputs */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="password"],
+select,
+textarea {
+    @apply focus-premium transition-smooth;
+}
+
+/* Read-only / locked fields — consistent Filament-style appearance */
+.fi-input-wrp:has(input[readonly]),
+.fi-input-wrp:has(textarea[readonly]),
+.fi-input-wrp:has(select:disabled) {
+    background-color: rgb(243 244 246) !important;
+}
+
+input[readonly],
+textarea[readonly],
+.fi-input[readonly],
+select:disabled {
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+}
+
+/* Button improvements */
+button {
+    @apply btn-premium;
+}
+
+button[type="submit"],
+.fi-btn-primary {
+    @apply btn-floating;
+}
+
+/* Reduce sidebar menu spacing */
+.fi-sidebar-nav-groups {
+    @apply gap-2 !important;
+}
+
+.fi-sidebar-group {
+    @apply gap-0 !important;
+}
+
+.fi-sidebar-item {
+    @apply py-1 !important;
+}
+
+.fi-sidebar-item-button {
+    @apply py-1.5 !important;
+}
+
+.fi-sidebar-group-items {
+    @apply gap-0 !important;
+}
+
+/* Global height fix */
+html,
+body {
+    height: 100%;
+}
+
+/* Mobile Sidebar Full Height Fix - Aggressive */
+.fi-sidebar {
+    height: 100% !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+}
+
+@media (max-width: 1024px) {
+
+    /* Target the sidebar container specifically on mobile */
+    .fi-sidebar.fi-sidebar-open {
+        height: 100vh !important;
+        height: 100dvh !important;
+        bottom: 0 !important;
+    }
+
+    .fi-sidebar-nav {
+        height: calc(100vh - 64px) !important;
+        height: calc(100dvh - 64px) !important;
+        min-height: auto !important;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .fi-sidebar-nav-groups {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    /* Ensure the backdrop/wrapper also takes full height if it exists */
+    .fi-sidebar-header {
+        flex-shrink: 0;
+    }
+}
+
+/* Print Optimization: Targeted only on charts and main content */
+@media print {
+
+    /* Hide all navigation, sidebars, topbars, headers, and UI controls */
+    .fi-sidebar,
+    .fi-sidebar-active,
+    .fi-sidebar-header,
+    .fi-topbar,
+    .fi-header,
+    .fi-header-actions,
+    .fi-breadcrumbs,
+    .fi-footer,
+    .fi-wi-dashboard-filter,
+    aside,
+    nav,
+    header,
+    footer,
+    button,
+    .fi-btn,
+    .fi-ac-actions,
+    [role="navigation"],
+    [data-sidebar] {
+        display: none !important;
+    }
+
+    /* Force the main content area to occupy full width and remove offsets */
+    main,
+    .fi-main {
+        margin: 0 !important;
+        margin-inline-start: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        display: block !important;
+        background: white !important;
+    }
+
+    /* Remove specific Filament background colors and shadows for cleaner print */
+    .fi-page,
+    .fi-main-ctn,
+    body {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Ensure chart cards are visible and break properly */
+    .fi-wi-chart,
+    .fi-wi-widget {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 30px !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .fi-wi-chart canvas {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+
+    /* Force colors to print (important for chart colors) */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

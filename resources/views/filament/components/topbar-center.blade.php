@@ -1,0 +1,1 @@
+<!-- Redundant content removed to favor consolidated topbar-branding hook -->

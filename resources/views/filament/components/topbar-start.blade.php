@@ -1,0 +1,1 @@
+<!-- Content moved to topbar-branding hook -->

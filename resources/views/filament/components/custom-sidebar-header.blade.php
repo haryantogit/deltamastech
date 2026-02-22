@@ -1,0 +1,1 @@
+<div class="fi-sidebar-header-placeholder" style="height: 0px;"></div>
