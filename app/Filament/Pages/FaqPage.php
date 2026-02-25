@@ -6,6 +6,8 @@ use Filament\Pages\Page;
 
 class FaqPage extends Page
 {
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-question-mark-circle';
 
     protected string $view = 'filament.pages.coming-soon';

@@ -8,7 +8,7 @@ class PosPage extends Page
 {
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-computer-desktop';
 
-    protected string $view = 'filament.pages.coming-soon';
+    protected string $view = 'filament.pages.pos-page';
 
     public string $feature = 'POS';
 
@@ -26,18 +26,29 @@ class PosPage extends Page
     }
 
     protected static ?int $navigationSort = 100;
-
     protected static string|null $navigationLabel = 'POS';
-
-    public static function getNavigationBadge(): ?string
-    {
-        return 'Coming Soon';
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'warning';
-    }
-
     protected static string|\UnitEnum|null $navigationGroup = null;
+
+    public static function getNavigationItem(): \Filament\Navigation\NavigationItem
+    {
+        return \Filament\Navigation\NavigationItem::make(static::getNavigationLabel())
+            ->group(static::getNavigationGroup())
+            ->icon(static::getNavigationIcon())
+            ->activeWhen(
+                fn() =>
+                request()->routeIs('filament.admin.pages.pos-page') ||
+                request()->is('admin/pos-page*') ||
+                request()->is('admin/web-pos-page*') ||
+                request()->is('admin/favorite-product-page*') ||
+                request()->is('admin/pos/favorite-product-page*') ||
+                request()->is('admin/pos-order-page*') ||
+                request()->is('admin/pos/pos-order-page*') ||
+                request()->is('admin/pos-settings*') ||
+                request()->is('admin/pos/pos-settings*') ||
+                request()->is('admin/outlets*') ||
+                request()->is('admin/cashier-page*')
+            )
+            ->sort(static::getNavigationSort())
+            ->url(static::getNavigationUrl());
+    }
 }

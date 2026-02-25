@@ -90,42 +90,78 @@
             let targetLabelText = null;
 
             // Logic to determine which item should be active
-            if (currentUrl.includes('/kas-bank/') || currentUrl.includes('kas-bank-detail')) {
-                targetLabelText = 'Kas & Bank';
-            } else if (
+            if (
                 currentUrl.includes('/contacts') ||
-                currentUrl.includes('/hutang') ||
-                currentUrl.includes('/piutang')
+                (currentUrl.includes('/hutang') && !currentUrl.includes('/hutang-piutang-per-kontak')) ||
+                (currentUrl.includes('/piutang') && !currentUrl.includes('/hutang-piutang-per-kontak'))
             ) {
                 targetLabelText = 'Kontak';
             } else if (
-                currentUrl.includes('/inventori-page') ||
-                currentUrl.includes('/warehouses') ||
-                currentUrl.includes('/warehouse-transfers') ||
-                currentUrl.includes('/stock-adjustments') ||
-                currentUrl.includes('/stock-movements')
+                currentUrl.includes('/report-page') ||
+                currentUrl.includes('/neraca') ||
+                currentUrl.includes('/laba-rugi') ||
+                currentUrl.includes('/buku-besar') ||
+                currentUrl.includes('/jurnal-umum') ||
+                currentUrl.includes('/trial-balance') ||
+                currentUrl.includes('/arus-kas') ||
+                currentUrl.includes('/ongkos-kirim-ekspedisi') ||
+                currentUrl.includes('/pengiriman-penjualan') ||
+                currentUrl.includes('/pendapatan-pelanggan') ||
+                currentUrl.includes('/penjualan-produk') ||
+                currentUrl.includes('/pemesanan-produk') ||
+                currentUrl.includes('/pelunasan-pembayaran-tagihan') ||
+                currentUrl.includes('/penjualan-per-kategori-produk') ||
+                currentUrl.includes('/penjualan-produk-per-pelanggan') ||
+                currentUrl.includes('/penjualan-per-periode') ||
+                currentUrl.includes('/penjualan-per-region') ||
+                currentUrl.includes('/detail-pembelian') ||
+                currentUrl.includes('/pembelian-per-produk') ||
+                currentUrl.includes('/pemesanan-pembelian-per-produk') ||
+                currentUrl.includes('/pembelian-per-vendor') ||
+                currentUrl.includes('/pengiriman-pembelian') ||
+                currentUrl.includes('/pelunasan-pembayaran-tagihan-pembelian') ||
+                currentUrl.includes('/pembelian-produk-per-vendor') ||
+                currentUrl.includes('/pembelian-per-periode') ||
+                currentUrl.includes('/pembelian-per-region') ||
+                currentUrl.includes('/ringkasan-inventori') ||
+                currentUrl.includes('/pergerakan-stok-inventori') ||
+                currentUrl.includes('/ringkasan-stok-gudang') ||
+                currentUrl.includes('/pergerakan-stok-gudang') ||
+                currentUrl.includes('/laporan-produksi') ||
+                currentUrl.includes('/laporan-penyesuaian-stok') ||
+                currentUrl.includes('/laporan-transfer-gudang') ||
+                currentUrl.includes('/perputaran-persediaan') ||
+                currentUrl.includes('/ringkasan-aset-tetap') ||
+                currentUrl.includes('/detil-aset-tetap') ||
+                currentUrl.includes('/pelepasan-aset') ||
+                currentUrl.includes('/pajak-penjualan') ||
+                currentUrl.includes('/biaya-per-kontak') ||
+                currentUrl.includes('/laporan/aktivitas-tim')
             ) {
-                targetLabelText = 'Inventori';
+                targetLabelText = 'Laporan';
             } else if (
-                currentUrl.includes('/pengaturan') ||
-                currentUrl.includes('/data-perusahaan') ||
-                currentUrl.includes('/notification-settings') ||
-                currentUrl.includes('/invoice-layout-settings') ||
-                currentUrl.includes('/profile') ||
-                currentUrl.includes('/roles') ||
-                currentUrl.includes('/units') ||
-                currentUrl.includes('/users') ||
-                currentUrl.includes('/tags') ||
-                currentUrl.includes('/shipping-methods') ||
-                currentUrl.includes('/payment-terms') ||
-                currentUrl.includes('/taxes') ||
-                currentUrl.includes('/pajak')
+                currentUrl.includes('/anggaran-page') ||
+                currentUrl.includes('/budgets') ||
+                currentUrl.includes('/laporan/anggaran-laba-rugi')
             ) {
-                targetLabelText = 'Pengaturan';
+                targetLabelText = 'Anggaran';
             } else if (
                 currentUrl.includes('/closings/')
             ) {
                 targetLabelText = 'Akun';
+            } else if (
+                currentUrl.includes('/pos-page') ||
+                currentUrl.includes('/web-pos-page') ||
+                currentUrl.includes('/favorite-product-page') ||
+                currentUrl.includes('/pos/favorite-product-page') ||
+                currentUrl.includes('/pos-order-page') ||
+                currentUrl.includes('/pos/pos-order-page') ||
+                currentUrl.includes('/pos-settings') ||
+                currentUrl.includes('/pos/pos-settings') ||
+                currentUrl.includes('/outlets') ||
+                currentUrl.includes('/cashier-page')
+            ) {
+                targetLabelText = 'POS';
             }
 
             if (!targetLabelText) return;
@@ -140,8 +176,7 @@
             if (!targetLink) return;
 
             // Apply Active Styles
-            // 1. Force Background (Light Blue)
-            targetLink.style.setProperty('background-color', 'rgba(239, 246, 255, 1)', 'important'); // bg-blue-50
+            // 1. Force Active Class
             targetLink.classList.add('fi-active');
 
             // 2. Force Text Color (Primary Blue)
