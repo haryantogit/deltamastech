@@ -41,7 +41,7 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 4;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cube';
 
@@ -1542,11 +1542,6 @@ class ProductResource extends Resource
                         ->visible(fn($record) => (bool) $record->is_fixed_asset && $record->status === 'registered')
                         ->requiresConfirmation()
                         ->action(fn($record) => $record->update(['show_in_products' => !$record->show_in_products])),
-                    Action::make('print')
-                        ->label('Cetak')
-                        ->icon('heroicon-o-printer')
-                        ->url(fn(Product $record) => Pages\ViewProduct::getUrl([$record->id]))
-                        ->openUrlInNewTab(),
                     DeleteAction::make()
                         ->label('Hapus'),
                 ])

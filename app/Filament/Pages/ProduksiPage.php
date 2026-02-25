@@ -57,7 +57,7 @@ class ProduksiPage extends Page
             ->url(static::getNavigationUrl());
     }
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 6;
 
     protected static string|null $navigationLabel = 'Produksi';
 

@@ -47,7 +47,7 @@ class Pengaturan extends Page
 
     protected static string|\UnitEnum|null $navigationGroup = null;
 
-    protected static ?int $navigationSort = 13;
+    protected static ?int $navigationSort = 11;
 
     protected static ?string $navigationLabel = 'Pengaturan';
 

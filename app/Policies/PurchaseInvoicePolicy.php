@@ -6,5 +6,5 @@ use App\Models\User;
 
 class PurchaseInvoicePolicy extends BasePolicy
 {
-    protected string $feature = 'purchase';
+    protected string $feature = 'pembelian.invoice';
 }

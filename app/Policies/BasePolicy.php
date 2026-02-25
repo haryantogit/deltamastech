@@ -13,7 +13,7 @@ abstract class BasePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $this->hasPermission($user, "view_any_{$this->feature}");
+        return $this->hasPermission($user, "{$this->feature}.view");
     }
 
     /**
@@ -21,7 +21,7 @@ abstract class BasePolicy
      */
     public function view(User $user, $model): bool
     {
-        return $this->hasPermission($user, "view_any_{$this->feature}"); // Or specific view permission
+        return $this->hasPermission($user, "{$this->feature}.view");
     }
 
     /**
@@ -29,7 +29,7 @@ abstract class BasePolicy
      */
     public function create(User $user): bool
     {
-        return $this->hasPermission($user, "create_{$this->feature}");
+        return $this->hasPermission($user, "{$this->feature}.add");
     }
 
     /**
@@ -37,7 +37,7 @@ abstract class BasePolicy
      */
     public function update(User $user, $model): bool
     {
-        return $this->hasPermission($user, "update_{$this->feature}");
+        return $this->hasPermission($user, "{$this->feature}.edit");
     }
 
     /**
@@ -45,7 +45,7 @@ abstract class BasePolicy
      */
     public function delete(User $user, $model): bool
     {
-        return $this->hasPermission($user, "delete_{$this->feature}");
+        return $this->hasPermission($user, "{$this->feature}.delete");
     }
 
     protected function hasPermission(User $user, string $permission): bool

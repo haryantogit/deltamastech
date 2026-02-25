@@ -143,10 +143,12 @@
 
     <div class="biaya-header">
         <div class="biaya-title">Biaya</div>
-        <x-filament::button icon="heroicon-m-plus" tag="a"
-            href="{{ \App\Filament\Resources\ExpenseResource::getUrl('create') }}" size="sm">
-            Tambah Biaya
-        </x-filament::button>
+        @can('biaya.list.add')
+            <x-filament::button icon="heroicon-m-plus" tag="a"
+                href="{{ \App\Filament\Resources\ExpenseResource::getUrl('create') }}" size="sm">
+                Tambah Biaya
+            </x-filament::button>
+        @endcan
     </div>
 
     {{-- Widgets --}}

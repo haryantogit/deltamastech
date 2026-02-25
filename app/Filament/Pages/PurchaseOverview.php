@@ -21,6 +21,11 @@ class PurchaseOverview extends Page
 
     protected string $view = 'filament.pages.purchase-overview';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_pembelian');
+    }
+
     public function getMaxContentWidth(): string
     {
         return 'full';

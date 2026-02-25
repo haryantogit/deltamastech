@@ -115,53 +115,74 @@
     </style>
 
     {{-- Penawaran & Pesanan --}}
-    <div class="hub-section">
-        <div class="hub-section-title"><svg style="color:#f59e0b" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>Penawaran & Pesanan</div>
-        <div class="hub-grid">
-            <a href="{{ \App\Filament\Resources\SalesQuotations\SalesQuotationResource::getUrl('index') }}"
-                class="hub-card">
-                <div class="hub-card-icon" style="background:#fef3c7"><svg style="color:#d97706" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg></div><span class="hub-card-title">Penawaran Penjualan</span>
-            </a>
-            <a href="{{ \App\Filament\Resources\SalesOrderResource::getUrl('index') }}" class="hub-card">
-                <div class="hub-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg></div><span class="hub-card-title">Pesanan Penjualan</span>
-            </a>
+    @if(auth()->user()->can('penjualan.quote.view') || auth()->user()->can('penjualan.order.view'))
+        <div class="hub-section">
+            <div class="hub-section-title"><svg style="color:#f59e0b" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>Penawaran & Pesanan</div>
+            <div class="hub-grid">
+                @can('penjualan.quote.view')
+                    <a href="{{ \App\Filament\Resources\SalesQuotations\SalesQuotationResource::getUrl('index') }}"
+                        class="hub-card">
+                        <div class="hub-card-icon" style="background:#fef3c7"><svg style="color:#d97706" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg></div><span class="hub-card-title">Penawaran Penjualan</span>
+                    </a>
+                @endcan
+                @can('penjualan.order.view')
+                    <a href="{{ \App\Filament\Resources\SalesOrderResource::getUrl('index') }}" class="hub-card">
+                        <div class="hub-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg></div><span class="hub-card-title">Pesanan Penjualan</span>
+                    </a>
+                @endcan
+            </div>
         </div>
-    </div>
+    @endif
 
     {{-- Pengiriman & Tagihan --}}
-    <div class="hub-section">
-        <div class="hub-section-title"><svg style="color:#10b981" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>Pengiriman & Tagihan</div>
-        <div class="hub-grid">
-            <a href="{{ \App\Filament\Resources\SalesDeliveryResource::getUrl('index') }}" class="hub-card">
-                <div class="hub-card-icon" style="background:#dcfce7"><svg style="color:#059669" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                    </svg></div><span class="hub-card-title">Pengiriman Penjualan</span>
-            </a>
-            <a href="{{ \App\Filament\Resources\SalesInvoiceResource::getUrl('index') }}" class="hub-card">
-                <div class="hub-card-icon" style="background:#e0e7ff"><svg style="color:#4f46e5" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg></div><span class="hub-card-title">Tagihan Penjualan</span>
-            </a>
+    @if(auth()->user()->can('penjualan.delivery.view') || auth()->user()->can('penjualan.invoice.view'))
+        <div class="hub-section">
+            <div class="hub-section-title"><svg style="color:#10b981" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>Pengiriman & Tagihan</div>
+            <div class="hub-grid">
+                @can('penjualan.delivery.view')
+                    <a href="{{ \App\Filament\Resources\SalesDeliveryResource::getUrl('index') }}" class="hub-card">
+                        <div class="hub-card-icon" style="background:#dcfce7"><svg style="color:#059669" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg></div><span class="hub-card-title">Pengiriman Penjualan</span>
+                    </a>
+                @endcan
+                @can('penjualan.invoice.view')
+                    <a href="{{ \App\Filament\Resources\SalesInvoiceResource::getUrl('index') }}" class="hub-card">
+                        <div class="hub-card-icon" style="background:#e0e7ff"><svg style="color:#4f46e5" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg></div><span class="hub-card-title">Tagihan Penjualan</span>
+                    </a>
+                @endcan
+                @can('penjualan.return.view')
+                    <a href="{{ \App\Filament\Resources\SalesReturns\SalesReturnResource::getUrl('index') }}" class="hub-card">
+                        <div class="hub-card-icon" style="background:#fecdd3"><svg style="color:#e11d48" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg></div><span class="hub-card-title">Retur Penjualan</span>
+                    </a>
+                @endcan
+            </div>
         </div>
-    </div>
+    @endif
 
     {{-- Lainnya --}}
     <div class="hub-section">

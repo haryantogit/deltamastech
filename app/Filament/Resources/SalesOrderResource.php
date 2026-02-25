@@ -243,6 +243,7 @@ class SalesOrderResource extends Resource
                                             ->label('Kuantitas')
                                             ->numeric()
                                             ->default(1)
+                                            ->minValue(1)
                                             ->required()
                                             ->live(debounce: 500)
                                             ->suffixAction(
@@ -828,10 +829,13 @@ class SalesOrderResource extends Resource
                 ActionGroup::make([
                     ViewAction::make(),
                     EditAction::make(),
+                    \Filament\Actions\DeleteAction::make(),
                     Action::make('createDelivery')
                         ->label('Buat Pengiriman')
                         ->icon('heroicon-o-truck')
-                        ->color('success')
+                        ->color('warning')
+                        ->visible(fn() => auth()->user()->can('penjualan.delivery.add'))
+                        ->requiresConfirmation()
                         ->url(fn($record) => SalesDeliveryResource::getUrl('create', ['sales_order_id' => $record->id]))
                         ->hidden(
                             fn($record) =>
@@ -841,8 +845,10 @@ class SalesOrderResource extends Resource
                         ),
                     Action::make('createInvoice')
                         ->label('Buat Tagihan')
-                        ->icon('heroicon-o-document-text')
-                        ->color('warning')
+                        ->icon('heroicon-o-document-plus')
+                        ->color('success')
+                        ->visible(fn() => auth()->user()->can('penjualan.invoice.add'))
+                        ->requiresConfirmation()
                         ->url(fn($record) => SalesInvoiceResource::getUrl('create', ['sales_order_id' => $record->id]))
                         ->hidden(
                             fn($record) =>

@@ -6,5 +6,5 @@ use App\Models\User;
 
 class UserPolicy extends BasePolicy
 {
-    protected string $feature = 'user';
+    protected string $feature = 'pengaturan.user';
 }

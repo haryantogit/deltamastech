@@ -39,7 +39,7 @@ class InventoriPage extends Page
         ];
     }
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 5;
 
     protected static string|null $navigationLabel = 'Inventori';
 

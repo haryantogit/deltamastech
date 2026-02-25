@@ -21,6 +21,11 @@ class SalesOverview extends Page
 
     protected string $view = 'filament.pages.sales-overview';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_penjualan');
+    }
+
     public function getMaxContentWidth(): string
     {
         return 'full';

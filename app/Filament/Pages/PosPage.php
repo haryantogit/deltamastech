@@ -25,7 +25,7 @@ class PosPage extends Page
         return 'full';
     }
 
-    protected static ?int $navigationSort = 100;
+    protected static ?int $navigationSort = 15;
     protected static string|null $navigationLabel = 'POS';
     protected static string|\UnitEnum|null $navigationGroup = null;
 

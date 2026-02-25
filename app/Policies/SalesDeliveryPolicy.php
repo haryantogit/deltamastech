@@ -6,5 +6,5 @@ use App\Models\User;
 
 class SalesDeliveryPolicy extends BasePolicy
 {
-    protected string $feature = 'sales';
+    protected string $feature = 'penjualan.delivery';
 }

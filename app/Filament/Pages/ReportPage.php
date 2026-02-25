@@ -25,7 +25,7 @@ class ReportPage extends Page
         return 'full';
     }
 
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 7;
 
     protected static string|null $navigationLabel = 'Laporan';
 

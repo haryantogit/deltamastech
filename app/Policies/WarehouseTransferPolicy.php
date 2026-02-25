@@ -6,5 +6,5 @@ use App\Models\User;
 
 class WarehouseTransferPolicy extends BasePolicy
 {
-    protected string $feature = 'inventory';
+    protected string $feature = 'inventori.transfer';
 }

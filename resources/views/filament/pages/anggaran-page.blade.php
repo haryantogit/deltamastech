@@ -139,55 +139,63 @@
     </style>
 
     {{-- Daftar Menu Anggaran --}}
-    <div class="anggaran-section">
-        <div class="anggaran-section-title">
-            <svg style="color:#db2777" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            Operasional Anggaran
+    @if(auth()->user()->can('anggaran.management.view') || auth()->user()->can('anggaran.report.view'))
+        <div class="anggaran-section">
+            <div class="anggaran-section-title">
+                <svg style="color:#db2777" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Operasional Anggaran
+            </div>
+            <div class="anggaran-grid">
+                @can('anggaran.management.view')
+                    <a href="{{ \App\Filament\Resources\BudgetResource::getUrl('index') }}" class="anggaran-card">
+                        <div class="anggaran-card-icon" style="background:#dcfce7">
+                            <svg style="color:#16a34a" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <span class="anggaran-card-title">Manajemen Anggaran</span>
+                    </a>
+                @endcan
+                @can('anggaran.report.view')
+                    <a href="{{ \App\Filament\Pages\Laporan\AnggaranLabaRugi::getUrl() }}" class="anggaran-card">
+                        <div class="anggaran-card-icon" style="background:#fef3c7">
+                            <svg style="color:#d97706" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <span class="anggaran-card-title">Anggaran Laba Rugi</span>
+                    </a>
+                @endcan
+            </div>
         </div>
-        <div class="anggaran-grid">
-            <a href="{{ \App\Filament\Resources\BudgetResource::getUrl('index') }}" class="anggaran-card">
-                <div class="anggaran-card-icon" style="background:#dcfce7">
-                    <svg style="color:#16a34a" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                </div>
-                <span class="anggaran-card-title">Manajemen Anggaran</span>
-            </a>
-            <a href="{{ \App\Filament\Pages\Laporan\AnggaranLabaRugi::getUrl() }}" class="anggaran-card">
-                <div class="anggaran-card-icon" style="background:#fef3c7">
-                    <svg style="color:#d97706" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                </div>
-                <span class="anggaran-card-title">Anggaran Laba Rugi</span>
-            </a>
-        </div>
-    </div>
+    @endif
 
     {{-- Laporan --}}
-    <div class="anggaran-section">
-        <div class="anggaran-section-title">
-            <svg style="color:#22c55e" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Laporan
+    @can('anggaran.report.view')
+        <div class="anggaran-section">
+            <div class="anggaran-section-title">
+                <svg style="color:#22c55e" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Laporan
+            </div>
+            <div class="anggaran-grid">
+                <a href="{{ \App\Filament\Pages\Laporan\ManajemenAnggaran::getUrl() }}" class="anggaran-card">
+                    <div class="anggaran-card-icon" style="background:#dcfce7">
+                        <svg style="color:#16a34a" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <span class="anggaran-card-title">Laporan Manajemen Anggaran</span>
+                </a>
+            </div>
         </div>
-        <div class="anggaran-grid">
-            <a href="{{ \App\Filament\Pages\Laporan\ManajemenAnggaran::getUrl() }}" class="anggaran-card">
-                <div class="anggaran-card-icon" style="background:#dcfce7">
-                    <svg style="color:#16a34a" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                </div>
-                <span class="anggaran-card-title">Laporan Manajemen Anggaran</span>
-            </a>
-        </div>
-    </div>
+    @endcan
 </x-filament-panels::page>

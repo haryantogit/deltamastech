@@ -7,5 +7,5 @@ use App\Models\User;
 
 class RolePolicy extends BasePolicy
 {
-    protected string $feature = 'role';
+    protected string $feature = 'pengaturan.role';
 }

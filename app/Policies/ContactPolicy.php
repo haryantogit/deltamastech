@@ -6,5 +6,5 @@ use App\Models\User;
 
 class ContactPolicy extends BasePolicy
 {
-    protected string $feature = 'contact';
+    protected string $feature = 'kontak.list';
 }

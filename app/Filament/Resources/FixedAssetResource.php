@@ -50,7 +50,7 @@ class FixedAssetResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = null;
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 9;
 
     public static function form(\Filament\Schemas\Schema $form): \Filament\Schemas\Schema
     {

@@ -138,48 +138,59 @@
     </style>
 
     {{-- Manajemen Gudang & Stok --}}
-    <div class="inventori-section">
-        <div class="inventori-section-title"><svg style="color:#3b82f6" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>Manajemen Gudang & Stok</div>
-        <div class="inventori-grid">
-            <a href="{{ \App\Filament\Resources\Warehouses\WarehouseResource::getUrl('index') }}"
-                class="inventori-card">
-                <div class="inventori-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg></div><span class="inventori-card-title">Daftar Gudang</span>
-            </a>
+    @if(auth()->user()->can('inventori.warehouse.view') || auth()->user()->can('inventori.transfer.view') || auth()->user()->can('inventori.adjustment.view') || auth()->user()->can('inventori.movement.view'))
+        <div class="inventori-section">
+            <div class="inventori-section-title"><svg style="color:#3b82f6" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>Manajemen Gudang & Stok</div>
+            <div class="inventori-grid">
+                @can('inventori.warehouse.view')
+                    <a href="{{ \App\Filament\Resources\Warehouses\WarehouseResource::getUrl('index') }}"
+                        class="inventori-card">
+                        <div class="inventori-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg></div><span class="inventori-card-title">Daftar Gudang</span>
+                    </a>
+                @endcan
 
-            <a href="{{ \App\Filament\Resources\WarehouseTransfers\WarehouseTransferResource::getUrl('index') }}"
-                class="inventori-card">
-                <div class="inventori-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg></div><span class="inventori-card-title">Daftar Transfer</span>
-            </a>
+                @can('inventori.transfer.view')
+                    <a href="{{ \App\Filament\Resources\WarehouseTransfers\WarehouseTransferResource::getUrl('index') }}"
+                        class="inventori-card">
+                        <div class="inventori-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg></div><span class="inventori-card-title">Daftar Transfer</span>
+                    </a>
+                @endcan
 
-            <a href="{{ \App\Filament\Resources\StockAdjustments\StockAdjustmentResource::getUrl('index') }}"
-                class="inventori-card">
-                <div class="inventori-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg></div><span class="inventori-card-title">Daftar Penyesuaian</span>
-            </a>
-            <a href="{{ \App\Filament\Resources\StockMovementResource::getUrl('index') }}" class="inventori-card">
-                <div class="inventori-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg></div><span class="inventori-card-title">Riwayat Pergerakan Stok</span>
-            </a>
+                @can('inventori.adjustment.view')
+                    <a href="{{ \App\Filament\Resources\StockAdjustments\StockAdjustmentResource::getUrl('index') }}"
+                        class="inventori-card">
+                        <div class="inventori-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg></div><span class="inventori-card-title">Daftar Penyesuaian</span>
+                    </a>
+                @endcan
+
+                @can('inventori.movement.view')
+                    <a href="{{ \App\Filament\Resources\StockMovementResource::getUrl('index') }}" class="inventori-card">
+                        <div class="inventori-card-icon" style="background:#dbeafe"><svg style="color:#2563eb" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg></div><span class="inventori-card-title">Riwayat Pergerakan Stok</span>
+                    </a>
+                @endcan
+            </div>
         </div>
-    </div>
+    @endif
 
 
 </x-filament-panels::page>

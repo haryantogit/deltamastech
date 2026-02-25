@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register Gate::before to handle string-based permission checks
+        // This enables @can('penjualan.quote.view') etc. in Blade templates
+        Gate::before(function ($user, $ability) {
+            // Super Admin bypasses all checks
+            if ($user->role?->name === 'Super Admin') {
+                return true;
+            }
+
+            // Check if the ability matches a permission in the user's role
+            if ($user->role?->permissions->contains('name', $ability)) {
+                return true;
+            }
+
+            // Return null to let other gates/policies handle it
+            return null;
+        });
+
         \App\Models\SalesInvoice::observe(\App\Observers\SalesInvoiceObserver::class);
         \App\Models\PurchaseInvoice::observe(\App\Observers\PurchaseInvoiceObserver::class);
         \App\Models\ManufacturingOrder::observe(\App\Observers\ManufacturingOrderObserver::class);
@@ -31,6 +49,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\DebtPayment::observe(\App\Observers\DebtPaymentObserver::class);
         \App\Models\ReceivablePayment::observe(\App\Observers\ReceivablePaymentObserver::class);
         \App\Models\Expense::observe(\App\Observers\ExpenseObserver::class);
+        \App\Models\SalesReturn::observe(\App\Observers\SalesReturnObserver::class);
+        \App\Models\PurchaseReturn::observe(\App\Observers\PurchaseReturnObserver::class);
 
         // Global pagination options for all Filament tables
         \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {

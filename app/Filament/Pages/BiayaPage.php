@@ -20,11 +20,11 @@ class BiayaPage extends Page
         return 'full';
     }
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 12;
 
     protected static string|null $navigationLabel = 'Biaya';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static string|\UnitEnum|null $navigationGroup = null;
 

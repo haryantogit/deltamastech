@@ -23,8 +23,16 @@ class EditRole extends EditRecord
         $record = $this->record;
 
         $allIds = [];
+        $prefixes = ['permissions_', 'hub_', 'sub_', 'globals_'];
         foreach ($data as $key => $ids) {
-            if (\Illuminate\Support\Str::startsWith($key, 'permissions_') && is_array($ids)) {
+            $isPermissionField = false;
+            foreach ($prefixes as $prefix) {
+                if (\Illuminate\Support\Str::startsWith($key, $prefix)) {
+                    $isPermissionField = true;
+                    break;
+                }
+            }
+            if ($isPermissionField && is_array($ids)) {
                 $allIds = array_merge($allIds, $ids);
             }
         }

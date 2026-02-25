@@ -128,43 +128,6 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->navigationGroups([
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label('Menu Utama')
-                    ->icon('heroicon-o-home')
-                    ->collapsible()
-                    ->collapsed(false),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label('Kontak')
-                    ->icon('heroicon-o-users')
-                    ->collapsible()
-                    ->collapsed(),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label('Penjualan')
-                    ->icon('heroicon-o-shopping-cart')
-                    ->collapsible()
-                    ->collapsed(),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label('Pembelian')
-                    ->icon('heroicon-o-truck')
-                    ->collapsible()
-                    ->collapsed(),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label('Inventori')
-                    ->icon('heroicon-o-cube')
-                    ->collapsible()
-                    ->collapsed(),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label('Mengelola Akses')
-                    ->icon('heroicon-o-shield-check')
-                    ->collapsible()
-                    ->collapsed(),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label('Lainnya')
-                    ->icon('heroicon-o-ellipsis-horizontal-circle')
-                    ->collapsible()
-                    ->collapsed(),
-            ])
 
             // --- CSS TAMBAHAN (Padding Konten & Footer Style) ---
             ->renderHook(

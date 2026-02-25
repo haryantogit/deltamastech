@@ -10,6 +10,7 @@
     /* Set Inter as the default font */
     body {
         font-family: 'Inter', sans-serif;
+        zoom: 90%;
         @apply antialiased;
     }
 

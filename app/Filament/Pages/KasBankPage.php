@@ -37,7 +37,7 @@ class KasBankPage extends Page
         return 'full';
     }
 
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 13;
 
     protected static string|null $navigationLabel = 'Kas & Bank';
     protected ?string $subheading = null;

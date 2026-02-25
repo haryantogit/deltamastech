@@ -58,7 +58,7 @@ class AnggaranPage extends Page
             ->url(static::getNavigationUrl());
     }
 
-    protected static ?int $navigationSort = 41;
+    protected static ?int $navigationSort = 14;
 
     protected static string|null $navigationLabel = 'Anggaran';
 

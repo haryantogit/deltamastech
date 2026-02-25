@@ -6,5 +6,5 @@ use App\Models\User;
 
 class PurchaseQuotePolicy extends BasePolicy
 {
-    protected string $feature = 'purchase';
+    protected string $feature = 'pembelian.quote';
 }

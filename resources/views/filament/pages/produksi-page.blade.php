@@ -115,54 +115,55 @@
     </style>
 
     {{-- Daftar Menu Produksi --}}
-    <div class="produksi-section">
-        <div class="produksi-section-title">
-            <svg style="color:#3b82f6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            Operasional Produksi
-        </div>
-        <div class="produksi-grid">
-            <a href="{{ \App\Filament\Resources\ProductionOrderResource::getUrl('index') }}" class="produksi-card">
-                <div class="produksi-card-icon" style="background:#dbeafe">
-                    <svg style="color:#2563eb" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m4-4l-4-4" />
-                    </svg>
-                </div>
-                <span class="produksi-card-title">Konversi Produk</span>
+    @if(auth()->user()->can('produksi.order.view'))
+        <div class="produksi-section">
+            <div class="produksi-section-title">
+                <svg style="color:#3b82f6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                Operasional Produksi
+            </div>
+            <div class="produksi-grid">
+                <a href="{{ \App\Filament\Resources\ProductionOrderResource::getUrl('index') }}" class="produksi-card">
+            </div>
+            <span class="produksi-card-title">Konversi Produk</span>
             </a>
-            <a href="{{ \App\Filament\Resources\ProductionOrderResource::getUrl('create') }}" class="produksi-card">
-                <div class="produksi-card-icon" style="background:#e0e7ff">
-                    <svg style="color:#4f46e5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                </div>
-                <span class="produksi-card-title">Buat Konversi Baru</span>
-            </a>
+            @can('produksi.order.add')
+                <a href="{{ \App\Filament\Resources\ProductionOrderResource::getUrl('create') }}" class="produksi-card">
+                    <div class="produksi-card-icon" style="background:#e0e7ff">
+                        <svg style="color:#4f46e5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                    <span class="produksi-card-title">Buat Konversi Baru</span>
+                </a>
+            @endcan
         </div>
-    </div>
+        </div>
+    @endif
 
     {{-- Laporan Produksi --}}
-    <div class="produksi-section">
-        <div class="produksi-section-title">
-            <svg style="color:#22c55e" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Laporan
+    @can('produksi.result.view')
+        <div class="produksi-section">
+            <div class="produksi-section-title">
+                <svg style="color:#22c55e" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Laporan
+            </div>
+            <div class="produksi-grid">
+                <a href="{{ \App\Filament\Pages\ProductionReport::getUrl() }}" class="produksi-card">
+                    <div class="produksi-card-icon" style="background:#dcfce7">
+                        <svg style="color:#16a34a" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <span class="produksi-card-title">Laporan Produksi</span>
+                </a>
+            </div>
         </div>
-        <div class="produksi-grid">
-            <a href="{{ \App\Filament\Pages\ProductionReport::getUrl() }}" class="produksi-card">
-                <div class="produksi-card-icon" style="background:#dcfce7">
-                    <svg style="color:#16a34a" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                </div>
-                <span class="produksi-card-title">Laporan Produksi</span>
-            </a>
-        </div>
-    </div>
+    @endcan
 </x-filament-panels::page>

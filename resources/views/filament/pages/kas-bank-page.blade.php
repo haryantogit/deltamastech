@@ -144,53 +144,59 @@
         @foreach($accounts as $index => $account)
             {{-- Calculate basic metrics if needed, but Widget handles chart --}}
 
-            <div class="kas-card">
-                <div class="kas-card-header">
-                    <div class="kas-card-title">
-                        <h3>{{ $account['name'] }}</h3>
-                        <p>{{ $account['code'] }}</p>
-                    </div>
-                    <div class="kas-card-actions">
-                        @if(str_contains(strtolower($account['name']), 'bca'))
-                            <div class="btn-action btn-connect" title="Bank Connect">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                                </svg>
-                                <span>Bank Connect</span>
-                            </div>
-                        @endif
-                        <div onclick="event.preventDefault(); window.location.href='{{ \App\Filament\Pages\KasBankDetail::getUrl(['record' => $account['id']]) }}'"
-                            class="btn-action btn-manage">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Atur Akun
+            @can('akuntansi.kas_bank.view')
+                <div class="kas-card">
+                    <div class="kas-card-header">
+                        <div class="kas-card-title">
+                            <h3>{{ $account->name }}</h3>
+                            <p>{{ $account->code }}</p>
                         </div>
-                    </div>
-                </div>
-
-                <div class="kas-card-body">
-                    <div class="kas-metrics">
-                        <div>
-                            <div class="metric-item-value large">
-                                {{ number_format($account['current_balance'], 0, ',', '.') }}
-                            </div>
-                            <div class="metric-item-label">Saldo Buku</div>
-                        </div>
-                    </div>
-
-                    <div class="kas-widget-container">
-                        @livewire(\App\Filament\Widgets\AccountBalanceChart::class, [
-                            'accountId' => $account['id'],
-                            'filters' => $filters,
-                        ], key($account['id']))
-                                    </div>
+                        <div class="kas-card-actions">
+                            @can('akuntansi.kas_bank.edit')
+                                @if(str_contains(strtolower($account->name), 'bca'))
+                                    @can('akuntansi.kas_bank.connect')
+                                        <div class="btn-action btn-connect" title="Bank Connect">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                                            </svg>
+                                            <span>Bank Connect</span>
                                         </div>
-                                    </div>
+                                    @endcan
+                                @endif
+                                <div onclick="event.preventDefault(); window.location.href='{{ \App\Filament\Pages\KasBankDetail::getUrl(['record' => $account->id]) }}'"
+                                    class="btn-action btn-manage">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    Atur Akun
+                                </div>
+                            @endcan
+                        </div>
+                    </div>
+
+                    <div class="kas-card-body">
+                        <div class="kas-metrics">
+                            <div>
+                                <div class="metric-item-value large">
+                                    {{ number_format($account->current_balance, 0, ',', '.') }}
+                                </div>
+                                <div class="metric-item-label">Saldo Buku</div>
+                            </div>
+                        </div>
+
+                        <div class="kas-widget-container">
+                            @livewire(\App\Filament\Widgets\AccountBalanceChart::class, [
+                                'accountId' => $account->id,
+                                'filters' => $filters,
+                            ], key($account->id))
+                        </div>
+                        </div>
+                    </div>
+            @endcan
         @endforeach
     </div>
 </x-filament-panels::page>
