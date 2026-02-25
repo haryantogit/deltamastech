@@ -71,11 +71,7 @@ class HutangResource extends Resource
                             ->schema([
                                 TextInput::make('number')
                                     ->label('Nomor')
-                                    ->default(function () {
-                                        $last = Debt::where('number', 'like', 'CM/%')->latest('id')->first();
-                                        $next = $last ? (int) substr($last->number, 3) + 1 : 1;
-                                        return 'CM/' . str_pad($next, 5, '0', STR_PAD_LEFT);
-                                    })
+                                    ->default(fn() => \App\Models\NumberingSetting::getNextNumber('hutang') ?? 'CM/' . str_pad((intval(substr(\App\Models\Debt::where('number', 'like', 'CM/%')->max('number'), 3)) ?? 0) + 1, 5, '0', STR_PAD_LEFT))
                                     ->required()
                                     ->disabled()
                                     ->dehydrated(),

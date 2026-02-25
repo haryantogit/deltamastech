@@ -9,7 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WarehouseTransfer extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\HasAutomaticNumbering;
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'stock_transfer';
+    }
 
     protected $fillable = [
         'number',

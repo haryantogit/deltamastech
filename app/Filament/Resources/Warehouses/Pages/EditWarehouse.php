@@ -11,8 +11,21 @@ class EditWarehouse extends EditRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/inventori-page') => 'Inventori',
-            '#' => 'Edit Gudang',
+            WarehouseResource::getUrl('index') => 'Gudang',
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index')),
+            \Filament\Actions\DeleteAction::make(),
         ];
     }
 }

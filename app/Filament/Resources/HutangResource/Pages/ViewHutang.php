@@ -13,9 +13,12 @@ class ViewHutang extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('back')
+            Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->outlined()
+                ->size('sm')
+                ->icon('heroicon-o-arrow-left')
                 ->url(fn() => HutangResource::getUrl('index')),
             Actions\Action::make('print')
                 ->label('Print')

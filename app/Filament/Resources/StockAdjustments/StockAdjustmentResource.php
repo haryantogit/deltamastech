@@ -24,6 +24,7 @@ class StockAdjustmentResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
     protected static string|null $navigationLabel = 'Penyesuaian Stok';
+    protected static ?string $modelLabel = 'Penyesuaian Stok';
     protected static ?string $pluralModelLabel = 'Penyesuaian Stok';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventori';

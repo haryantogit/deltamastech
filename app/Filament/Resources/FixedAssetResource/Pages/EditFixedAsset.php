@@ -10,9 +10,23 @@ class EditFixedAsset extends EditRecord
 {
     protected static string $resource = FixedAssetResource::class;
 
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin') => 'Beranda',
+            FixedAssetResource::getUrl('index') => 'Aset Tetap',
+            '#' => 'Edit Aset Tetap',
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index')),
             Actions\DeleteAction::make(),
         ];
     }

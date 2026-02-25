@@ -13,7 +13,12 @@ use Spatie\Activitylog\LogOptions;
 
 class PurchaseInvoice extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, \App\Traits\HasAutomaticNumbering;
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'purchase_invoice';
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

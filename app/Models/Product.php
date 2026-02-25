@@ -57,6 +57,7 @@ class Product extends Model
         'purchase_invoice_id',
         'disposal_date',
         'disposal_price',
+        'show_in_products',
     ];
 
     protected $casts = [
@@ -84,6 +85,7 @@ class Product extends Model
         'cost_limit' => 'decimal:2',
         'disposal_date' => 'date',
         'disposal_price' => 'decimal:2',
+        'show_in_products' => 'boolean',
     ];
 
     public function unit(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -134,6 +136,16 @@ class Product extends Model
     public function purchaseInvoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(PurchaseInvoice::class, 'purchase_invoice_id');
+    }
+
+    public function purchaseTax(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Tax::class, 'purchase_tax_id');
+    }
+
+    public function salesTax(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Tax::class, 'sales_tax_id');
     }
 
     public function tags(): \Illuminate\Database\Eloquent\Relations\MorphToMany
@@ -305,6 +317,23 @@ class Product extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope a query to only include products visible in the regular product list.
+     */
+    public function scopeVisibleInProductList($query)
+    {
+        return $query->where(
+            fn($q) =>
+            $q->where('is_fixed_asset', false)
+                ->orWhere(
+                    fn($sq) =>
+                    $sq->where('is_fixed_asset', true)
+                        ->where('status', 'registered')
+                        ->where('show_in_products', true)
+                )
+        );
     }
 
     /**

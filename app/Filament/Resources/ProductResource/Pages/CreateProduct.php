@@ -25,6 +25,25 @@ class CreateProduct extends CreateRecord
         return 'full';
     }
 
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin/inventori-page') => 'Inventori',
+            ProductResource::getUrl('index') => 'Produk',
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index')),
+        ];
+    }
+
     private ?int $initial_warehouse_id = null;
 
     protected function mutateFormDataBeforeCreate(array $data): array

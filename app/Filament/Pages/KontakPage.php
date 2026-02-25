@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Actions\Action;
 use Filament\Pages\Page;
 
 class KontakPage extends Page
@@ -25,22 +26,41 @@ class KontakPage extends Page
         return 'full';
     }
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->outlined()
+                ->size('sm')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin')),
+        ];
+    }
+
     protected static bool $shouldRegisterNavigation = true;
 
-    public static function getNavigationItem(): \Filament\Navigation\NavigationItem
+    public static function getNavigationItems(): array
     {
-        return \Filament\Navigation\NavigationItem::make(static::getNavigationLabel())
-            ->group(static::getNavigationGroup())
-            ->icon(static::getNavigationIcon())
-            ->activeWhen(
-                fn() =>
-                request()->routeIs('filament.admin.pages.kontak-page') ||
-                request()->routeIs('filament.admin.resources.contacts.*') ||
-                request()->routeIs('filament.admin.resources.hutang.*') ||
-                request()->routeIs('filament.admin.resources.piutang.*')
-            )
-            ->sort(static::getNavigationSort())
-            ->url(static::getNavigationUrl());
+        return [
+            \Filament\Navigation\NavigationItem::make(static::getNavigationLabel())
+                ->group(static::getNavigationGroup())
+                ->icon(static::getNavigationIcon())
+                ->isActiveWhen(
+                    fn() =>
+                    in_array(request()->segment(2), [
+                        'kontak-page',
+                        'contacts',
+                        'hutang',
+                        'piutang',
+                        'umur-hutang',
+                        'umur-piutang',
+                    ]) || request()->routeIs('filament.admin.resources.piutang.*', 'filament.admin.resources.hutang.*', 'filament.admin.resources.contacts.*')
+                )
+                ->sort(static::getNavigationSort())
+                ->url(static::getNavigationUrl()),
+        ];
     }
 
     protected static ?int $navigationSort = 11;

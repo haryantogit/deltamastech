@@ -9,6 +9,12 @@ use App\Models\Tag;
 
 class Debt extends Model
 {
+    use \App\Traits\HasAutomaticNumbering;
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'hutang';
+    }
     protected $fillable = [
         'number',
         'supplier_id',

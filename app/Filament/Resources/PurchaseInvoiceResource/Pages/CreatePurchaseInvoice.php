@@ -13,9 +13,10 @@ class CreatePurchaseInvoice extends CreateRecord
     protected function getHeaderActions(): array
     {
         return [
-            \Filament\Actions\Action::make('back')
+            \Filament\Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->icon('heroicon-o-arrow-left')
                 ->url(static::getResource()::getUrl('index')),
         ];
     }
@@ -26,6 +27,7 @@ class CreatePurchaseInvoice extends CreateRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/pembelian-page') => 'Pembelian',
             PurchaseInvoiceResource::getUrl('index') => 'Tagihan Pembelian',
             '#' => 'Buat Tagihan',

@@ -25,9 +25,10 @@ class EditPurchaseDelivery extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
-            Actions\Action::make('back')
+            Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->icon('heroicon-o-arrow-left')
                 ->url(static::getResource()::getUrl('index')),
         ];
     }

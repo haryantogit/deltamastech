@@ -62,6 +62,15 @@ class FixedAssetResource extends Resource
                 Hidden::make('status')->default('draft'),
                 Hidden::make('can_be_purchased')->default(true),
 
+                Section::make('Sinkronisasi Produk')
+                    ->schema([
+                        Toggle::make('show_in_products')
+                            ->label('Aktifkan di Produk')
+                            ->helperText('Jika diaktifkan, aset tetap ini akan muncul di daftar produk.')
+                            ->default(false),
+                    ])
+                    ->visible(fn($record) => $record && $record->status === 'registered'),
+
                 Section::make(fn($record) => ($record && $record->status === 'draft') ? 'Daftarkan Aset Tetap' : 'Detil')
                     ->schema([
                         FileUpload::make('image')
@@ -437,6 +446,13 @@ class FixedAssetResource extends Resource
                     ->label('Tag')
                     ->badge()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('show_in_products')
+                    ->label('Status Produk')
+                    ->badge()
+                    ->formatStateUsing(fn(bool $state): string => $state ? 'Aktif di Produk' : 'Non-aktif di Produk')
+                    ->color(fn(bool $state): string => $state ? 'success' : 'gray')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('purchase_date')
                     ->label('Tanggal Pembelian')
                     ->date('d/m/Y')
@@ -471,6 +487,13 @@ class FixedAssetResource extends Resource
                         ->icon('heroicon-m-check-circle')
                         ->visible(fn($record) => $record->status === 'draft')
                         ->action(fn($record) => $record->update(['status' => 'registered'])),
+                    \Filament\Actions\Action::make('sync_to_product')
+                        ->label(fn($record) => $record->show_in_products ? 'Nonaktifkan di Produk' : 'Aktifkan di Produk')
+                        ->icon(fn($record) => $record->show_in_products ? 'heroicon-m-eye-slash' : 'heroicon-m-eye')
+                        ->color(fn($record) => $record->show_in_products ? 'warning' : 'success')
+                        ->visible(fn($record) => $record->status === 'registered')
+                        ->requiresConfirmation()
+                        ->action(fn($record) => $record->update(['show_in_products' => !$record->show_in_products])),
                     \Filament\Actions\Action::make('dispose')
                         ->label('Lepas/Jual')
                         ->icon('heroicon-m-banknotes')

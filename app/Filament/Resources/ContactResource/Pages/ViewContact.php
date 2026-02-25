@@ -27,6 +27,14 @@ class ViewContact extends ViewRecord
         return 'Lihat Kontak';
     }
 
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin/kontak-page') => 'Kontak',
+            ContactResource::getUrl('index') => 'Daftar Kontak',
+        ];
+    }
+
     public function getMaxContentWidth(): \Filament\Support\Enums\Width|string|null
     {
         return \Filament\Support\Enums\Width::Full;
@@ -35,9 +43,10 @@ class ViewContact extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('back')
+            Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->icon('heroicon-o-arrow-left')
                 ->url(fn() => ContactResource::getUrl('index')),
             Actions\Action::make('hutang')
                 ->label('Hutang')

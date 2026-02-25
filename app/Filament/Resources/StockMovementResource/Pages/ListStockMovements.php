@@ -13,13 +13,18 @@ class ListStockMovements extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            // No Create Action
+            Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin/inventori-page')),
         ];
     }
 
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/inventori-page') => 'Inventori',
             '#' => 'Riwayat Stok',
         ];

@@ -18,9 +18,10 @@ class CreateHutang extends CreateRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('back')
+            Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->icon('heroicon-o-arrow-left')
                 ->url(fn() => HutangResource::getUrl('index')),
         ];
     }

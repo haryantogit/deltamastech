@@ -42,10 +42,11 @@ class ListProducts extends ListRecords
                 ->color('primary')
                 ->button(),
 
-            Actions\Action::make('back')
+            Actions\Action::make('kembali')
                 ->label('Kembali')
-                ->url(url('/admin'))
-                ->color('gray'),
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin/inventori-page')),
 
             Actions\Action::make('print')
                 ->label('Cetak')
@@ -66,25 +67,25 @@ class ListProducts extends ListRecords
     {
         return [
             'all' => Tab::make('Semua')
-                ->badge(Product::count()),
+                ->badge(fn() => Product::visibleInProductList()->count()),
             'standard' => Tab::make('Standard')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('type', 'standard'))
-                ->badge(Product::where('type', 'standard')->count()),
+                ->badge(fn() => Product::visibleInProductList()->where('type', 'standard')->count()),
             'service' => Tab::make('Jasa')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('type', 'service'))
-                ->badge(Product::where('type', 'service')->count()),
+                ->badge(fn() => Product::visibleInProductList()->where('type', 'service')->count()),
             'manufacturing' => Tab::make('Manufaktur')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('type', 'manufacturing'))
-                ->badge(Product::where('type', 'manufacturing')->count()),
+                ->badge(fn() => Product::visibleInProductList()->where('type', 'manufacturing')->count()),
             'bundle' => Tab::make('Paket')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('type', 'bundle'))
-                ->badge(Product::where('type', 'bundle')->count()),
+                ->badge(fn() => Product::visibleInProductList()->where('type', 'bundle')->count()),
             'variant' => Tab::make('Varian')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('type', 'variant'))
-                ->badge(Product::where('type', 'variant')->count()),
+                ->badge(fn() => Product::visibleInProductList()->where('type', 'variant')->count()),
             'fixed_asset' => Tab::make('Aset Tetap')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('type', 'fixed_asset'))
-                ->badge(Product::where('type', 'fixed_asset')->count()),
+                ->badge(fn() => Product::visibleInProductList()->where('type', 'fixed_asset')->count()),
         ];
     }
 
@@ -117,7 +118,8 @@ class ListProducts extends ListRecords
     {
         return [
             url('/admin') => 'Beranda',
-            'Produk',
+            url('/admin/inventori-page') => 'Inventori',
+            '#' => 'Produk',
         ];
     }
 }

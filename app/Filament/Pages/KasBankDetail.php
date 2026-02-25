@@ -10,6 +10,8 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\FileUpload;
 use Filament\Pages\Page;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -37,6 +39,13 @@ class KasBankDetail extends Page implements HasTable
 
     #[Url]
     public ?string $activeTab = 'all';
+
+    public bool $showStats = false;
+
+    public function toggleStats(): void
+    {
+        $this->showStats = !$this->showStats;
+    }
 
     public function getHeaderWidgetsColumns(): int|array
     {
@@ -277,57 +286,92 @@ class KasBankDetail extends Page implements HasTable
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('panduan')
-                ->label('Panduan')
-                ->color('gray')
-                ->outlined()
-                ->size('sm')
-                ->icon('heroicon-o-question-mark-circle')
-                ->url('#'),
             Action::make('kembali')
                 ->label('Kembali')
-                ->color('warning')
+                ->color('gray')
                 ->outlined()
                 ->size('sm')
                 ->icon('heroicon-o-arrow-left')
                 ->url('/admin/kas-bank'),
+            Action::make('toggleStats')
+                ->label(fn() => $this->showStats ? 'Sembunyikan Statistik' : 'Tampilkan Statistik')
+                ->color('gray')
+                ->outlined()
+                ->size('sm')
+                ->icon(fn() => $this->showStats ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                ->action(fn() => $this->toggleStats()),
             ActionGroup::make([
                 Action::make('transfer')
                     ->label('Transfer Dana')
                     ->icon('heroicon-m-arrows-right-left')
+                    ->modalWidth('2xl')
                     ->form([
-                        Select::make('from_account_id')
-                            ->label('Dari Akun')
-                            ->options(Account::whereIn('category', ['kas', 'bank'])->pluck('name', 'id'))
-                            ->required()
-                            ->default($this->account->id)
-                            ->columnSpan(1),
-                        Select::make('to_account_id')
-                            ->label('Ke Akun')
-                            ->options(Account::whereIn('category', ['kas', 'bank'])->pluck('name', 'id'))
-                            ->required()
-                            ->columnSpan(1),
-                        DatePicker::make('transaction_date')
-                            ->label('Tanggal')
-                            ->default(now())
-                            ->required()
-                            ->columnSpan(1),
-                        TextInput::make('amount')
-                            ->label('Jumlah')
-                            ->numeric()
-                            ->required()
-                            ->prefix('Rp')
-                            ->columnSpan(1),
-                        Textarea::make('description')
-                            ->label('Deskripsi')
-                            ->columnSpanFull(),
+                        \Filament\Schemas\Components\Grid::make(6)
+                            ->schema([
+                                Select::make('from_account_id')
+                                    ->label('Dari')
+                                    ->options(\App\Models\Account::whereIn('category', ['Kas & Bank', 'kas', 'bank'])->get()->mapWithKeys(fn($a) => [$a->id => "{$a->code} - {$a->name}"]))
+                                    ->searchable()
+                                    ->required()
+                                    ->default($this->account->id)
+                                    ->columnSpan(6),
+
+                                Select::make('to_account_id')
+                                    ->label('Ke')
+                                    ->options(\App\Models\Account::whereIn('category', ['Kas & Bank', 'kas', 'bank'])->get()->mapWithKeys(fn($a) => [$a->id => "{$a->code} - {$a->name}"]))
+                                    ->searchable()
+                                    ->required()
+                                    ->columnSpan(6),
+
+                                DatePicker::make('transaction_date')
+                                    ->label('Tanggal Transaksi')
+                                    ->default(now())
+                                    ->required()
+                                    ->columnSpan(2),
+
+                                TextInput::make('amount')
+                                    ->label('Total')
+                                    ->numeric()
+                                    ->required()
+                                    ->columnSpan(2),
+
+                                TextInput::make('reference_number')
+                                    ->label('Nomor')
+                                    ->default(fn() => \App\Models\NumberingSetting::getNextNumber('journal_entry') ?? 'TR/00001')
+                                    ->required()
+                                    ->columnSpan(2),
+
+                                Select::make('tags')
+                                    ->label('Tag')
+                                    ->multiple()
+                                    ->options(\App\Models\Tag::pluck('name', 'id'))
+                                    ->searchable()
+                                    ->columnSpan(3),
+
+                                TextInput::make('memo')
+                                    ->label('Referensi')
+                                    ->columnSpan(3),
+
+                                FileUpload::make('attachment')
+                                    ->label('Lampiran')
+                                    ->directory('transfers')
+                                    ->placeholder(new \Illuminate\Support\HtmlString('Seret & Jatuhkan berkas Anda atau <span class="text-primary-600 font-medium cursor-pointer">Jelajahi</span>'))
+                                    ->columnSpan(6),
+                            ]),
                     ])
                     ->action(function (array $data) {
                         $entry = JournalEntry::create([
                             'transaction_date' => $data['transaction_date'],
-                            'description' => $data['description'] ?? 'Transfer Dana',
+                            'description' => 'Transfer Dana',
                             'total_amount' => $data['amount'],
+                            'reference_number' => $data['reference_number'],
+                            'memo' => $data['memo'] ?? null,
+                            'attachment' => $data['attachment'] ?? null,
                         ]);
+
+                        if (!empty($data['tags'])) {
+                            $entry->tags()->sync($data['tags']);
+                        }
 
                         JournalItem::create([
                             'journal_entry_id' => $entry->id,
@@ -342,7 +386,8 @@ class KasBankDetail extends Page implements HasTable
                             'debit' => 0,
                             'credit' => $data['amount'],
                         ]);
-                    }),
+                    })
+                    ->modalSubmitActionLabel('Transfer'),
                 Action::make('kirim')
                     ->label('Kirim Dana')
                     ->icon('heroicon-m-arrow-up-tray')
@@ -357,15 +402,8 @@ class KasBankDetail extends Page implements HasTable
                 ->color('primary')
                 ->button()
                 ->size('sm'),
-            Action::make('import')
-                ->label('Import')
-                ->color('gray')
-                ->outlined()
-                ->size('sm')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->url('#'),
-            Action::make('print')
-                ->label('Print')
+            Action::make('cetak')
+                ->label('Cetak')
                 ->color('gray')
                 ->outlined()
                 ->size('sm')

@@ -54,34 +54,34 @@ class SalesInvoiceResource extends Resource
                             ->schema([
                                 Grid::make(2)
                                     ->schema([
-                                        Select::make('contact_id')
-                                            ->relationship('contact', 'name', modifyQueryUsing: fn($query) => $query->where('type', 'customer'))
-                                            ->label('Pelanggan')
-                                            ->searchable()
-                                            ->preload()
-                                            ->required()
-                                            ->getOptionLabelUsing(fn($value) => \App\Models\Contact::find($value)?->name ?? $value)
-                                            ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('sales_order_id')))
-                                            ->dehydrated(),
-                                        TextInput::make('contact_name')
-                                            ->label('Pelanggan')
-                                            ->disabled()
-                                            ->dehydrated(false)
-                                            ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('sales_order_id'))),
-
+                                        Group::make([
+                                            Select::make('contact_id')
+                                                ->relationship('contact', 'name', modifyQueryUsing: fn($query) => $query->where('type', 'customer'))
+                                                ->label('Pelanggan')
+                                                ->searchable()
+                                                ->preload()
+                                                ->required()
+                                                ->getOptionLabelUsing(fn($value) => \App\Models\Contact::find($value)?->name ?? $value)
+                                                ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('sales_order_id')))
+                                                ->dehydrated(),
+                                            TextInput::make('contact_name')
+                                                ->label('Pelanggan')
+                                                ->disabled()
+                                                ->dehydrated(false)
+                                                ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('sales_order_id'))),
+                                        ])->columnSpan(1),
 
                                         TextInput::make('invoice_number')
                                             ->label('Nomor')
                                             ->required()
-                                            ->disabled()
+                                            ->readOnly()
                                             ->dehydrated()
-                                            ->default(function () {
-                                                $last = \App\Models\SalesInvoice::latest('id')->first();
-                                                if ($last && preg_match('/INV\/(\d{5})/', $last->invoice_number, $matches)) {
-                                                    return 'INV/' . str_pad(intval($matches[1]) + 1, 5, '0', STR_PAD_LEFT);
-                                                }
-                                                return 'INV/00001';
-                                            }),
+                                            ->default(fn() => \App\Models\NumberingSetting::getNextNumber('sales_invoice') ?? 'INV/' . date('Ymd') . '-' . rand(100, 999))
+                                            ->columnSpan(1),
+                                    ]),
+
+                                Grid::make(2)
+                                    ->schema([
                                         DatePicker::make('transaction_date')
                                             ->label('Tgl. Transaksi')
                                             ->required()
@@ -89,6 +89,88 @@ class SalesInvoiceResource extends Resource
                                         DatePicker::make('due_date')
                                             ->label('Tgl. Jatuh Tempo')
                                             ->default(now()->addDays(30)),
+                                    ]),
+
+                                Grid::make(2)
+                                    ->schema([
+                                        Group::make([
+                                            Select::make('warehouse_id')
+                                                ->relationship('warehouse', 'name')
+                                                ->label('Gudang')
+                                                ->searchable()
+                                                ->preload()
+                                                ->live()
+                                                ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('sales_order_id')))
+                                                ->dehydrated()
+                                                ->default(1),
+                                            TextInput::make('warehouse_name')
+                                                ->label('Gudang')
+                                                ->disabled()
+                                                ->dehydrated(false)
+                                                ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('sales_order_id'))),
+                                        ])->columnSpan(1),
+
+                                        Group::make([
+                                            Select::make('sales_order_id')
+                                                ->relationship('salesOrder', 'number')
+                                                ->label('Nomor Pesanan')
+                                                ->searchable()
+                                                ->preload()
+                                                ->live()
+                                                ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('sales_order_id')))
+                                                ->dehydrated()
+                                                ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                    if (!$state)
+                                                        return;
+                                                    $so = \App\Models\SalesOrder::with(['customer', 'warehouse', 'shippingMethod', 'items.product', 'items.unit'])->find($state);
+                                                    if (!$so)
+                                                        return;
+
+                                                    $set('contact_id', $so->customer_id);
+                                                    $set('warehouse_id', $so->warehouse_id);
+                                                    $set('payment_term_id', $so->payment_term_id);
+                                                    $set('reference', $so->reference);
+                                                    $set('shipping_method_id', $so->shipping_method_id);
+                                                    $set('tracking_number', $so->tracking_number);
+                                                    $set('tax_inclusive', (bool) $so->tax_inclusive);
+                                                    $set('discount_total', $so->discount_amount);
+                                                    $set('shipping_cost', $so->shipping_cost);
+                                                    $set('other_cost', $so->other_cost);
+                                                    $set('down_payment', $so->down_payment);
+                                                    $set('notes', $so->notes);
+
+                                                    $items = $so->items->map(fn($item) => [
+                                                        'product_id' => $item->product_id,
+                                                        'product_name' => $item->product?->name ?? '-',
+                                                        'description' => $item->description,
+                                                        'qty' => $item->quantity,
+                                                        'unit_id' => $item->unit_id,
+                                                        'unit_name' => $item->unit?->name ?? '-',
+                                                        'price' => $item->unit_price,
+                                                        'discount_percent' => $item->discount_percent,
+                                                        'tax_name' => $item->tax_name,
+                                                        'subtotal' => $item->total_price,
+                                                    ])->toArray();
+
+                                                    $set('items', $items);
+                                                    self::updateTotals($get, $set);
+                                                }),
+                                            TextInput::make('sales_order_number')
+                                                ->label('Nomor Pesanan')
+                                                ->disabled()
+                                                ->dehydrated(false)
+                                                ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('sales_order_id')))
+                                                ->suffixAction(
+                                                    fn($state) => $state ? Action::make('view_so')
+                                                        ->icon('heroicon-m-arrow-top-right-on-square')
+                                                        ->url(fn(Get $get) => $get('sales_order_id') ? SalesOrderResource::getUrl('view', ['record' => $get('sales_order_id')]) : null)
+                                                        ->openUrlInNewTab() : null
+                                                ),
+                                        ])->columnSpan(1),
+                                    ]),
+
+                                Grid::make(3)
+                                    ->schema([
                                         Select::make('payment_term_id')
                                             ->relationship('paymentTerm', 'name')
                                             ->label('Termin')
@@ -96,77 +178,6 @@ class SalesInvoiceResource extends Resource
                                                 TextInput::make('name')->required(),
                                                 TextInput::make('days')->numeric()->required(),
                                             ]),
-                                        Select::make('sales_order_id')
-                                            ->relationship('salesOrder', 'number')
-                                            ->label('Nomor Pesanan')
-                                            ->searchable()
-                                            ->preload()
-                                            ->live()
-                                            ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('sales_order_id')))
-                                            ->dehydrated()
-                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                                if (!$state)
-                                                    return;
-                                                $so = \App\Models\SalesOrder::with(['customer', 'warehouse', 'shippingMethod', 'items.product', 'items.unit'])->find($state);
-                                                if (!$so)
-                                                    return;
-
-                                                $set('contact_id', $so->customer_id);
-                                                $set('warehouse_id', $so->warehouse_id);
-                                                $set('payment_term_id', $so->payment_term_id);
-                                                $set('reference', $so->reference);
-                                                $set('shipping_method_id', $so->shipping_method_id);
-                                                $set('tracking_number', $so->tracking_number);
-                                                $set('tax_inclusive', (bool) $so->tax_inclusive);
-                                                $set('discount_total', $so->discount_amount);
-                                                $set('shipping_cost', $so->shipping_cost);
-                                                $set('other_cost', $so->other_cost);
-                                                $set('down_payment', $so->down_payment);
-                                                $set('notes', $so->notes);
-
-                                                $items = $so->items->map(fn($item) => [
-                                                    'product_id' => $item->product_id,
-                                                    'product_name' => $item->product?->name ?? '-',
-                                                    'description' => $item->description,
-                                                    'qty' => $item->quantity,
-                                                    'unit_id' => $item->unit_id,
-                                                    'unit_name' => $item->unit?->name ?? '-',
-                                                    'price' => $item->unit_price,
-                                                    'discount_percent' => $item->discount_percent,
-                                                    'tax_name' => $item->tax_name,
-                                                    'subtotal' => $item->total_price,
-                                                ])->toArray();
-
-                                                $set('items', $items);
-                                                self::updateTotals($get, $set);
-                                            }),
-                                        TextInput::make('sales_order_number')
-                                            ->label('Nomor Pesanan')
-                                            ->disabled()
-                                            ->dehydrated(false)
-                                            ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('sales_order_id')))
-                                            ->suffixAction(
-                                                fn($state) => $state ? Action::make('view_so')
-                                                    ->icon('heroicon-m-arrow-top-right-on-square')
-                                                    ->url(fn(Get $get) => $get('sales_order_id') ? SalesOrderResource::getUrl('view', ['record' => $get('sales_order_id')]) : null)
-                                                    ->openUrlInNewTab() : null
-                                            ),
-
-
-                                        Select::make('warehouse_id')
-                                            ->relationship('warehouse', 'name')
-                                            ->label('Gudang')
-                                            ->searchable()
-                                            ->preload()
-                                            ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('sales_order_id')))
-                                            ->dehydrated(),
-                                        TextInput::make('warehouse_name')
-                                            ->label('Gudang')
-                                            ->disabled()
-                                            ->dehydrated(false)
-                                            ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('sales_order_id'))),
-
-
                                         TextInput::make('reference')
                                             ->label('Referensi'),
                                         Select::make('tags')
@@ -174,7 +185,6 @@ class SalesInvoiceResource extends Resource
                                             ->multiple()
                                             ->label('Tag')
                                             ->preload(),
-
                                     ]),
                             ]),
 
@@ -189,6 +199,11 @@ class SalesInvoiceResource extends Resource
                                             ->label('Ekspedisi')
                                             ->searchable()
                                             ->preload()
+                                            ->createOptionForm([
+                                                TextInput::make('name')
+                                                    ->label('Nama Ekspedisi')
+                                                    ->required(),
+                                            ])
                                             ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('sales_order_id')))
                                             ->dehydrated(),
                                         TextInput::make('shipping_method_name')
@@ -204,7 +219,7 @@ class SalesInvoiceResource extends Resource
 
                         Section::make('Item Tagihan')
                             ->schema([
-                                Grid::make(2)
+                                Grid::make(3)
                                     ->schema([
                                         TextInput::make('barcode_scanner')
                                             ->label('Scan Barcode/SKU')
@@ -255,12 +270,16 @@ class SalesInvoiceResource extends Resource
                                                     $set('barcode_scanner', null);
                                                     self::updateTotals($get, $set);
                                                 }
-                                            }),
+                                            })
+                                            ->columnSpan(2),
                                         Toggle::make('tax_inclusive')
                                             ->label('Harga termasuk pajak')
                                             ->inline(false)
+                                            ->default(false)
                                             ->live()
-                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set)),
+                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set))
+                                            ->extraAttributes(['class' => 'mt-8'])
+                                            ->columnSpan(1),
                                     ]),
 
                                 Repeater::make('items')
@@ -268,27 +287,60 @@ class SalesInvoiceResource extends Resource
                                     ->schema([
                                         Select::make('product_id_select')
                                             ->label('Produk')
-                                            ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
+                                            ->relationship('product', 'name', modifyQueryUsing: function ($query, Get $get) {
+                                                $query->active();
+                                                $warehouseId = $get('../../warehouse_id');
+                                                if ($warehouseId) {
+                                                    $query->whereHas('stocks', fn($q) => $q->where('warehouse_id', $warehouseId));
+                                                }
+                                            })
+                                            ->getOptionLabelFromRecordUsing(function ($record, Get $get) {
+                                                $warehouseId = $get('../../warehouse_id');
+                                                $stock = 0;
+                                                if ($warehouseId) {
+                                                    $stock = $record->stocks()->where('warehouse_id', $warehouseId)->value('quantity') ?? 0;
+                                                }
+                                                $stock = (float) $stock;
+                                                return "<div class='flex justify-between items-center w-full'><span>{$record->name}</span> <span class='text-xs font-medium px-2 py-0.5 rounded bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-400'>Stok: " . number_format($stock) . "</span></div>";
+                                            })
+                                            ->allowHtml()
                                             ->searchable()
                                             ->preload()
                                             ->required()
+                                            ->disabled(fn(Get $get) => filled($get('../../sales_order_id')))
                                             ->columnSpan(3)
                                             ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('../../sales_order_id')))
                                             ->dehydrated(false)
                                             ->live()
-                                            ->afterStateUpdated(function ($state, Set $set) {
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get, $component) {
                                                 $set('product_id', $state);
                                                 if ($product = \App\Models\Product::with('unit')->find($state)) {
                                                     $set('product_name', $product->name);
                                                     $set('description', $product->description);
                                                     $set('unit_id', $product->unit_id);
+                                                    $set('unit_id_select', $product->unit_id);
                                                     $set('unit_name', $product->unit?->name ?? '');
                                                     $set('price', $product->sell_price ?? 0);
+                                                    $set('qty', 1);
+
+                                                    // Auto-populate tax
+                                                    $taxName = null;
+                                                    if ($product->sales_tax_id) {
+                                                        if (is_numeric($product->sales_tax_id)) {
+                                                            $tax = \App\Models\Tax::find($product->sales_tax_id);
+                                                            $taxName = $tax ? $tax->name : null;
+                                                        } else {
+                                                            $taxName = $product->sales_tax_id;
+                                                        }
+                                                    }
+                                                    $set('tax_name', $taxName);
+
+                                                    self::calculateLineTotal($get, $set, $component);
                                                 }
                                             }),
                                         TextInput::make('product_name')
                                             ->label('Produk')
-                                            ->disabled()
+                                            ->readOnly(fn(Get $get) => filled($get('../../sales_order_id')))
                                             ->dehydrated(false)
                                             ->columnSpan(3)
                                             ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('../../sales_order_id'))),
@@ -301,23 +353,40 @@ class SalesInvoiceResource extends Resource
                                         TextInput::make('qty')
                                             ->label('Kuantitas')
                                             ->numeric()
-                                            ->default(0)
+                                            ->default(1)
                                             ->required()
+                                            ->readOnly(fn(Get $get) => filled($get('../../sales_order_id')))
                                             ->live(onBlur: true)
-                                            ->hint(function (Get $get) {
-                                                $productId = $get('product_id');
-                                                $warehouseId = $get('../../warehouse_id');
-                                                if (!$productId)
-                                                    return null;
-                                                $product = \App\Models\Product::find($productId);
-                                                if (!$product || !$product->track_inventory)
-                                                    return null;
-                                                $stock = $product->getStockForWarehouse($warehouseId);
-                                                $requestedQty = (float) $get('qty');
-                                                $color = $stock >= $requestedQty ? '#22c55e' : '#ef4444';
-                                                return new \Illuminate\Support\HtmlString("<span style='background-color: {$color}; color: white; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; border-radius: 9999px;'>{$stock}</span>");
-                                            })
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component)),
+                                            ->suffixAction(
+                                                Action::make('checkStock')
+                                                    ->button()
+                                                    ->size('sm')
+                                                    ->color(function (Get $get, $state) {
+                                                        $productId = $get('product_id');
+                                                        $warehouseId = $get('../../warehouse_id');
+                                                        if (!$productId || !$warehouseId)
+                                                            return 'gray';
+                                                        $product = \App\Models\Product::find($productId);
+                                                        if (!$product || !$product->track_inventory)
+                                                            return 'gray';
+                                                        $stock = (float) $product->getStockForWarehouse($warehouseId);
+                                                        $requestedQty = (float) $state;
+                                                        return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
+                                                    })
+                                                    ->label(function (Get $get) {
+                                                        $productId = $get('product_id');
+                                                        $warehouseId = $get('../../warehouse_id');
+                                                        if (!$productId || !$warehouseId)
+                                                            return '0';
+                                                        $product = \App\Models\Product::find($productId);
+                                                        if (!$product || !$product->track_inventory)
+                                                            return '0';
+                                                        $stock = $product->getStockForWarehouse($warehouseId);
+                                                        return number_format($stock);
+                                                    })
+                                            )
+                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                            ->columnSpan(2),
 
                                         Select::make('unit_id_select')
                                             ->label('Satuan')
@@ -325,14 +394,15 @@ class SalesInvoiceResource extends Resource
                                             ->relationship('unit', 'name')
                                             ->searchable()
                                             ->preload()
-                                            ->columnSpan(2)
+                                            ->disabled(fn(Get $get) => filled($get('../../sales_order_id')))
+                                            ->columnSpan(1)
                                             ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('../../sales_order_id')))
                                             ->dehydrated(false)->live()->afterStateUpdated(fn($state, Set $set) => $set('unit_id', $state)),
                                         TextInput::make('unit_name')
                                             ->label('Satuan')
-                                            ->disabled()
+                                            ->readOnly(fn(Get $get) => filled($get('../../sales_order_id')))
                                             ->dehydrated(false)
-                                            ->columnSpan(2)
+                                            ->columnSpan(1)
                                             ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('../../sales_order_id'))),
                                         Hidden::make('unit_id')
                                             ->dehydrated(),
@@ -347,21 +417,26 @@ class SalesInvoiceResource extends Resource
                                             ->label('Harga')
                                             ->numeric()
                                             ->required()
+                                            ->readOnly()
                                             ->live(onBlur: true)
                                             ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component)),
-                                        TextInput::make('tax_name')
+                                        Select::make('tax_name')
                                             ->label('Pajak')
-                                            ->disabled()
-                                            ->dehydrated(),
+                                            ->options(fn() => \App\Models\Tax::pluck('name', 'name')->toArray())
+                                            ->placeholder('Pilih')
+                                            ->disabled(fn(Get $get) => filled($get('../../sales_order_id')))
+                                            ->dehydrated()
+                                            ->live()
+                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component)),
                                         TextInput::make('subtotal')
                                             ->label('Total')
                                             ->numeric()
-                                            ->disabled()
+                                            ->readOnly()
                                             ->dehydrated(),
                                     ])
                                     ->columns(12)
                                     ->columnSpanFull()
-                                    ->live(debounce: 500)
+                                    ->live()
                                     ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set))
                                     ->addActionLabel('Tambah Item'),
                             ])->columnSpanFull(),
@@ -385,52 +460,87 @@ class SalesInvoiceResource extends Resource
                                             ->readOnly()
                                             ->dehydrated()
                                             ->prefix('Rp'),
+
+                                        Toggle::make('has_discount')
+                                            ->label('Tambahan Diskon')
+                                            ->inline()
+                                            ->live()
+                                            ->dehydrated(false)
+                                            ->default(fn($get) => (float) ($get('discount_total') ?? 0) > 0),
                                         TextInput::make('discount_total')
-                                            ->label('Diskon')
+                                            ->label('Nominal Diskon')
                                             ->numeric()
                                             ->default(0)
-                                            ->live(onBlur: true)
+                                            ->live(debounce: 500)
                                             ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set))
-                                            ->prefix('Rp'),
-                                        TextInput::make('tax_amount')
+                                            ->prefix('Rp')
+                                            ->hidden(fn(Get $get) => !$get('has_discount')),
+
+                                        TextInput::make('total_tax')
                                             ->label('Pajak')
                                             ->numeric()
                                             ->readOnly()
                                             ->prefix('Rp'),
-                                        TextInput::make('shipping_cost')
+
+                                        Toggle::make('has_shipping')
                                             ->label('Biaya Pengiriman')
+                                            ->inline()
+                                            ->live()
+                                            ->dehydrated(false)
+                                            ->default(fn($get) => (float) ($get('shipping_cost') ?? 0) > 0),
+                                        TextInput::make('shipping_cost')
+                                            ->label('Nominal Pengiriman')
                                             ->numeric()
                                             ->default(0)
-                                            ->live(onBlur: true)
+                                            ->live(debounce: 500)
                                             ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set))
-                                            ->prefix('Rp'),
+                                            ->prefix('Rp')
+                                            ->hidden(fn(Get $get) => !$get('has_shipping')),
+
+                                        Toggle::make('has_other_cost')
+                                            ->label('Biaya Lainnya')
+                                            ->inline()
+                                            ->live()
+                                            ->dehydrated(false)
+                                            ->default(fn($get) => (float) ($get('other_cost') ?? 0) > 0),
                                         TextInput::make('other_cost')
-                                            ->label('Biaya Transaksi')
+                                            ->label('Nominal Biaya Lain')
                                             ->numeric()
                                             ->default(0)
-                                            ->live(onBlur: true)
+                                            ->live(debounce: 500)
                                             ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set))
-                                            ->prefix('Rp'),
+                                            ->prefix('Rp')
+                                            ->hidden(fn(Get $get) => !$get('has_other_cost')),
+
                                         TextInput::make('total_amount')
                                             ->label('Total')
                                             ->numeric()
                                             ->readOnly()
                                             ->dehydrated()
-                                            ->prefix('Rp'),
+                                            ->prefix('Rp')
+                                            ->extraAttributes(['class' => 'font-bold text-lg']),
+
+                                        Toggle::make('has_down_payment')
+                                            ->label('Uang Muka (DP)')
+                                            ->inline()
+                                            ->live()
+                                            ->dehydrated(false)
+                                            ->default(fn($get) => (float) ($get('down_payment') ?? 0) > 0),
                                         TextInput::make('down_payment')
-                                            ->label('Uang Muka')
+                                            ->label('Nominal Uang Muka')
                                             ->numeric()
                                             ->default(0)
-                                            ->live(onBlur: true)
+                                            ->live(debounce: 500)
                                             ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set))
-                                            ->prefix('Rp'),
+                                            ->prefix('Rp')
+                                            ->hidden(fn(Get $get) => !$get('has_down_payment')),
+
                                         TextInput::make('balance_due')
                                             ->label('Sisa Tagihan')
                                             ->numeric()
                                             ->readOnly()
-                                            ->dehydrated()
                                             ->prefix('Rp'),
-                                    ])->columns(1),
+                                    ])->columnSpan(1),
                             ]),
                     ])->columnSpanFull(),
             ]);
@@ -441,36 +551,96 @@ class SalesInvoiceResource extends Resource
         $qty = (float) $get('qty');
         $price = (float) $get('price');
         $discountPercent = (float) $get('discount_percent');
+        $taxName = $get('tax_name');
 
-        $subtotal = $qty * $price;
-        $discountAmount = $subtotal * ($discountPercent / 100);
-        $lineTotal = $subtotal - $discountAmount;
+        $taxInclusive = (bool) $get('../../tax_inclusive');
+        $taxRate = 0;
+        if ($taxName) {
+            $tax = \App\Models\Tax::where('name', $taxName)->first();
+            $taxRate = $tax ? ($tax->rate / 100) : 0;
+        }
 
-        $set('subtotal', $lineTotal);
+        $base = $qty * $price;
+        $discounted = $base * (1 - ($discountPercent / 100));
+
+        if ($taxInclusive) {
+            $taxAmount = $discounted - ($discounted / (1 + $taxRate));
+            $total = $discounted;
+        } else {
+            $taxAmount = $discounted * $taxRate;
+            $total = $discounted + $taxAmount;
+        }
+
+        $set('tax_amount', $taxAmount);
+        $set('subtotal', $total);
+
         self::updateTotals($get, $set);
     }
 
     public static function updateTotals(Get $get, Set $set): void
     {
-        $items = $get('items') ?? [];
-        $subTotal = 0;
-        foreach ($items as $item) {
-            $subTotal += (float) ($item['subtotal'] ?? 0);
+        $items = $get('items');
+        $prefix = '';
+
+        if (!is_array($items)) {
+            $items = $get('../../items');
+            if (is_array($items)) {
+                $prefix = '../../';
+            }
         }
 
-        $discountTotal = (float) ($get('discount_total') ?? 0);
-        $shippingCost = (float) ($get('shipping_cost') ?? 0);
-        $otherCost = (float) ($get('other_cost') ?? 0);
-        $downPayment = (float) ($get('down_payment') ?? 0);
+        if (!is_array($items)) {
+            $items = $get('../../../items');
+            if (is_array($items)) {
+                $prefix = '../../../';
+            }
+        }
 
-        $totalAmount = $subTotal - $discountTotal + $shippingCost + $otherCost;
-        $balanceDue = $totalAmount - $downPayment;
+        if (!is_array($items)) {
+            $items = [];
+        }
 
-        $set('sub_total', $subTotal);
-        $set('total_amount', $totalAmount);
-        $set('balance_due', $balanceDue);
+        $subTotal = 0;
+        $totalTax = 0;
+
+        $taxInclusive = (bool) $get($prefix . 'tax_inclusive');
+        $taxes = \App\Models\Tax::pluck('rate', 'name')->toArray();
+
+        foreach ($items as $item) {
+            $qty = (float) ($item['qty'] ?? 0);
+            $price = (float) ($item['price'] ?? 0);
+            $discountPercent = (float) ($item['discount_percent'] ?? 0);
+            $taxName = $item['tax_name'] ?? null;
+
+            $taxRate = (isset($taxes[$taxName])) ? ($taxes[$taxName] / 100) : 0;
+
+            $base = $qty * $price;
+            $discounted = $base * (1 - ($discountPercent / 100));
+
+            if ($taxInclusive) {
+                $itemTax = $discounted - ($discounted / (1 + $taxRate));
+                $subTotal += ($discounted / (1 + $taxRate));
+            } else {
+                $itemTax = $discounted * $taxRate;
+                $subTotal += $discounted;
+            }
+            $totalTax += $itemTax;
+        }
+
+        $set($prefix . 'sub_total', $subTotal);
+        $set($prefix . 'total_tax', $totalTax);
+
+        $discountAmount = (float) ($get($prefix . 'discount_total') ?? 0);
+        $shippingCost = (float) ($get($prefix . 'shipping_cost') ?? 0);
+        $otherCost = (float) ($get($prefix . 'other_cost') ?? 0);
+        $dp = (float) ($get($prefix . 'down_payment') ?? 0);
+
+        $totalAmount = $subTotal + $totalTax - $discountAmount + $shippingCost + $otherCost;
+        $balance = $totalAmount - $dp;
+
+        $set($prefix . 'total_amount', $totalAmount);
+        $set($prefix . 'balance_due', $balance);
     }
-
     public static function table(Table $table): Table
     {
         return $table

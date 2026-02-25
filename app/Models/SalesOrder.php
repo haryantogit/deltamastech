@@ -9,10 +9,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use App\Traits\HasAutomaticNumbering;
 
 class SalesOrder extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, HasAutomaticNumbering;
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'sales_order';
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

@@ -60,16 +60,18 @@ class ListPurchaseInvoices extends ListRecords
                 ->icon('heroicon-o-printer')
                 ->color('gray')
                 ->extraAttributes(['onclick' => 'window.print(); return false;']),
-            Actions\Action::make('back')
+            Actions\Action::make('kembali')
                 ->label('Kembali')
-                ->url(url('/admin'))
-                ->color('gray'),
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin/pembelian-page')),
         ];
     }
 
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/pembelian-page') => 'Pembelian',
             '#' => 'Tagihan Pembelian',
         ];

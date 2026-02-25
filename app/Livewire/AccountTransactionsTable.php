@@ -82,8 +82,8 @@ class AccountTransactionsTable extends Component
                     }));
             })
             ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
-            ->orderBy('journal_entries.transaction_date', 'desc')
-            ->orderBy('journal_entries.created_at', 'desc')
+            ->orderBy('journal_entries.transaction_date', 'asc')
+            ->orderBy('journal_entries.created_at', 'asc')
             ->select('journal_items.*');
 
         // Opening Balance Calculation (Before Start Date)
@@ -98,7 +98,6 @@ class AccountTransactionsTable extends Component
         $openingBalance = $isDebitNormal ? ($opDebit - $opCredit) : ($opCredit - $opDebit);
 
         // Summaries for Footer (Visible Page vs Total?)
-        // Calculate Range Totals BEFORE map to use in start balance calculation
         $totalRangeQuery = JournalItem::where('account_id', $this->accountId)
             ->whereHas('journalEntry', function (Builder $q) {
                 $q->when($this->startDate, fn($q) => $q->whereDate('transaction_date', '>=', $this->startDate))
@@ -115,32 +114,14 @@ class AccountTransactionsTable extends Component
         $closingBalance = $openingBalance + $netChange;
 
         // Pagination
-        $transactions = $query->paginate(10);
+        $transactions = $query->paginate(30); // Increased for better view like screenshot
 
         // Calculate Running Balances for the current page
-        // We need the cumulative balance existing BEFORE the first item of this page, 
-        // but within the selected date range + Opening Balance.
-
-        // 1. Get all items in range BEFORE the current page's items to calculate "Page Start Balance"
-        // This is tricky with simple pagination.
-        // Easier way: 
-        // Iterate and calculate. But standard pagination only gives slicing.
-
-        // Alternative: Calculate running balance strictly on the Collection for view purposes, 
-        // assuming we can get the "Balance at Start of Page".
-
-        // "Balance at Start of Page" = OpeningBalance + Sum(Net) of all items matching filter BUT before offset.
         $page = $this->getPage();
-        $perPage = 10;
+        $perPage = 30;
         $offset = ($page - 1) * $perPage;
 
-        // For DESC order:
-        // Page 1 contains newest items. First row balance = closingBalance.
-        // Page 2 contains items older than Page 1. First row balance = closingBalance - Sum(Net of items on Page 1).
-
-        $totalNetInRange = $isDebitNormal ? ($totalDebit - $totalCredit) : ($totalCredit - $totalDebit);
-        $rangeClosingBalance = $openingBalance + $totalNetInRange;
-
+        // Balance at start of THIS page = OpeningBalance + Sum(Net of all items in range BEFORE this page)
         $previousItemsSumQuery = JournalItem::where('account_id', $this->accountId)
             ->whereHas('journalEntry', function (Builder $q) {
                 $q->when($this->startDate, fn($q) => $q->whereDate('transaction_date', '>=', $this->startDate))
@@ -151,32 +132,28 @@ class AccountTransactionsTable extends Component
                     }));
             })
             ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
-            ->orderBy('journal_entries.transaction_date', 'desc') // MUST match main query
-            ->orderBy('journal_entries.created_at', 'desc')
-            ->limit($offset) // Items on NEWER pages (since DESC)
+            ->orderBy('journal_entries.transaction_date', 'asc')
+            ->orderBy('journal_entries.created_at', 'asc')
+            ->limit($offset)
             ->get();
 
         $prevDebit = $previousItemsSumQuery->sum('debit');
         $prevCredit = $previousItemsSumQuery->sum('credit');
         $prevNet = $isDebitNormal ? ($prevDebit - $prevCredit) : ($prevCredit - $prevDebit);
 
-        $runningBalance = $rangeClosingBalance - $prevNet;
+        $runningBalance = $openingBalance + $prevNet;
 
         // Transform transactions to include running balance
         $formattedTransactions = $transactions->getCollection()->map(function ($item) use (&$runningBalance, $isDebitNormal) {
             $net = $isDebitNormal ? ($item->debit - $item->credit) : ($item->credit - $item->debit);
-
-            $item_balance = $runningBalance;
-            $runningBalance -= $net; // Next item (older) will have this balance minus current net
+            $runningBalance += $net;
 
             // Add custom attributes
             $item->net_amount = $net;
-            $item->running_balance = $item_balance;
+            $item->running_balance = $runningBalance;
             $item->transaction_date = $item->journalEntry->transaction_date;
             $item->description = $item->journalEntry->description;
-            // Map 'Nomor' to reference_number
             $item->nomor = $item->journalEntry->reference_number;
-            // Map 'Referensi' to memo (or tags/contact if needed)
             $item->referensi = $item->journalEntry->memo;
 
             // Determine 'Sumber' based on reference number logic matching the screenshot

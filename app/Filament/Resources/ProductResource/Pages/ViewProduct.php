@@ -24,13 +24,22 @@ class ViewProduct extends ViewRecord
         return 'Lihat Produk';
     }
 
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin/inventori-page') => 'Inventori',
+            ProductResource::getUrl('index') => 'Produk',
+        ];
+    }
+
 
     protected function getHeaderActions(): array
     {
         return [
-            \Filament\Actions\Action::make('back')
+            \Filament\Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->icon('heroicon-o-arrow-left')
                 ->url(fn() => ProductResource::getUrl('index')),
             \Filament\Actions\Action::make('print')
                 ->label('Print Info Produk')

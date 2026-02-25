@@ -11,8 +11,21 @@ class CreateContact extends CreateRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/kontak-page') => 'Kontak',
-            '#' => 'Buat Baru',
+            ContactResource::getUrl('index') => 'Daftar Kontak',
+            '#' => 'Buat Kontak',
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index')),
         ];
     }
 }

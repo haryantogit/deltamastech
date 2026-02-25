@@ -18,6 +18,15 @@ class CreateExpense extends CreateRecord
         return $this->getResource()::getUrl('index');
     }
 
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin') => 'Beranda',
+            $this->getResource()::getUrl('index') => 'Biaya',
+            '' => 'Buat Biaya',
+        ];
+    }
+
     protected function afterCreate(): void
     {
         $expense = $this->record;
@@ -51,11 +60,4 @@ class CreateExpense extends CreateRecord
         });
     }
 
-    public function getBreadcrumbs(): array
-    {
-        return [
-            url('/admin/biaya-page') => 'Biaya',
-            '#' => 'Tambah',
-        ];
-    }
 }

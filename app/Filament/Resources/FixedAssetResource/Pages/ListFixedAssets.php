@@ -21,6 +21,19 @@ class ListFixedAssets extends ListRecords
                 ->extraAttributes(['onclick' => 'window.print(); return false;']),
             Actions\CreateAction::make()
                 ->label('Tambah Aset'),
+            Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin')),
+        ];
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin') => 'Beranda',
+            '#' => 'Aset Tetap',
         ];
     }
 

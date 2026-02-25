@@ -15,6 +15,7 @@ class EditPurchaseInvoice extends EditRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/pembelian-page') => 'Pembelian',
             PurchaseInvoiceResource::getUrl('index') => 'Tagihan Pembelian',
             '#' => 'Edit Tagihan',
@@ -30,9 +31,10 @@ class EditPurchaseInvoice extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
-            \Filament\Actions\Action::make('back')
+            \Filament\Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->icon('heroicon-o-arrow-left')
                 ->url(static::getResource()::getUrl('index')),
         ];
     }

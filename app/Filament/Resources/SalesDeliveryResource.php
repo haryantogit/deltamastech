@@ -71,7 +71,7 @@ class SalesDeliveryResource extends Resource
                                 TextInput::make('number')
                                     ->required()
                                     ->label('Nomor')
-                                    ->default(fn() => \App\Models\SalesDelivery::generateNumber())
+                                    ->default(fn() => \App\Models\NumberingSetting::getNextNumber('sales_delivery') ?? \App\Models\SalesDelivery::generateNumber())
                                     ->readOnly()
                                     ->dehydrated(),
                                 Hidden::make('sales_order_id'),
@@ -142,30 +142,6 @@ class SalesDeliveryResource extends Resource
 
                 Section::make('Item Pengiriman')
                     ->schema([
-                        TextInput::make('barcode_scanner')
-                            ->label('Scan Barcode/SKU')
-                            ->placeholder('Scan Barcode/SKU...')
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                if (blank($state))
-                                    return;
-                                $product = \App\Models\Product::where('sku', trim($state))->first();
-                                if ($product) {
-                                    $items = $get('items') ?? [];
-                                    $items[] = [
-                                        'product_id' => $product->id,
-                                        'product_name' => $product->name,
-                                        'description' => $product->description,
-                                        'quantity' => 1,
-                                        'unit_id' => $product->unit_id,
-                                        'unit_name' => $product->unit?->name ?? '',
-                                    ];
-                                    $set('items', $items);
-                                    $set('barcode_scanner', null);
-                                }
-                            })
-                            ->columnSpanFull(),
-
                         Repeater::make('items')
                             ->relationship()
                             ->schema([
@@ -207,21 +183,39 @@ class SalesDeliveryResource extends Resource
                                             ->label('Kuantitas')
                                             ->default(1)
                                             ->columnSpan(2)
-                                            ->hint(function (Get $get) {
-                                                $productId = $get('product_id');
-                                                $warehouseId = $get('../../warehouse_id');
-                                                if (!$productId)
-                                                    return null;
+                                            ->live(debounce: 500)
+                                            ->suffixAction(
+                                                Action::make('checkStock')
+                                                    ->button()
+                                                    ->size('sm')
+                                                    ->color(function (Get $get, $state) {
+                                                        $productId = $get('product_id');
+                                                        $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
+                                                        if (!$productId || !$warehouseId)
+                                                            return 'gray';
 
-                                                $product = \App\Models\Product::find($productId);
-                                                if (!$product || !$product->track_inventory)
-                                                    return null;
+                                                        $product = \App\Models\Product::find($productId);
+                                                        if (!$product || !$product->track_inventory)
+                                                            return 'gray';
 
-                                                $stock = $product->getStockForWarehouse($warehouseId);
-                                                $requestedQty = (float) $get('quantity');
-                                                $color = $stock >= $requestedQty ? '#22c55e' : '#ef4444';
-                                                return new \Illuminate\Support\HtmlString("<span style='background-color: {$color}; color: white; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; border-radius: 9999px;'>{$stock}</span>");
-                                            }),
+                                                        $stock = (float) $product->getStockForWarehouse($warehouseId);
+                                                        $requestedQty = (float) $state;
+                                                        return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
+                                                    })
+                                                    ->label(function (Get $get) {
+                                                        $productId = $get('product_id');
+                                                        $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
+                                                        if (!$productId || !$warehouseId)
+                                                            return '0';
+
+                                                        $product = \App\Models\Product::find($productId);
+                                                        if (!$product || !$product->track_inventory)
+                                                            return '0';
+
+                                                        $stock = $product->getStockForWarehouse($warehouseId);
+                                                        return number_format($stock);
+                                                    })
+                                            ),
 
                                         Hidden::make('unit_id'),
                                         TextInput::make('unit_name')

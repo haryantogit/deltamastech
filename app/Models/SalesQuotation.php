@@ -7,7 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class SalesQuotation extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\HasAutomaticNumbering;
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'sales_quotation';
+    }
 
     protected $fillable = [
         'number',

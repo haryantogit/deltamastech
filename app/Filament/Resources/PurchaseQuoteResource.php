@@ -56,71 +56,11 @@ class PurchaseQuoteResource extends Resource
                                     ->required()
                                     ->label('Vendor')
                                     ->searchable()
-                                    ->preload()
-                                    ->createOptionForm([
-                                        Hidden::make('type')->default('Vendor'),
-                                        Hidden::make('payable_account_id')
-                                            ->default(fn() => \App\Models\Account::where('code', '2-20100')->first()?->id),
-                                        Hidden::make('receivable_account_id')
-                                            ->default(fn() => \App\Models\Account::where('code', '1-10100')->first()?->id),
-                                        FileUpload::make('photo')
-                                            ->label('Foto')
-                                            ->image()
-                                            ->avatar()
-                                            ->columnSpanFull()
-                                            ->alignCenter(),
-                                        Grid::make(4)
-                                            ->schema([
-                                                Select::make('salutation')
-                                                    ->label('Sapaan')
-                                                    ->options([
-                                                        'Bapak' => 'Bapak',
-                                                        'Ibu' => 'Ibu',
-                                                        'Sdr' => 'Sdr',
-                                                        'Nona' => 'Nona',
-                                                    ])
-                                                    ->columnSpan(1),
-                                                TextInput::make('name')
-                                                    ->label('Nama')
-                                                    ->required()
-                                                    ->columnSpan(3),
-                                            ]),
-                                        TextInput::make('company')->label('Perusahaan'),
-                                        Grid::make(2)->schema([
-                                            TextInput::make('phone')->label('Telepon'),
-                                            TextInput::make('email')->label('Email')->email(),
-                                        ]),
-                                        Grid::make(2)->schema([
-                                            TextInput::make('nik')->label('NIK / KTP'),
-                                            TextInput::make('npwp')->label('NPWP'),
-                                        ]),
-                                        Textarea::make('address')->label('Alamat Penagihan'),
-
-                                        Section::make('Rekening Bank')
-                                            ->schema([
-                                                Repeater::make('bankAccounts')
-                                                    ->relationship()
-                                                    ->schema([
-                                                        TextInput::make('bank_name')->label('Nama Bank'),
-                                                        TextInput::make('bank_account_holder')->label('Nama Pemilik'),
-                                                        TextInput::make('bank_account_no')->label('Nomor Rekening'),
-                                                    ])
-                                                    ->addActionLabel('Tambah Rekening Bank')
-                                                    ->collapsible()
-                                                    ->collapsed(),
-                                            ])
-                                            ->collapsible(),
-                                    ]),
+                                    ->preload(),
                                 TextInput::make('number')
                                     ->label('Nomor')
                                     ->required()
-                                    ->default(function () {
-                                        $lastQuote = \App\Models\PurchaseQuote::latest('id')->first();
-                                        if ($lastQuote && preg_match('/PQ\/(\d{5})/', $lastQuote->number, $matches)) {
-                                            return 'PQ/' . str_pad(intval($matches[1]) + 1, 5, '0', STR_PAD_LEFT);
-                                        }
-                                        return 'PQ/00001';
-                                    })
+                                    ->default(fn() => \App\Models\NumberingSetting::getNextNumber('purchase_quote') ?? 'PQ/' . str_pad((\App\Models\PurchaseQuote::max('id') ?? 0) + 1, 5, '0', STR_PAD_LEFT))
                                     ->readOnly(),
                                 DatePicker::make('date')
                                     ->label('Tgl. Transaksi')
@@ -129,29 +69,31 @@ class PurchaseQuoteResource extends Resource
                                 DatePicker::make('due_date')
                                     ->label('Kadaluarsa')
                                     ->default(now()->addDays(30)),
-                                Select::make('payment_term_id')
-                                    ->relationship('paymentTerm', 'name')
-                                    ->label('Termin')
-                                    ->createOptionForm([
-                                        TextInput::make('name')->required(),
-                                        TextInput::make('days')->numeric()->required(),
-                                    ]),
-                                // Warehouse relationship commented out if not requested or needed yet, but keeping structure
-                                // Select::make('warehouse_id')
-                                //     ->relationship('warehouse', 'name')
-                                //     ->label('Gudang')
-                                //     ->searchable()
-                                //     ->preload(),
-                                TextInput::make('reference')
-                                    ->label('Referensi'),
-                                Select::make('tags')
-                                    ->relationship('tags', 'name')
-                                    ->multiple()
-                                    ->label('Tag')
-                                    ->createOptionForm([
-                                        TextInput::make('name')->label('Nama Tag')->required(),
+                                Grid::make(3)
+                                    ->schema([
+                                        Select::make('payment_term_id')
+                                            ->relationship('paymentTerm', 'name')
+                                            ->label('Termin')
+                                            ->preload()
+                                            ->searchable(),
+                                        // Warehouse relationship commented out if not requested or needed yet, but keeping structure
+                                        // Select::make('warehouse_id')
+                                        //     ->relationship('warehouse', 'name')
+                                        //     ->label('Gudang')
+                                        //     ->searchable()
+                                        //     ->preload(),
+                                        TextInput::make('reference')
+                                            ->label('Referensi'),
+                                        Select::make('tags')
+                                            ->relationship('tags', 'name')
+                                            ->multiple()
+                                            ->label('Tag')
+                                            ->createOptionForm([
+                                                TextInput::make('name')->label('Nama Tag')->required(),
+                                            ])
+                                            ->preload(),
                                     ])
-                                    ->preload(),
+                                    ->columnSpanFull(),
                                 Hidden::make('status')
                                     ->default('draft'),
                             ])->columns(2),
@@ -171,81 +113,81 @@ class PurchaseQuoteResource extends Resource
                                         TextInput::make('tracking_number')
                                             ->label('No. Resi'),
                                     ]),
-                            ])
-                            ->collapsible()
-                            ->collapsed(), // Hide by default as per screenshot "Sembunyikan Informasi Pengiriman"
+                            ]),
 
-                        Section::make('Item Penawaran')
+                        Section::make('Items')
                             ->schema([
-                                TextInput::make('barcode_scanner')
-                                    ->label('Scan Barcode/SKU')
-                                    ->placeholder('Scan Barcode/SKU...')
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                        if (blank($state))
-                                            return;
+                                Grid::make(3)
+                                    ->schema([
+                                        TextInput::make('barcode_scanner')
+                                            ->label('Scan Barcode/SKU')
+                                            ->placeholder('Scan Barcode/SKU...')
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                if (blank($state))
+                                                    return;
 
-                                        // Sanitize input just in case
-                                        $state = trim($state);
+                                                $state = trim($state);
+                                                $product = \App\Models\Product::where('sku', $state)->first();
 
-                                        $product = \App\Models\Product::where('sku', $state)->first();
+                                                if ($product) {
+                                                    $items = $get('items') ?? [];
+                                                    $existingIndex = null;
 
-                                        if ($product) {
-                                            $items = $get('items') ?? [];
-                                            $existingIndex = null;
+                                                    foreach ($items as $index => $item) {
+                                                        if (isset($item['product_id']) && $item['product_id'] == $product->id) {
+                                                            $existingIndex = $index;
+                                                            break;
+                                                        }
+                                                    }
 
-                                            foreach ($items as $index => $item) {
-                                                if (isset($item['product_id']) && $item['product_id'] == $product->id) {
-                                                    $existingIndex = $index;
-                                                    break;
+                                                    $price = $product->cost_price ?? $product->buy_price ?? $product->price ?? 0;
+
+                                                    if ($existingIndex !== null) {
+                                                        $items[$existingIndex]['quantity'] = ($items[$existingIndex]['quantity'] ?? 0) + 1;
+                                                        $qty = (float) $items[$existingIndex]['quantity'];
+                                                        $uPrice = (float) ($items[$existingIndex]['unit_price'] ?? $price);
+                                                        $items[$existingIndex]['total_price'] = $qty * $uPrice;
+                                                    } else {
+                                                        $items[] = [
+                                                            'product_id' => $product->id,
+                                                            'description' => $product->description,
+                                                            'quantity' => 1,
+                                                            'unit_id' => $product->unit_id,
+                                                            'unit_price' => $price,
+                                                            'discount_percent' => 0,
+                                                            'tax_name' => 'Bebas Pajak',
+                                                            'tax_amount' => 0,
+                                                            'total_price' => $price,
+                                                        ];
+                                                    }
+
+                                                    $set('items', $items);
+                                                    $set('barcode_scanner', null);
+                                                    self::updateTotals($get, $set);
+
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('Produk ditambahkan: ' . $product->name)
+                                                        ->success()
+                                                        ->send();
+                                                } else {
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('Produk tidak ditemukan')
+                                                        ->danger()
+                                                        ->send();
                                                 }
-                                            }
+                                            })
+                                            ->columnSpan(2),
 
-                                            $price = $product->cost_price ?? $product->buy_price ?? $product->price ?? 0;
-
-                                            if ($existingIndex !== null) {
-                                                $items[$existingIndex]['quantity'] = ($items[$existingIndex]['quantity'] ?? 0) + 1;
-                                                $qty = (float) $items[$existingIndex]['quantity'];
-                                                $uPrice = (float) ($items[$existingIndex]['unit_price'] ?? $price);
-                                                $items[$existingIndex]['total_price'] = $qty * $uPrice;
-                                            } else {
-                                                $items[] = [
-                                                    'product_id' => $product->id,
-                                                    'description' => $product->description,
-                                                    'quantity' => 1,
-                                                    'unit_id' => $product->unit_id,
-                                                    'unit_price' => $price,
-                                                    'discount_percent' => 0,
-                                                    'tax_name' => 'Bebas Pajak',
-                                                    'tax_amount' => 0,
-                                                    'total_price' => $price,
-                                                ];
-                                            }
-
-                                            $set('items', $items);
-                                            $set('barcode_scanner', null);
-
-                                            // Delay updateTotals to ensure state is committed
-                                            self::updateTotals($get, $set);
-
-                                            \Filament\Notifications\Notification::make()
-                                                ->title('Produk ditambahkan: ' . $product->name)
-                                                ->success()
-                                                ->send();
-                                        } else {
-                                            \Filament\Notifications\Notification::make()
-                                                ->title('Produk tidak ditemukan')
-                                                ->danger()
-                                                ->send();
-                                        }
-                                    })
-                                    ->columnSpanFull(),
-
-                                Toggle::make('tax_inclusive')
-                                    ->label('Harga termasuk pajak')
-                                    ->default(true)
-                                    ->reactive()
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set)),
+                                        Toggle::make('tax_inclusive')
+                                            ->label('Harga termasuk pajak')
+                                            ->default(true)
+                                            ->reactive()
+                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set))
+                                            ->inline(false)
+                                            ->columnSpan(1)
+                                            ->extraAttributes(['class' => 'mt-8']),
+                                    ]),
 
                                 Repeater::make('items')
                                     ->relationship()
@@ -253,114 +195,6 @@ class PurchaseQuoteResource extends Resource
                                         Select::make('product_id')
                                             ->relationship('product', 'name')
                                             ->label('Produk')
-                                            ->createOptionForm([
-                                                Section::make()
-                                                    ->schema([
-                                                        Hidden::make('type')->default('standard'),
-                                                        FileUpload::make('image')
-                                                            ->label('Sembunyikan Gambar Produk')
-                                                            ->image()
-                                                            ->maxSize(10240)
-                                                            ->maxFiles(5)
-                                                            ->multiple()
-                                                            ->directory('products')
-                                                            ->visibility('public')
-                                                            ->columnSpanFull(),
-                                                        TextInput::make('name')
-                                                            ->label('Nama Produk')
-                                                            ->required()
-                                                            ->columnSpanFull(),
-                                                        Grid::make(3)
-                                                            ->schema([
-                                                                Select::make('category_id')
-                                                                    ->relationship('category', 'name')
-                                                                    ->label('Kategori')
-                                                                    ->required()
-                                                                    ->createOptionForm([
-                                                                        TextInput::make('name')->required(),
-                                                                    ])
-                                                                    ->searchable()
-                                                                    ->preload(),
-                                                                TextInput::make('sku')
-                                                                    ->label('Kode/SKU')
-                                                                    ->default(function () {
-                                                                        $nextId = (\App\Models\Product::max('id') ?? 0) + 1;
-                                                                        return 'SKU/' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
-                                                                    })
-                                                                    ->unique('products', 'sku')
-                                                                    ->dehydrated(),
-                                                                Select::make('unit_id')
-                                                                    ->relationship('unit', 'name')
-                                                                    ->label('Satuan')
-                                                                    ->required()
-                                                                    ->createOptionForm([
-                                                                        TextInput::make('name')->required(),
-                                                                        TextInput::make('symbol')->required(),
-                                                                    ])
-                                                                    ->searchable()->preload(),
-                                                            ]),
-                                                        Textarea::make('description')
-                                                            ->label('Deskripsi')
-                                                            ->columnSpanFull(),
-
-                                                        Section::make('Tampilkan pengaturan akun dan pajak')
-                                                            ->collapsed()
-                                                            ->schema([
-                                                                Toggle::make('can_be_purchased')
-                                                                    ->label('Saya membeli item ini')
-                                                                    ->default(true)
-                                                                    ->reactive(),
-                                                                TextInput::make('buy_price')
-                                                                    ->label('Harga')
-                                                                    ->numeric()
-                                                                    ->default(0)
-                                                                    ->hidden(fn(Get $get) => !$get('can_be_purchased'))
-                                                                    ->prefix('Rp'),
-                                                                Hidden::make('purchase_account_id')
-                                                                    ->default(fn() => \App\Models\Account::where('code', '5-10000')->first()?->id),
-                                                                Select::make('purchase_tax_id')
-                                                                    ->label('Pajak Pembelian')
-                                                                    ->options([
-                                                                        'PPN 11%' => 'PPN 11%',
-                                                                        'PPN 12%' => 'PPN 12%',
-                                                                        'PPH 21' => 'PPH 21',
-                                                                        'PPH 23' => 'PPH 23',
-                                                                        'Bebas Pajak' => 'Bebas Pajak',
-                                                                    ])
-                                                                    ->hidden(fn(Get $get) => !$get('can_be_purchased')),
-
-                                                                Toggle::make('can_be_sold')
-                                                                    ->label('Saya menjual item ini')
-                                                                    ->default(true)
-                                                                    ->reactive(),
-                                                                TextInput::make('sell_price')
-                                                                    ->label('Harga')
-                                                                    ->numeric()
-                                                                    ->default(0)
-                                                                    ->hidden(fn(Get $get) => !$get('can_be_sold'))
-                                                                    ->prefix('Rp'),
-                                                                Hidden::make('sales_account_id')
-                                                                    ->default(fn() => \App\Models\Account::where('code', '4-10000')->first()?->id),
-                                                                Select::make('sales_tax_id')
-                                                                    ->label('Pajak Penjualan')
-                                                                    ->options([
-                                                                        'PPN 11%' => 'PPN 11%',
-                                                                        'PPN 12%' => 'PPN 12%',
-                                                                        'PPH 21' => 'PPH 21',
-                                                                        'PPH 23' => 'PPH 23',
-                                                                        'Bebas Pajak' => 'Bebas Pajak',
-                                                                    ])
-                                                                    ->hidden(fn(Get $get) => !$get('can_be_sold')),
-
-                                                                Toggle::make('track_inventory')
-                                                                    ->label('Saya melacak inventori item ini')
-                                                                    ->default(true)
-                                                                    ->reactive(),
-                                                                Hidden::make('inventory_account_id')
-                                                                    ->default(fn() => \App\Models\Account::where('code', '1-10003')->first()?->id),
-                                                            ])
-                                                    ])
-                                            ])
                                             ->searchable()
                                             ->preload()
                                             ->required()
@@ -391,54 +225,61 @@ class PurchaseQuoteResource extends Resource
                                             ->default(1)
                                             ->required()
                                             ->live(debounce: 500)
-                                            ->hint(function (Get $get) {
-                                                $productId = $get('product_id');
-                                                // Purchase Quote doesn't have warehouse_id, use null for total stock
-                                                if (!$productId)
-                                                    return null;
-
-                                                $product = \App\Models\Product::find($productId);
-                                                if (!$product || !$product->track_inventory)
-                                                    return null;
-
-                                                $stock = $product->getStockForWarehouse();
-                                                $minStock = (float) ($product->min_stock ?? 0);
-                                                $color = $stock > $minStock ? '#22c55e' : '#ef4444';
-                                                return new \Illuminate\Support\HtmlString(
-                                                    "<span style=\"padding: 2px 10px; border-radius: 9999px; background-color: {$color}; color: white; font-size: 12px; font-weight: bold; display: inline-block; line-height: 1;\">{$stock}</span>"
-                                                );
-                                            })
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component)),
+                                            ->suffixAction(
+                                                \Filament\Actions\Action::make('checkStock')
+                                                    ->button()
+                                                    ->size('sm')
+                                                    ->color(function (Get $get, $state) {
+                                                        $productId = $get('product_id');
+                                                        if (!$productId)
+                                                            return 'gray';
+                                                        $product = \App\Models\Product::find($productId);
+                                                        if (!$product || !$product->track_inventory)
+                                                            return 'gray';
+                                                        $stock = (float) $product->getStockForWarehouse();
+                                                        $requestedQty = (float) $state;
+                                                        return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
+                                                    })
+                                                    ->label(function (Get $get) {
+                                                        $productId = $get('product_id');
+                                                        if (!$productId)
+                                                            return '0';
+                                                        $product = \App\Models\Product::find($productId);
+                                                        if (!$product || !$product->track_inventory)
+                                                            return '0';
+                                                        $stock = $product->getStockForWarehouse();
+                                                        return number_format($stock);
+                                                    })
+                                            )
+                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                            ->columnSpan(2),
                                         Select::make('unit_id')
                                             ->relationship('unit', 'name')
                                             ->label('Satuan')
                                             ->placeholder('Pilih')
-                                            ->createOptionForm([
-                                                TextInput::make('name')->label('Nama Satuan')->required(),
-                                                TextInput::make('symbol')->label('Simbol')->required(),
-                                            ])
-                                            ->searchable()
-                                            ->columnSpan(2),
+                                            ->columnSpan(1),
                                         TextInput::make('discount_percent')
                                             ->label('Diskon (%)')
                                             ->numeric()
                                             ->default(0)
                                             ->suffix('%')
                                             ->live(debounce: 500)
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component)),
+                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                            ->columnSpan(1),
                                         TextInput::make('unit_price')
                                             ->label('Harga')
                                             ->numeric()
                                             ->required()
+                                            ->readOnly()
                                             ->live(debounce: 500)
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component)),
+                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                            ->columnSpan(1),
                                         Select::make('tax_id')
                                             ->label('Pajak')
                                             ->placeholder('Pilih')
                                             ->options(\App\Models\Tax::pluck('name', 'id')->toArray())
                                             ->default(null)
                                             ->nullable()
-                                            ->searchable()
                                             ->preload()
                                             ->live()
                                             ->afterStateUpdated(function ($state, Set $set, Get $get, $component) {
@@ -459,13 +300,15 @@ class PurchaseQuoteResource extends Resource
 
                                                 $set('tax_amount', $taxAmount);
                                                 self::calculateLineTotal($get, $set, $component);
-                                            }),
+                                            })
+                                            ->columnSpan(1),
                                         Hidden::make('tax_amount'),
                                         TextInput::make('total_price')
                                             ->label('Total')
                                             ->numeric()
                                             ->readOnly()
-                                            ->dehydrated(),
+                                            ->dehydrated()
+                                            ->columnSpan(1),
                                     ])
                                     ->columns(12)
                                     ->columnSpanFull()
@@ -491,6 +334,7 @@ class PurchaseQuoteResource extends Resource
                                             ->label('Sub Total')
                                             ->numeric()
                                             ->readOnly()
+                                            ->default(0)
                                             ->prefix('Rp'),
 
                                         Toggle::make('has_discount')
@@ -554,6 +398,7 @@ class PurchaseQuoteResource extends Resource
                                             ->label('Total')
                                             ->numeric()
                                             ->readOnly()
+                                            ->default(0)
                                             ->prefix('Rp')
                                             ->extraAttributes(['class' => 'font-bold text-lg']),
                                     ])->columnSpan(1),
@@ -615,17 +460,28 @@ class PurchaseQuoteResource extends Resource
 
     public static function updateTotals(Get $get, Set $set, array $overrides = []): void
     {
-        // Try all possible paths to find the items repeater
-        $items = $get('items') ?? $get('../../items') ?? $get('../../../items') ?? $get('../../../../items') ?? [];
+        $items = $get('items');
+        $prefix = '';
 
-        // If still not an array
         if (!is_array($items)) {
-            $items = $get('../../') ?? [];
-            if (!is_array($items))
-                $items = [];
+            $items = $get('../../items');
+            if (is_array($items)) {
+                $prefix = '../../';
+            }
         }
 
-        $taxInclusive = (bool) $get('tax_inclusive');
+        if (!is_array($items)) {
+            $items = $get('../../../items');
+            if (is_array($items)) {
+                $prefix = '../../../';
+            }
+        }
+
+        if (!is_array($items)) {
+            $items = [];
+        }
+
+        $taxInclusive = (bool) $get($prefix . 'tax_inclusive');
         $subTotal = 0;
         $totalTax = 0;
         $taxes = \App\Models\Tax::pluck('rate', 'id')->all();
@@ -633,7 +489,6 @@ class PurchaseQuoteResource extends Resource
         foreach ($items as $key => $item) {
             $keysProcessed[] = (string) $key;
 
-            // Apply overrides if key matches
             if (isset($overrides['key']) && (string) $key === (string) $overrides['key']) {
                 $qty = (float) $overrides['quantity'];
                 $price = (float) $overrides['unit_price'];
@@ -656,17 +511,14 @@ class PurchaseQuoteResource extends Resource
 
             if ($taxInclusive) {
                 $itemTax = $discounted - ($discounted / (1 + $taxRate));
-                $itemTotal = $discounted;
                 $subTotal += ($discounted / (1 + $taxRate));
             } else {
                 $itemTax = $discounted * $taxRate;
-                $itemTotal = $discounted + $itemTax;
                 $subTotal += $discounted;
             }
             $totalTax += $itemTax;
         }
 
-        // Fallback for current edited row if not in items list yet
         if (isset($overrides['key']) && !in_array((string) $overrides['key'], $keysProcessed)) {
             $qty = (float) $overrides['quantity'];
             $price = (float) $overrides['unit_price'];
@@ -691,22 +543,15 @@ class PurchaseQuoteResource extends Resource
             $totalTax += $itemTax;
         }
 
-        // Set Final fields
-        $set('sub_total', $subTotal);
-        $set('../../sub_total', $subTotal);
-        $set('../../../sub_total', $subTotal);
-        $set('../../../../sub_total', $subTotal);
+        $set($prefix . 'sub_total', $subTotal);
 
-        $discountAmount = (float) ($get('discount_amount') ?? $get('../../discount_amount') ?? $get('../../../discount_amount') ?? 0);
-        $shippingCost = (float) ($get('shipping_cost') ?? $get('../../shipping_cost') ?? $get('../../../shipping_cost') ?? 0);
-        $otherCost = (float) ($get('other_cost') ?? $get('../../other_cost') ?? $get('../../../other_cost') ?? 0);
+        $discountAmount = (float) ($get($prefix . 'discount_amount') ?? 0);
+        $shippingCost = (float) ($get($prefix . 'shipping_cost') ?? 0);
+        $otherCost = (float) ($get($prefix . 'other_cost') ?? 0);
 
         $grandTotal = $subTotal + $totalTax - $discountAmount + $shippingCost + $otherCost;
 
-        $set('total_amount', $grandTotal);
-        $set('../../total_amount', $grandTotal);
-        $set('../../../total_amount', $grandTotal);
-        $set('../../../../total_amount', $grandTotal);
+        $set($prefix . 'total_amount', $grandTotal);
     }
 
     public static function infolist(Schema $infolist): Schema

@@ -24,8 +24,9 @@ class ListContacts extends ListRecords
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/kontak-page') => 'Kontak',
-            '#' => 'List',
+            '#' => 'Daftar Kontak',
         ];
     }
 
@@ -78,10 +79,11 @@ class ListContacts extends ListRecords
                 ->icon('heroicon-o-printer')
                 ->color('gray')
                 ->extraAttributes(['onclick' => 'window.print(); return false;']),
-            Actions\Action::make('back')
+            Actions\Action::make('kembali')
                 ->label('Kembali')
-                ->url(url('/admin'))
-                ->color('gray'),
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin/kontak-page')),
         ];
     }
 

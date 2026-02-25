@@ -38,11 +38,11 @@ class ListAccounts extends ListRecords
                 ->label('Tambah Akun')
                 ->color('primary')
                 ->size('sm'),
-            Actions\Action::make('back')
+            Actions\Action::make('kembali')
                 ->label('Kembali')
-                ->url(url('/admin'))
                 ->color('gray')
-                ->size('sm'),
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin')),
             Actions\Action::make('print')
                 ->label('Cetak')
                 ->icon('heroicon-m-printer')
@@ -62,7 +62,7 @@ class ListAccounts extends ListRecords
     {
         return [
             url('/admin') => 'Beranda',
-            'Akun',
+            '#' => 'Akun',
         ];
     }
 }

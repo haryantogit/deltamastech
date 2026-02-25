@@ -10,11 +10,15 @@ class ProductionCost extends Model
     protected $fillable = [
         'product_id',
         'account_id',
+        'unit_amount',
+        'multiplier',
         'amount',
         'description',
     ];
 
     protected $casts = [
+        'unit_amount' => 'decimal:2',
+        'multiplier' => 'decimal:2',
         'amount' => 'decimal:2',
     ];
 

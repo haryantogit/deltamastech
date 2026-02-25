@@ -32,6 +32,7 @@ class WarehouseTransferResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrows-right-left';
 
     protected static string|null $navigationLabel = 'Transfer Gudang';
+    protected static ?string $modelLabel = 'Transfer Gudang';
     protected static ?string $pluralModelLabel = 'Transfer Gudang';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Inventori';
@@ -56,7 +57,7 @@ class WarehouseTransferResource extends Resource
                                 TextInput::make('number')
                                     ->required()
                                     ->unique(ignoreRecord: true)
-                                    ->default(fn() => 'WT/' . date('Ymd') . '/' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT))
+                                    ->default(fn() => \App\Models\NumberingSetting::getNextNumber('stock_transfer') ?? 'WT/' . date('Ymd') . '/' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT))
                                     ->label('Nomor')
                                     ->extraAttributes(['class' => 'font-mono']),
 
@@ -68,6 +69,7 @@ class WarehouseTransferResource extends Resource
                                 Select::make('from_warehouse_id')
                                     ->label('Dari Gudang')
                                     ->options(\App\Models\Warehouse::pluck('name', 'id')->prepend('Tanpa Gudang (Unassigned)', 'unassigned'))
+                                    ->default(1) // Gudang Utama
                                     ->formatStateUsing(fn($state) => $state === null ? 'unassigned' : $state)
                                     ->dehydrateStateUsing(fn($state) => $state === 'unassigned' ? null : $state)
                                     ->searchable()

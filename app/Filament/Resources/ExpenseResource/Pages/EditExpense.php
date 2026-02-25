@@ -25,8 +25,10 @@ class EditExpense extends EditRecord
     public function getBreadcrumbs(): array
     {
         return [
-            url('/admin/biaya-page') => 'Biaya',
-            '#' => 'Edit',
+            url('/admin') => 'Beranda',
+            $this->getResource()::getUrl('index') => 'Biaya',
+            '' => 'Edit Biaya',
         ];
     }
+
 }

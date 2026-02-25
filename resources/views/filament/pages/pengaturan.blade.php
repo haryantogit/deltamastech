@@ -356,15 +356,15 @@
                             d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                     </svg></div><span class="settings-card-title">Alur Bisnis</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Penomoran Otomatis']) }}" class="settings-card">
-                <div class="coming-soon-badge">Coming Soon</div>
+            <a href="{{ \App\Filament\Pages\PenomoranOtomatis::getUrl() }}" class="settings-card">
                 <div class="settings-card-icon" style="background:#fef3c7"><svg style="color:#d97706" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                     </svg></div><span class="settings-card-title">Penomoran Otomatis</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Tanggal Penguncian']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Tanggal Penguncian']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#fce7f3"><svg style="color:#db2777" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -372,7 +372,8 @@
                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg></div><span class="settings-card-title">Tanggal Penguncian</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Pemetaan Akun']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Pemetaan Akun']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#e0e7ff"><svg style="color:#4f46e5" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -380,8 +381,7 @@
                             d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg></div><span class="settings-card-title">Pemetaan Akun</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Audit']) }}" class="settings-card">
-                <div class="coming-soon-badge">Coming Soon</div>
+            <a href="{{ \App\Filament\Pages\Pengaturan\Audit::getUrl() }}" class="settings-card">
                 <div class="settings-card-icon" style="background:#dcfce7"><svg style="color:#16a34a" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -396,7 +396,8 @@
                             d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
                     </svg></div><span class="settings-card-title">Konsolidasi</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Custom Fields']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Custom Fields']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#fef9c3"><svg style="color:#ca8a04" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -406,7 +407,8 @@
                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg></div><span class="settings-card-title">Custom Fields</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Multi Mata Uang']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Multi Mata Uang']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#f3e8ff"><svg style="color:#9333ea" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -432,7 +434,8 @@
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg></div><span class="settings-card-title">Layout Invoice</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Layout Laporan']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Layout Laporan']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#dcfce7"><svg style="color:#16a34a" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -448,7 +451,8 @@
                             d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                     </svg></div><span class="settings-card-title">Translasi</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Template Email']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Template Email']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#fce7f3"><svg style="color:#db2777" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -456,7 +460,8 @@
                             d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg></div><span class="settings-card-title">Template Email</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Template WhatsApp']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Template WhatsApp']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#dcfce7"><svg style="color:#16a34a" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -464,7 +469,8 @@
                             d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg></div><span class="settings-card-title">Template WhatsApp</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Layout Barcode']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Layout Barcode']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#e0e7ff"><svg style="color:#4f46e5" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -472,7 +478,8 @@
                             d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                     </svg></div><span class="settings-card-title">Layout Barcode</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Pengingat Jatuh Tempo']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Pengingat Jatuh Tempo']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#fef9c3"><svg style="color:#ca8a04" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -480,7 +487,8 @@
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg></div><span class="settings-card-title">Pengingat Jatuh Tempo</span>
             </a>
-            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Ulang Tahun Pelanggan']) }}" class="settings-card">
+            <a href="{{ \App\Filament\Pages\ComingSoon::getUrl(['feature' => 'Ulang Tahun Pelanggan']) }}"
+                class="settings-card">
                 <div class="coming-soon-badge">Coming Soon</div>
                 <div class="settings-card-icon" style="background:#fee2e2"><svg style="color:#dc2626" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">

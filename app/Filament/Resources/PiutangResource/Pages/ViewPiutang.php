@@ -12,9 +12,12 @@ class ViewPiutang extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            \Filament\Actions\Action::make('back')
+            \Filament\Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->outlined()
+                ->size('sm')
+                ->icon('heroicon-o-arrow-left')
                 ->url($this->getResource()::getUrl('index')),
             \Filament\Actions\Action::make('print')
                 ->label('Print')

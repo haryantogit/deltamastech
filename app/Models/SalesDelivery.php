@@ -8,9 +8,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SalesDelivery extends Model
 {
+    use \App\Traits\HasAutomaticNumbering;
     public function tags(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphToMany(Tag::class, 'taggable');
+    }
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'sales_delivery';
     }
 
     protected $fillable = [

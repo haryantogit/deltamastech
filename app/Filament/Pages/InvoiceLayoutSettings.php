@@ -110,9 +110,12 @@ class InvoiceLayoutSettings extends Page implements HasForms
                 ->label('Panduan')
                 ->color('gray')
                 ->icon('heroicon-o-question-mark-circle'),
-            Action::make('back')
+            Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->outlined()
+                ->size('sm')
+                ->icon('heroicon-o-arrow-left')
                 ->url(\App\Filament\Pages\Pengaturan::getUrl()),
         ];
     }

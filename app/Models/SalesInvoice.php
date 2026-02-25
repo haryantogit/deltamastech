@@ -12,7 +12,17 @@ use Spatie\Activitylog\LogOptions;
 
 class SalesInvoice extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, \App\Traits\HasAutomaticNumbering;
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'sales_invoice';
+    }
+
+    protected function getNumberingField(): string
+    {
+        return 'invoice_number';
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

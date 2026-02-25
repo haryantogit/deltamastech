@@ -21,7 +21,7 @@ class StockAdjustmentForm
                                 \Filament\Forms\Components\TextInput::make('number')
                                     ->required()
                                     ->unique(ignoreRecord: true)
-                                    ->default(fn() => 'SA/' . date('Ymd') . '/' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT))
+                                    ->default(fn() => \App\Models\NumberingSetting::getNextNumber('stock_adjustment') ?? 'SA/' . date('Ymd') . '/' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT))
                                     ->label('Nomor')
                                     ->extraAttributes(['class' => 'font-mono']),
 

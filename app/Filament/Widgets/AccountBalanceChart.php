@@ -9,35 +9,40 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
+use Livewire\Attributes\On;
+
 class AccountBalanceChart extends ChartWidget
 {
-    use InteractsWithPageFilters;
-
     public function getHeading(): ?string
     {
-        return 'HUTANG & PIUTANG';
+        return 'Aliran Kas';
     }
 
     public ?string $accountId = null;
+
+    public array $filters = [];
+
+    #[On('filtersUpdated')]
+    public function updateFilters(array $filters): void
+    {
+        $this->filters = $filters;
+    }
 
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $maxHeight = '300px';
 
-    public ?string $filter = 'year';
+    public ?string $filter = null;
 
     protected function getFilters(): ?array
     {
-        return [
-            'year' => 'Bulanan', // Shows Jan-Dec
-            'month' => 'Harian', // Shows 1-31
-        ];
+        return [];
     }
 
     protected function getData(): array
     {
         $startDate = $this->filters['startDate'] ?? now()->startOfYear()->toDateString();
-        $endDate = $this->filters['endDate'] ?? now()->toDateString();
+        $endDate = $this->filters['endDate'] ?? now()->endOfYear()->toDateString();
 
         $start = Carbon::parse($startDate);
         $end = Carbon::parse($endDate);
@@ -47,70 +52,42 @@ class AccountBalanceChart extends ChartWidget
             return ['datasets' => [], 'labels' => []];
         }
 
-        $activeFilter = $this->filter;
-
         $labels = [];
         $netData = [];
-        $piutangData = []; // Debit (Money In)
-        $hutangData = [];  // Credit (Money Out)
+        $piutangData = []; // Uang Masuk
+        $hutangData = [];  // Uang Keluar
 
-        if ($activeFilter === 'month') {
-            // Harian (Use range from global filter)
-            $groupBy = 'date';
-            $format = 'd';
-            $period = \Carbon\CarbonPeriod::create($start, $end);
-        } else {
-            // Bulanan (Use range from global filter)
-            $groupBy = 'month';
-            $format = 'M Y';
-            $period = \Carbon\CarbonPeriod::create($start->copy()->startOfMonth(), '1 month', $end->copy()->endOfMonth());
-        }
+        // Default to monthly view within the range
+        $groupBy = 'month';
+        $format = 'M Y';
+        $period = \Carbon\CarbonPeriod::create($start->copy()->startOfMonth(), '1 month', $end->copy()->endOfMonth());
 
         // Running balance for Net Line
         // We will show Net Change per period (Cash Flow) instead of Running Balance
         // This makes the Net line align with the Bars (which are monthly totals)
 
         // Fetch Data
-        if ($activeFilter === 'month') {
-            $data = JournalItem::where('account_id', $accountId)
-                ->whereBetween('created_at', [$start, $end])
-                ->selectRaw('DATE(created_at) as date, SUM(debit) as debit, SUM(credit) as credit')
-                ->groupBy('date')
-                ->get();
+        // Year/Month view (aggregated by month)
+        $data = JournalItem::where('account_id', $accountId)
+            ->whereHas('journalEntry', function (Builder $query) use ($start, $end) {
+                $query->whereBetween('transaction_date', [$start, $end]);
+            })
+            ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
+            ->selectRaw('YEAR(journal_entries.transaction_date) as year, MONTH(journal_entries.transaction_date) as month, SUM(debit) as debit, SUM(credit) as credit')
+            ->groupBy('year', 'month')
+            ->get();
 
-            foreach ($period as $date) {
-                $dStr = $date->format('Y-m-d');
-                $row = $data->firstWhere('date', $dStr);
+        foreach ($period as $date) {
+            $labels[] = $date->format($format);
 
-                $debit = $row ? (float) $row->debit : 0;
-                $credit = $row ? (float) $row->credit : 0;
-                $netChange = $debit - $credit;
+            $row = $data->where('year', $date->year)->firstWhere('month', $date->month);
+            $debit = $row ? (float) $row->debit : 0;
+            $credit = $row ? (float) $row->credit : 0;
+            $netChange = $debit - $credit;
 
-                $labels[] = $date->format($format);
-                $piutangData[] = $debit;
-                $hutangData[] = $credit * -1;
-                $netData[] = $netChange;
-            }
-        } else {
-            // Year/Month view (aggregated by month)
-            $data = JournalItem::where('account_id', $accountId)
-                ->whereBetween('created_at', [$start, $end])
-                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(debit) as debit, SUM(credit) as credit')
-                ->groupBy('year', 'month')
-                ->get();
-
-            foreach ($period as $date) {
-                $labels[] = $date->format($format);
-
-                $row = $data->where('year', $date->year)->firstWhere('month', $date->month);
-                $debit = $row ? (float) $row->debit : 0;
-                $credit = $row ? (float) $row->credit : 0;
-                $netChange = $debit - $credit;
-
-                $piutangData[] = $debit;
-                $hutangData[] = $credit * -1;
-                $netData[] = $netChange;
-            }
+            $piutangData[] = $debit;
+            $hutangData[] = $credit * -1;
+            $netData[] = $netChange;
         }
 
         return [
@@ -126,7 +103,7 @@ class AccountBalanceChart extends ChartWidget
                     'order' => 1, // Draw on top
                 ],
                 [
-                    'label' => 'Piutang',
+                    'label' => 'Uang Masuk',
                     'data' => $piutangData,
                     'type' => 'bar',
                     'backgroundColor' => '#2dd4bf', // Teal/Cyan
@@ -135,7 +112,7 @@ class AccountBalanceChart extends ChartWidget
                     'order' => 2,
                 ],
                 [
-                    'label' => 'Hutang',
+                    'label' => 'Uang Keluar',
                     'data' => $hutangData,
                     'type' => 'bar',
                     'backgroundColor' => '#f43f5e', // Red

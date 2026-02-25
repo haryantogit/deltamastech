@@ -71,11 +71,7 @@ class PiutangResource extends Resource
                             ->schema([
                                 TextInput::make('invoice_number')
                                     ->label('Nomor')
-                                    ->default(function () {
-                                        $last = Receivable::where('invoice_number', 'like', 'DM/%')->latest('id')->first();
-                                        $next = $last ? (int) substr($last->invoice_number, 3) + 1 : 1;
-                                        return 'DM/' . str_pad($next, 5, '0', STR_PAD_LEFT);
-                                    })
+                                    ->default(fn() => \App\Models\NumberingSetting::getNextNumber('piutang') ?? 'DM/' . str_pad((intval(substr(\App\Models\Receivable::where('invoice_number', 'like', 'DM/%')->max('invoice_number'), 3)) ?? 0) + 1, 5, '0', STR_PAD_LEFT))
                                     ->required()
                                     ->disabled()
                                     ->dehydrated(),

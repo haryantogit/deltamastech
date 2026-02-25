@@ -103,9 +103,12 @@ class NotificationSettings extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('back')
+            Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->outlined()
+                ->size('sm')
+                ->icon('heroicon-o-arrow-left')
                 ->url(\App\Filament\Pages\Pengaturan::getUrl()),
         ];
     }

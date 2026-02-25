@@ -16,16 +16,18 @@ class ListStockAdjustments extends ListRecords
             \Filament\Actions\CreateAction::make()
                 ->label('Tambah Penyesuaian')
                 ->color('primary'),
-            \Filament\Actions\Action::make('back')
+            \Filament\Actions\Action::make('kembali')
                 ->label('Kembali')
-                ->url(url('/admin'))
-                ->color('gray'),
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin/inventori-page')),
         ];
     }
 
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/inventori-page') => 'Inventori',
             '#' => 'Penyesuaian Stok',
         ];

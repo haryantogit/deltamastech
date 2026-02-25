@@ -12,8 +12,9 @@ class ViewWarehouse extends ViewRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/inventori-page') => 'Inventori',
-            '#' => 'Lihat Gudang',
+            WarehouseResource::getUrl('index') => 'Gudang',
         ];
     }
 
@@ -34,10 +35,11 @@ class ViewWarehouse extends ViewRecord
                 ->label('Print')
                 ->icon('heroicon-o-printer')
                 ->color('gray'),
-            \Filament\Actions\Action::make('back')
+            \Filament\Actions\Action::make('kembali')
                 ->label('Kembali')
-                ->url(WarehouseResource::getUrl('index'))
-                ->color('warning'),
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(WarehouseResource::getUrl('index')),
         ];
     }
 

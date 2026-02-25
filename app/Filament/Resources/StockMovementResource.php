@@ -105,8 +105,8 @@ class StockMovementResource extends Resource
                     ->formatStateUsing(fn(string $state): string => match ($state) {
                         'in' => 'Masuk',
                         'out' => 'Keluar',
-                        'sale' => 'Penjualan',
-                        'purchase' => 'Pembelian',
+                        'sale', 'sales', 'Sales' => 'Penjualan',
+                        'purchase', 'Purchase' => 'Pembelian',
                         'adjustment' => 'Penyesuaian',
                         'adjustment_plus' => 'Penyesuaian (+)',
                         'adjustment_minus' => 'Penyesuaian (-)',
@@ -114,8 +114,8 @@ class StockMovementResource extends Resource
                         default => ucfirst($state),
                     })
                     ->colors([
-                        'success' => ['in', 'purchase', 'adjustment_plus'],
-                        'danger' => ['out', 'sale', 'adjustment_minus'],
+                        'success' => ['in', 'purchase', 'Purchase', 'adjustment_plus'],
+                        'danger' => ['out', 'sale', 'sales', 'Sales', 'adjustment_minus'],
                         'info' => ['transfer', 'adjustment'],
                     ]),
                 Tables\Columns\TextColumn::make('quantity')

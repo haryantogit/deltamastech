@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SalesOrderResource\Pages;
 
 use App\Filament\Resources\SalesOrderResource;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\EditRecord;
 
 class EditSalesOrder extends EditRecord
@@ -62,6 +63,11 @@ class EditSalesOrder extends EditRecord
                 ])),
 
             \Filament\Actions\DeleteAction::make(),
+            Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index')),
         ];
     }
 }

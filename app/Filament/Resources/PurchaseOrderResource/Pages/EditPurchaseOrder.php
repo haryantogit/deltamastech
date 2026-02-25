@@ -63,6 +63,11 @@ class EditPurchaseOrder extends EditRecord
                 ])),
 
             Actions\DeleteAction::make(),
+            Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index')),
         ];
     }
 }

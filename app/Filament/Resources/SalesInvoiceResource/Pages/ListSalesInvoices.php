@@ -60,10 +60,11 @@ class ListSalesInvoices extends ListRecords
                 ->icon('heroicon-o-printer')
                 ->color('gray')
                 ->extraAttributes(['onclick' => 'window.print(); return false;']),
-            \Filament\Actions\Action::make('back')
+            \Filament\Actions\Action::make('kembali')
                 ->label('Kembali')
-                ->url(url('/admin'))
-                ->color('gray'),
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin/penjualan-page')),
         ];
     }
 
@@ -75,6 +76,7 @@ class ListSalesInvoices extends ListRecords
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/penjualan-page') => 'Penjualan',
             '#' => 'Tagihan Penjualan',
         ];

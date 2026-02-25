@@ -11,6 +11,17 @@ class CreatePurchaseQuote extends CreateRecord
 
     protected static ?string $title = 'Buat Penawaran Pembelian';
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index')),
+        ];
+    }
+
     public function getBreadcrumbs(): array
     {
         return [

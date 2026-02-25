@@ -88,12 +88,4 @@ class ListExpenses extends ListRecords
         return parent::getTabsContentComponent()
             ->contained(true);
     }
-
-    public function getBreadcrumbs(): array
-    {
-        return [
-            url('/admin') => 'Beranda',
-            'Biaya',
-        ];
-    }
 }

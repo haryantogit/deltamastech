@@ -97,6 +97,10 @@ class ProductResource extends Resource
                             ->label('Aktif')
                             ->default(true)
                             ->helperText('Produk tidak aktif tidak akan muncul di transaksi'),
+                        Toggle::make('show_in_products')
+                            ->label('Aktifkan di Produk')
+                            ->helperText('Jika diaktifkan, aset tetap ini akan muncul di daftar produk.')
+                            ->visible(fn(Get $get) => $get('type') === 'fixed_asset'),
                     ])
                     ->columnSpan(6),
 
@@ -574,15 +578,34 @@ class ProductResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->columnSpan(7),
-                                TextInput::make('amount')
-                                    ->label('Total')
+                                    ->columnSpan(4),
+                                TextInput::make('unit_amount')
+                                    ->label('Per Pcs')
                                     ->numeric()
                                     ->prefix('Rp')
-                                    ->default(0)
                                     ->required()
-                                    ->live(onBlur: true)
-                                    ->columnSpan(4),
+                                    ->live()
+                                    ->afterStateUpdated(function (Set $set, Get $get) {
+                                        $set('amount', (float) ($get('unit_amount') ?? 0) * (float) ($get('multiplier') ?? 1));
+                                    })
+                                    ->columnSpan(2),
+                                TextInput::make('multiplier')
+                                    ->label('Pengali')
+                                    ->numeric()
+                                    ->required()
+                                    ->default(1)
+                                    ->live()
+                                    ->afterStateUpdated(function (Set $set, Get $get) {
+                                        $set('amount', (float) ($get('unit_amount') ?? 0) * (float) ($get('multiplier') ?? 1));
+                                    })
+                                    ->columnSpan(2),
+                                TextInput::make('amount')
+                                    ->label('Jumlah')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->readOnly()
+                                    ->required()
+                                    ->columnSpan(3),
                             ])
                             ->columns(11)
                             ->addActionLabel('+ Tambah baris')
@@ -1223,7 +1246,7 @@ class ProductResource extends Resource
     public static function table(\Filament\Tables\Table $table): \Filament\Tables\Table
     {
         return $table
-            ->modifyQueryUsing(fn(Builder $query) => $query->where(fn($q) => $q->where('is_fixed_asset', false)->orWhere(fn($sq) => $sq->where('is_fixed_asset', true)->where('status', 'registered')))->with(['category', 'unit']))
+            ->modifyQueryUsing(fn(Builder $query) => $query->visibleInProductList()->with(['category', 'unit']))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 ImageColumn::make('image')
@@ -1512,6 +1535,13 @@ class ProductResource extends Resource
                         ->label('Lihat'),
                     EditAction::make()
                         ->label('Ubah'),
+                    \Filament\Actions\Action::make('sync_to_product')
+                        ->label(fn($record) => $record->show_in_products ? 'Nonaktifkan di Produk' : 'Aktifkan di Produk')
+                        ->icon(fn($record) => $record->show_in_products ? 'heroicon-m-eye-slash' : 'heroicon-m-eye')
+                        ->color(fn($record) => $record->show_in_products ? 'warning' : 'success')
+                        ->visible(fn($record) => (bool) $record->is_fixed_asset && $record->status === 'registered')
+                        ->requiresConfirmation()
+                        ->action(fn($record) => $record->update(['show_in_products' => !$record->show_in_products])),
                     Action::make('print')
                         ->label('Cetak')
                         ->icon('heroicon-o-printer')

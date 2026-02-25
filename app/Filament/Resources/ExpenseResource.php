@@ -40,6 +40,7 @@ class ExpenseResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = null;
     protected static ?int $navigationSort = 30;
     protected static ?string $navigationLabel = 'Biaya';
+    protected static ?string $modelLabel = 'Biaya';
     protected static ?string $pluralModelLabel = 'Biaya';
     protected static ?string $slug = 'biaya';
 
@@ -49,168 +50,258 @@ class ExpenseResource extends Resource
             ->schema([
                 Section::make('Informasi Utama')
                     ->schema([
-                        Grid::make(3)
+                        Grid::make(12)
                             ->schema([
+                                Select::make('account_id')
+                                    ->label('Dibayar Dari')
+                                    ->relationship('account', 'name', fn($query) => $query->where('category', 'Kas & Bank'))
+                                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->code} - {$record->name}")
+                                    ->searchable(['code', 'name'])
+                                    ->preload()
+                                    ->default(fn() => \App\Models\Account::where('code', '1-10001')->value('id'))
+                                    ->disabled(fn($get) => $get('is_pay_later'))
+                                    ->required(fn($get) => !$get('is_pay_later'))
+                                    ->columnSpan(6),
+
+                                Toggle::make('is_pay_later')
+                                    ->label('Bayar Nanti')
+                                    ->reactive()
+                                    ->default(false)
+                                    ->inline(false)
+                                    ->columnSpan(6),
+
                                 Select::make('contact_id')
                                     ->relationship('contact', 'name')
                                     ->label('Penerima')
                                     ->searchable()
                                     ->preload()
-                                    ->required(),
+                                    ->required()
+                                    ->columnSpan(fn($get) => $get('is_pay_later') ? 12 : 6),
+
                                 DatePicker::make('transaction_date')
                                     ->label('Tgl. Transaksi')
                                     ->default(now())
-                                    ->required(),
-                                DatePicker::make('due_date')
-                                    ->label('Tgl. Jatuh Tempo'),
-                                TextInput::make('reference_number')
-                                    ->label('Nomor Biaya')
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->default(function () {
-                                        $lastExpense = \App\Models\Expense::latest('id')->first();
-                                        if ($lastExpense && preg_match('/EXP\/(\d{5})/', $lastExpense->reference_number, $matches)) {
-                                            return 'EXP/' . str_pad(intval($matches[1]) + 1, 5, '0', STR_PAD_LEFT);
-                                        }
-                                        return 'EXP/00001';
-                                    }),
-                            ]),
-                    ]),
+                                    ->required()
+                                    ->columnSpan(fn($get) => $get('is_pay_later') ? 4 : 6),
 
-                Section::make('Metode Pembayaran')
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                Toggle::make('is_pay_later')
-                                    ->label('Bayar Nanti')
-                                    ->reactive()
-                                    ->default(false),
-                                Toggle::make('is_recurring')
-                                    ->label('Transaksi Berulang')
-                                    ->default(false),
-                                Select::make('account_id')
-                                    ->label('Bayar Dari')
-                                    ->options(function () {
-                                        return Account::where('category', 'Asset')
-                                            ->where(function ($query) {
-                                                $query->where('name', 'like', '%Kas%')
-                                                    ->orWhere('name', 'like', '%Bank%');
-                                            })
-                                            ->get()
-                                            ->mapWithKeys(fn($item) => [$item->id => "{$item->code} - {$item->name}"]);
-                                    })
+                                DatePicker::make('due_date')
+                                    ->label('Tgl. Jatuh Tempo')
+                                    ->required(fn($get) => $get('is_pay_later'))
+                                    ->hidden(fn($get) => !$get('is_pay_later'))
+                                    ->columnSpan(4),
+
+                                Select::make('term_id')
+                                    ->relationship('term', 'name')
+                                    ->label('Termin')
                                     ->searchable()
                                     ->preload()
-                                    ->hidden(fn($get) => $get('is_pay_later'))
-                                    ->required(fn($get) => !$get('is_pay_later')),
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Nama Termin (Misal: COD, 30 Hari)')
+                                            ->required(),
+                                        TextInput::make('days')
+                                            ->label('Jumlah Hari')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->required(),
+                                    ])
+                                    ->required(fn($get) => $get('is_pay_later'))
+                                    ->hidden(fn($get) => !$get('is_pay_later'))
+                                    ->columnSpan(4),
+
+                                TextInput::make('reference_number')
+                                    ->label('Nomor')
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->default(fn() => \App\Models\NumberingSetting::getNextNumber('expense') ?? 'EXP/' . date('Ymd') . '-' . rand(100, 999))
+                                    ->columnSpan(4),
+
+                                TextInput::make('reference')
+                                    ->label('Referensi')
+                                    ->columnSpan(4),
+
+                                Select::make('tags')
+                                    ->relationship('tags', 'name')
+                                    ->label('Tag')
+                                    ->multiple()
+                                    ->preload()
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->required(),
+                                    ])
+                                    ->columnSpan(4),
                             ]),
                     ]),
 
                 Section::make('Daftar Biaya')
                     ->schema([
+                        Grid::make(1)
+                            ->schema([
+                                Toggle::make('tax_inclusive')
+                                    ->label('Harga termasuk pajak')
+                                    ->default(false)
+                                    ->inline(false)
+                                    ->reactive()
+                                    ->afterStateUpdated(fn($set, $get) => static::calculateTotals($set, $get)),
+                            ]),
+
                         Repeater::make('items')
                             ->relationship()
+                            ->hiddenLabel()
                             ->schema([
-                                Grid::make(4)
+                                Grid::make(12)
                                     ->schema([
                                         Select::make('account_id')
                                             ->label('Akun Biaya')
-                                            ->options(function () {
-                                                return Account::where('category', 'Expense')
-                                                    ->get()
-                                                    ->mapWithKeys(fn($item) => [$item->id => "{$item->code} - {$item->name}"]);
-                                            })
-                                            ->searchable()
+                                            ->relationship('account', 'name', fn($query) => $query->where(function ($q) {
+                                                $q->where('code', 'like', '5%')
+                                                    ->orWhere('code', 'like', '6%')
+                                                    ->orWhere('code', 'like', '7%')
+                                                    ->orWhere('code', 'like', '8%')
+                                                    ->orWhere('code', 'like', '9%');
+                                            }))
+                                            ->getOptionLabelFromRecordUsing(fn($record) => "{$record->code} - {$record->name}")
+                                            ->searchable(['code', 'name'])
                                             ->preload()
                                             ->required()
-                                            ->columnSpan(2),
-                                        TextInput::make('amount')
-                                            ->label('Jumlah')
-                                            ->numeric()
-                                            ->prefix('Rp')
-                                            ->required()
-                                            ->reactive()
-                                            ->afterStateUpdated(fn($set, $get) => static::calculateTotals($set, $get)),
+                                            ->columnSpan(3),
+
+                                        TextInput::make('description')
+                                            ->label('Deskripsi')
+                                            ->columnSpan(4),
+
                                         Select::make('tax_id')
                                             ->label('Pajak')
                                             ->relationship('tax', 'name')
                                             ->preload()
                                             ->searchable()
                                             ->default(null)
-                                            ->nullable(),
-                                    ]),
-                                TextInput::make('description')
-                                    ->label('Deskripsi')
-                                    ->columnSpanFull(),
-                            ])
-                            ->addActionLabel('Tambah Baris Biaya')
-                            ->reorderable(false)
-                            ->afterStateUpdated(fn($set, $get) => static::calculateTotals($set, $get)),
+                                            ->nullable()
+                                            ->reactive()
+                                            ->afterStateUpdated(fn($set, $get) => static::calculateTotals($set, $get))
+                                            ->columnSpan(2),
 
-                        Grid::make(2)
-                            ->schema([
-                                Group::make()
-                                    ->schema([
-                                        Textarea::make('memo')
-                                            ->label('Pesan')
-                                            ->rows(3),
-                                        FileUpload::make('attachments')
-                                            ->label('Lampiran')
-                                            ->multiple()
-                                            ->directory('expenses'),
-                                    ])->columnSpan(1),
-
-                                Group::make()
-                                    ->schema([
-                                        TextInput::make('subtotal')
-                                            ->label('Sub Total')
-                                            ->numeric()
-                                            ->readOnly()
-                                            ->prefix('Rp')
-                                            ->default(0),
-                                        TextInput::make('total_amount')
+                                        TextInput::make('amount')
                                             ->label('Total')
                                             ->numeric()
-                                            ->readOnly()
-                                            ->prefix('Rp')
-                                            ->default(0),
-                                        Hidden::make('remaining_amount')
-                                            ->default(0),
-                                    ])->columnSpan(1),
-                            ]),
+                                            ->required()
+                                            ->reactive()
+                                            ->afterStateUpdated(fn($set, $get) => static::calculateTotals($set, $get))
+                                            ->columnSpan(3),
+                                    ]),
+                            ])
+                            ->addActionLabel('+ Tambah baris')
+                            ->reorderable(false)
+                            ->afterStateUpdated(fn($set, $get) => static::calculateTotals($set, $get)),
                     ]),
 
-                Section::make('Tagging')
+                Grid::make(2)
                     ->schema([
-                        Select::make('tags')
-                            ->relationship('tags', 'name')
-                            ->multiple()
-                            ->preload()
-                            ->searchable()
-                            ->createOptionForm([
-                                TextInput::make('name')
-                                    ->required(),
-                            ]),
-                    ])->collapsible()->collapsed(),
-            ]);
+                        Group::make()
+                            ->schema([
+                                Textarea::make('memo')
+                                    ->label('Pesan')
+                                    ->rows(3),
+
+                                FileUpload::make('attachments')
+                                    ->label('Lampiran')
+                                    ->multiple()
+                                    ->directory('expenses'),
+                            ])->columnSpan(1),
+
+                        Group::make()
+                            ->schema([
+                                TextInput::make('subtotal')
+                                    ->label('Sub Total')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->readOnly()
+                                    ->extraAttributes(['class' => 'font-bold pointer-events-none'])
+                                    ->default(0),
+
+                                Toggle::make('has_discount')
+                                    ->label('Tambahan Diskon')
+                                    ->dehydrated(false)
+                                    ->afterStateHydrated(fn($component, $record) => $component->state($record ? ($record->discount_amount > 0) : false))
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($set, $get, $state) {
+                                        if (!$state) {
+                                            $set('discount_amount', 0);
+                                        }
+                                        static::calculateTotals($set, $get);
+                                    }),
+
+                                TextInput::make('discount_amount')
+                                    ->label('Nominal Diskon')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->reactive()
+                                    ->extraAttributes(['class' => 'text-primary-600'])
+                                    ->afterStateUpdated(fn($set, $get) => static::calculateTotals($set, $get))
+                                    ->default(0)
+                                    ->hidden(fn($get) => !$get('has_discount')),
+
+                                TextInput::make('total_amount')
+                                    ->label('Total')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->readOnly()
+                                    ->extraAttributes(['class' => 'font-bold pointer-events-none'])
+                                    ->default(0),
+
+                                Hidden::make('remaining_amount')
+                                    ->default(0),
+                                Hidden::make('tax_total')
+                                    ->default(0),
+                            ])->columnSpan(1),
+                    ]),
+            ])
+            ->columns(1);
     }
 
     public static function calculateTotals($set, $get)
     {
         $items = $get('items') ?? [];
         $subtotal = 0;
+        $taxTotal = 0;
 
         foreach ($items as $item) {
-            $subtotal += (float) ($item['amount'] ?? 0);
+            $amount = (float) ($item['amount'] ?? 0);
+            $taxRate = 0;
+
+            if (!empty($item['tax_id'])) {
+                $tax = \App\Models\Tax::find($item['tax_id']);
+                if ($tax) {
+                    $taxRate = $tax->rate;
+                }
+            }
+
+            if ($get('tax_inclusive')) {
+                $subtotal += $amount;
+                if ($taxRate > 0) {
+                    $taxPortion = $amount - ($amount / (1 + ($taxRate / 100)));
+                    $taxTotal += $taxPortion;
+                }
+            } else {
+                $subtotal += $amount;
+                if ($taxRate > 0) {
+                    $taxTotal += $amount * ($taxRate / 100);
+                }
+            }
         }
 
+        $discount = (float) ($get('discount_amount') ?? 0);
+        $total = $subtotal + ($get('tax_inclusive') ? 0 : $taxTotal) - $discount;
+
         $set('subtotal', $subtotal);
-        $set('total_amount', $subtotal);
+        $set('tax_total', $taxTotal);
+        $set('total_amount', $total);
 
         if (!$get('is_pay_later')) {
             $set('remaining_amount', 0);
         } else {
-            $set('remaining_amount', $subtotal);
+            $set('remaining_amount', $total);
         }
     }
 

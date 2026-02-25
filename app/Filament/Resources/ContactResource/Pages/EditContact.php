@@ -13,6 +13,11 @@ class EditContact extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index')),
             Actions\DeleteAction::make(),
         ];
     }
@@ -20,8 +25,10 @@ class EditContact extends EditRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/kontak-page') => 'Kontak',
-            '#' => $this->record->name,
+            ContactResource::getUrl('index') => 'Daftar Kontak',
+            '#' => 'Edit Kontak',
         ];
     }
 }

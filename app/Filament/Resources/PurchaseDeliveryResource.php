@@ -77,7 +77,7 @@ class PurchaseDeliveryResource extends Resource
                                         TextInput::make('number')
                                             ->required()
                                             ->label('Nomor')
-                                            ->default(fn() => 'PD/' . str_pad(PurchaseDelivery::count() + 1, 5, '0', STR_PAD_LEFT))
+                                            ->default(fn() => \App\Models\NumberingSetting::getNextNumber('purchase_delivery') ?? 'PD/' . str_pad(\App\Models\PurchaseDelivery::count() + 1, 5, '0', STR_PAD_LEFT))
                                             ->disabled()
                                             ->dehydrated(),
 
@@ -208,16 +208,6 @@ class PurchaseDeliveryResource extends Resource
 
                         Section::make('Item Pengiriman')
                             ->schema([
-                                TextInput::make('barcode_scanner')
-                                    ->label('Scan Barcode/SKU')
-                                    ->placeholder('Scan Barcode/SKU...')
-                                    ->live(onBlur: true),
-
-                                Toggle::make('tax_inclusive')
-                                    ->label('Harga termasuk pajak')
-                                    ->default(false)
-                                    ->inline(),
-
                                 Repeater::make('items')
                                     ->relationship()
                                     ->schema([
@@ -259,21 +249,47 @@ class PurchaseDeliveryResource extends Resource
                                                     ->label('Kuantitas')
                                                     ->default(1)
                                                     ->columnSpan(2)
-                                                    ->hint(function (Get $get) {
-                                                        $productId = $get('product_id');
-                                                        $warehouseId = $get('../../warehouse_id');
-                                                        if (!$productId)
-                                                            return null;
+                                                    ->live(debounce: 500)
+                                                    ->suffixAction(
+                                                        Action::make('checkStock')
+                                                            ->button()
+                                                            ->size('sm')
+                                                            ->color(function (Get $get, $state) {
+                                                                $productId = $get('product_id');
+                                                                $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
+                                                                if (!$warehouseId) {
+                                                                    $warehouseId = $get('../../warehouse_id_select') ?? $get('warehouse_id_select');
+                                                                }
 
-                                                        $product = \App\Models\Product::find($productId);
-                                                        if (!$product || !$product->track_inventory)
-                                                            return null;
+                                                                if (!$productId || !$warehouseId)
+                                                                    return 'gray';
 
-                                                        $stock = $product->getStockForWarehouse($warehouseId);
-                                                        $requestedQty = (float) $get('quantity');
-                                                        $color = $stock >= $requestedQty ? '#22c55e' : '#ef4444';
-                                                        return new \Illuminate\Support\HtmlString("<span style='background-color: {$color}; color: white; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; border-radius: 9999px;'>{$stock}</span>");
-                                                    }),
+                                                                $product = \App\Models\Product::find($productId);
+                                                                if (!$product || !$product->track_inventory)
+                                                                    return 'gray';
+
+                                                                $stock = (float) $product->getStockForWarehouse($warehouseId);
+                                                                $requestedQty = (float) $state;
+                                                                return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
+                                                            })
+                                                            ->label(function (Get $get) {
+                                                                $productId = $get('product_id');
+                                                                $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
+                                                                if (!$warehouseId) {
+                                                                    $warehouseId = $get('../../warehouse_id_select') ?? $get('warehouse_id_select');
+                                                                }
+
+                                                                if (!$productId || !$warehouseId)
+                                                                    return '0';
+
+                                                                $product = \App\Models\Product::find($productId);
+                                                                if (!$product || !$product->track_inventory)
+                                                                    return '0';
+
+                                                                $stock = $product->getStockForWarehouse($warehouseId);
+                                                                return number_format($stock);
+                                                            })
+                                                    ),
 
                                                 Hidden::make('unit_id'),
                                                 TextInput::make('unit_name')

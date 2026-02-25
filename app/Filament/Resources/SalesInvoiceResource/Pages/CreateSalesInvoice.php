@@ -12,9 +12,10 @@ class CreateSalesInvoice extends CreateRecord
     protected function getHeaderActions(): array
     {
         return [
-            \Filament\Actions\Action::make('back')
+            \Filament\Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->icon('heroicon-o-arrow-left')
                 ->url(static::getResource()::getUrl('index')),
         ];
     }
@@ -30,6 +31,7 @@ class CreateSalesInvoice extends CreateRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/penjualan-page') => 'Penjualan',
             SalesInvoiceResource::getUrl('index') => 'Tagihan Penjualan',
             '#' => 'Buat Tagihan',

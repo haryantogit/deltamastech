@@ -18,7 +18,7 @@ class KasBankPage extends Page
     {
         $this->filters = [
             'startDate' => now()->startOfYear()->toDateString(),
-            'endDate' => now()->toDateString(),
+            'endDate' => now()->endOfYear()->toDateString(),
         ];
     }
 
@@ -51,7 +51,7 @@ class KasBankPage extends Page
             ->get();
 
         $startDate = $this->filters['startDate'] ?? now()->startOfYear()->toDateString();
-        $endDate = $this->filters['endDate'] ?? now()->toDateString();
+        $endDate = $this->filters['endDate'] ?? now()->endOfYear()->toDateString();
 
         $accountsData = $accounts->map(function ($account) use ($endDate) {
             // Get current balance up to selected date
@@ -98,6 +98,13 @@ class KasBankPage extends Page
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->outlined()
+                ->size('sm')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin')),
             \Filament\Actions\CreateAction::make()
                 ->label('Tambah Kas & Bank')
                 ->model(Account::class)
@@ -134,6 +141,19 @@ class KasBankPage extends Page
         return [
             url('/admin') => 'Beranda',
             'Kas & Bank',
+        ];
+    }
+
+    public static function getNavigationItems(): array
+    {
+        return [
+            \Filament\Navigation\NavigationItem::make(static::getNavigationLabel())
+                ->group(static::getNavigationGroup())
+                ->icon(static::getNavigationIcon())
+                ->activeIcon(static::getActiveNavigationIcon())
+                ->isActiveWhen(fn(): bool => request()->is('admin/kas-bank*'))
+                ->sort(static::getNavigationSort())
+                ->url(static::getNavigationUrl()),
         ];
     }
 }

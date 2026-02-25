@@ -20,6 +20,7 @@ class EditSalesInvoice extends EditRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/penjualan-page') => 'Penjualan',
             SalesInvoiceResource::getUrl('index') => 'Tagihan Penjualan',
             '#' => 'Edit Tagihan',
@@ -30,9 +31,10 @@ class EditSalesInvoice extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
-            Actions\Action::make('back')
+            Actions\Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
+                ->icon('heroicon-o-arrow-left')
                 ->url(static::getResource()::getUrl('index')),
         ];
     }

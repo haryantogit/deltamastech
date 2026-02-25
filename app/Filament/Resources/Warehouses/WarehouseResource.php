@@ -137,7 +137,6 @@ class WarehouseResource extends Resource
     {
         return [
             'index' => ListWarehouses::route('/'),
-            'create' => CreateWarehouse::route('/create'),
             'view' => ViewWarehouse::route('/{record}'),
             'edit' => EditWarehouse::route('/{record}/edit'),
         ];

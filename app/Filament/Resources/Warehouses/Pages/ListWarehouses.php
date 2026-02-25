@@ -20,15 +20,22 @@ class ListWarehouses extends ListRecords
                 ->icon(fn() => $this->showCharts ? 'heroicon-m-eye-slash' : 'heroicon-m-eye')
                 ->color('gray')
                 ->action(fn() => $this->showCharts = !$this->showCharts),
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin/inventori-page')),
             CreateAction::make()
                 ->label('Tambah Gudang')
-                ->color('primary'),
+                ->color('primary')
+                ->modal(),
         ];
     }
 
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/inventori-page') => 'Inventori',
             '#' => 'Gudang',
         ];

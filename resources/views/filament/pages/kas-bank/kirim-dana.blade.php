@@ -44,6 +44,10 @@
             margin: 0;
         }
 
+        .dark .kb-title {
+            color: #f9fafb;
+        }
+
         .kb-subtitle {
             font-size: 1.125rem;
             color: #9ca3af;
@@ -71,6 +75,16 @@
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
+        .dark .kb-btn-white {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e5e7eb;
+        }
+
+        .dark .kb-btn-white:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
         .kb-btn-orange {
             background: #f97316;
             color: white;
@@ -82,6 +96,13 @@
             border-radius: 0.75rem;
             border: 1px solid #f3f4f6;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .kb-form-container {
+            background: rgba(255, 255, 255, 0.03);
+            /* Filament dark form background */
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
         }
 
         .kb-form-footer {
@@ -101,8 +122,6 @@
     </style>
 
     <div class="kb-container">
-        {{-- Breadcrumbs Removed --}}
-
         {{-- Header --}}
         <div class="kb-header">
             <div class="kb-title-wrapper">
@@ -117,24 +136,27 @@
                     <x-filament::icon icon="heroicon-m-chevron-down"
                         style="width: 14px; height: 14px; color: #9ca3af;" />
                 </button>
-                <a href="/admin/kas-bank/detail/{{ $account->id }}" class="kb-btn kb-btn-orange">
-                    <x-filament::icon icon="heroicon-m-arrow-left" style="width: 16px; height: 16px;" />
-                    Kembali
-                </a>
             </div>
         </div>
 
-        {{-- Title Removed --}}
-
-        <div class="kb-form-container">
+        <form wire:submit.prevent="create" class="flex flex-col">
             {{ $this->form }}
 
-            <div class="kb-form-footer">
-                <x-filament::button wire:click="create" color="primary">
-                    <x-filament::icon icon="heroicon-m-check" class="w-4 h-4 mr-1" />
-                    Simpan
-                </x-filament::button>
+            <div style="margin-top: 2rem;">
+                <div class="fi-form-actions flex flex-wrap items-center gap-3">
+                    <x-filament::button type="submit" color="primary">
+                        Buat
+                    </x-filament::button>
+
+                    <x-filament::button type="button" wire:click="createAnother" color="gray">
+                        Buat & buat lainnya
+                    </x-filament::button>
+
+                    <x-filament::button tag="a" href="/admin/kas-bank/detail/{{ $account->id }}" color="gray">
+                        Batal
+                    </x-filament::button>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 </x-filament-panels::page>

@@ -20,14 +20,16 @@ class Pengaturan extends Page
         ];
     }
 
-    public static function isNavigationItemActive(): bool
+    public static function getNavigationItemActiveRoutePattern(): string|array
     {
-        return request()->routeIs([
+        return [
             'filament.admin.pages.pengaturan',
             'filament.admin.pages.data-perusahaan',
             'filament.admin.pages.notification-settings',
             'filament.admin.pages.invoice-layout-settings',
             'filament.admin.pages.profile',
+            'filament.admin.pages.audit',
+            'filament.admin.pages.penomoran-otomatis',
             'filament.admin.resources.roles.*',
             'filament.admin.resources.pajak.*',
             'filament.admin.resources.users.*',
@@ -35,7 +37,7 @@ class Pengaturan extends Page
             'filament.admin.resources.shipping-methods.*',
             'filament.admin.resources.tags.*',
             'filament.admin.resources.payment-terms.*',
-        ]);
+        ];
     }
 
     public function getMaxContentWidth(): string

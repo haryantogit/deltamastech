@@ -11,8 +11,22 @@ class EditWarehouseTransfer extends EditRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/inventori-page') => 'Inventori',
-            '#' => 'Edit Transfer',
+            WarehouseTransferResource::getUrl('index') => 'Transfer Gudang',
+            '#' => 'Edit Transfer Gudang',
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index')),
+            \Filament\Actions\DeleteAction::make(),
         ];
     }
 }

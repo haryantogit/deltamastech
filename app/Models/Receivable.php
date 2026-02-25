@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Receivable extends Model
 {
+    use \App\Traits\HasAutomaticNumbering;
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'piutang';
+    }
+
+    protected function getNumberingField(): string
+    {
+        return 'invoice_number';
+    }
     protected $fillable = [
         'invoice_number',
         'contact_id',

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Actions\Action;
 use Filament\Pages\Page;
 
 class InventoriPage extends Page
@@ -23,6 +24,19 @@ class InventoriPage extends Page
     public function getMaxContentWidth(): string
     {
         return 'full';
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('kembali')
+                ->label('Kembali')
+                ->color('gray')
+                ->outlined()
+                ->size('sm')
+                ->icon('heroicon-o-arrow-left')
+                ->url(url('/admin')),
+        ];
     }
 
     protected static ?int $navigationSort = 7;

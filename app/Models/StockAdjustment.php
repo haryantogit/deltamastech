@@ -9,7 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StockAdjustment extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\HasAutomaticNumbering;
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'stock_adjustment';
+    }
 
     protected $fillable = [
         'number',

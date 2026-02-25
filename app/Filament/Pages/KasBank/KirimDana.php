@@ -18,6 +18,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms;
 use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\DB;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 
 class KirimDana extends Page implements HasForms
@@ -131,7 +132,7 @@ class KirimDana extends Page implements HasForms
                                 Forms\Components\TextInput::make('trans_no')
                                     ->label('Nomor')
                                     ->required(),
-                                Forms\Components\TextInput::make('memo')
+                                Forms\Components\TextInput::make('reference')
                                     ->label('Referensi'),
                             ])->columnSpan(1),
                     ])->columns(2),
@@ -168,68 +169,68 @@ class KirimDana extends Page implements HasForms
                             ->columns(12)
                             ->defaultItems(1)
                             ->addActionLabel('Tambah baris')
-                            ->live()
-                            ->afterStateUpdated(fn(Get $get, Set $set) => self::updateTotals($get, $set)),
+                    ]), // End of Section Item Tagihan
 
-                        Grid::make(12)
+                Grid::make(2)
+                    ->components([
+                        Group::make()
                             ->components([
-                                Forms\Components\Placeholder::make('spacer')
-                                    ->hiddenLabel()
-                                    ->content('')
-                                    ->columnSpan(6),
+                                Forms\Components\Textarea::make('memo')
+                                    ->label('Pesan')
+                                    ->rows(3),
+                                Forms\Components\FileUpload::make('attachment')
+                                    ->label('Lampiran')
+                                    ->columnSpanFull(),
+                            ])->columnSpan(1),
+
+                        Group::make()
+                            ->components([
+                                Forms\Components\TextInput::make('sub_total')
+                                    ->label('Sub Total')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->prefix('Rp')
+                                    ->extraInputAttributes(['class' => 'text-right']),
+
+                                Forms\Components\Toggle::make('has_withholding')
+                                    ->label('Pemotongan')
+                                    ->inline()
+                                    ->live()
+                                    ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                                        if (!$state)
+                                            $set('withholding_amount', 0);
+                                        self::updateTotals($get, $set);
+                                    }),
+
                                 Group::make()
                                     ->components([
-                                        Forms\Components\TextInput::make('sub_total')
-                                            ->label('Sub Total')
+                                        Forms\Components\Select::make('withholding_account_id')
+                                            ->label('Akun Pemotongan')
+                                            ->options(Account::where('category', '!=', 'Kas & Bank')
+                                                ->get()
+                                                ->mapWithKeys(fn($account) => [$account->id => "{$account->code} - {$account->name}"]))
+                                            ->searchable()
+                                            ->required(),
+                                        Forms\Components\TextInput::make('withholding_amount')
+                                            ->label('Nominal')
                                             ->numeric()
-                                            ->readOnly()
-                                            ->prefix('Rp')
-                                            ->extraInputAttributes(['class' => 'text-right']),
-
-                                        Forms\Components\Toggle::make('has_withholding')
-                                            ->label('Pemotongan')
-                                            ->inline()
-                                            ->live()
-                                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                                if (!$state)
-                                                    $set('withholding_amount', 0);
-                                                self::updateTotals($get, $set);
-                                            }),
-
-                                        Group::make()
-                                            ->components([
-                                                Forms\Components\Select::make('withholding_account_id')
-                                                    ->label('Akun Pemotongan')
-                                                    ->options(Account::where('category', '!=', 'Kas & Bank')
-                                                        ->get()
-                                                        ->mapWithKeys(fn($account) => [$account->id => "{$account->code} - {$account->name}"]))
-                                                    ->searchable()
-                                                    ->required(),
-                                                Forms\Components\TextInput::make('withholding_amount')
-                                                    ->label('Nominal')
-                                                    ->numeric()
-                                                    ->default(0)
-                                                    ->live(debounce: 500)
-                                                    ->afterStateUpdated(fn(Get $get, Set $set) => self::updateTotals($get, $set))
-                                                    ->prefix('Rp'),
-                                            ])
-                                            ->columns(2)
-                                            ->visible(fn(Get $get) => $get('has_withholding')),
-
-                                        Forms\Components\TextInput::make('total_amount')
-                                            ->label('Sisa Tagihan')
-                                            ->numeric()
-                                            ->readOnly()
-                                            ->prefix('Rp')
-                                            ->extraInputAttributes(['class' => 'text-right font-bold']),
+                                            ->default(0)
+                                            ->live(debounce: 500)
+                                            ->afterStateUpdated(fn(Get $get, Set $set) => self::updateTotals($get, $set))
+                                            ->prefix('Rp'),
                                     ])
-                                    ->columnSpan(6),
-                            ]),
-                    ]),
+                                    ->columns(2)
+                                    ->visible(fn(Get $get) => $get('has_withholding')),
 
-                Forms\Components\FileUpload::make('attachment')
-                    ->label('Attachment')
-                    ->columnSpanFull(),
+                                Forms\Components\TextInput::make('total_amount')
+                                    ->label('Sisa Tagihan')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->prefix('Rp')
+                                    ->extraInputAttributes(['class' => 'text-right font-bold', 'style' => 'font-size: 1.125rem;']),
+                            ])
+                            ->columnSpan(1),
+                    ])->columnSpanFull(),
             ])
             ->statePath('data');
     }
@@ -250,7 +251,30 @@ class KirimDana extends Page implements HasForms
         $set('total_amount', $total);
     }
 
-    public function create(): void
+    public function createAnother(): void
+    {
+        $this->create(true);
+    }
+
+    protected function getFormActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('create')
+                ->label('Buat')
+                ->submit('create')
+                ->color('primary'),
+            \Filament\Actions\Action::make('createAnother')
+                ->label('Buat & buat lainnya')
+                ->action('createAnother')
+                ->color('gray'),
+            \Filament\Actions\Action::make('cancel')
+                ->label('Batal')
+                ->url(fn() => '/admin/kas-bank/detail/' . $this->record)
+                ->color('gray'),
+        ];
+    }
+
+    public function create($createAnother = false): void
     {
         $data = $this->form->getState();
 
@@ -292,8 +316,8 @@ class KirimDana extends Page implements HasForms
                 'transaction_date' => $data['transaction_date'],
                 'reference_number' => $data['trans_no'],
                 'description' => 'Kirim Dana to ' . Contact::find($data['contact_id'])->name,
-                // 'total_amount' => ... I should calculate and save this too?
-                // 'memo' => ... logic seems to use description for desc.
+                'total_amount' => $data['total_amount'] ?? 0,
+                'memo' => $data['memo'] ?? null,
             ]);
 
             // Wait, I need to be careful. The previous code was:
@@ -371,6 +395,10 @@ class KirimDana extends Page implements HasForms
             ->success()
             ->send();
 
-        $this->redirect('/admin/kas-bank/detail/' . $this->account->id);
+        if ($createAnother) {
+            $this->redirect(request()->header('Referer'));
+        } else {
+            $this->redirect('/admin/kas-bank/detail/' . $this->account->id);
+        }
     }
 }

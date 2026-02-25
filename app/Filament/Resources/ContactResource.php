@@ -35,6 +35,7 @@ class ContactResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = null;
     protected static ?string $navigationLabel = 'Kontak';
+    protected static ?string $modelLabel = 'Kontak';
     protected static ?string $pluralModelLabel = 'Kontak';
     protected static ?int $navigationSort = 11;
 

@@ -9,7 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseDelivery extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\HasAutomaticNumbering;
+
+    public function getNumberingSettingKey(): ?string
+    {
+        return 'purchase_delivery';
+    }
 
     protected $fillable = [
         'number',

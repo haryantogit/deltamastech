@@ -176,24 +176,21 @@
                 <div class="kas-card-body">
                     <div class="kas-metrics">
                         <div>
-                            <div class="metric-item-value">0</div>
-                            <div class="metric-item-label">Saldo di bank</div>
-                        </div>
-                        <div>
                             <div class="metric-item-value large">
                                 {{ number_format($account['current_balance'], 0, ',', '.') }}
                             </div>
-                            <div class="metric-item-label">Saldo di kledo</div>
+                            <div class="metric-item-label">Saldo Buku</div>
                         </div>
                     </div>
 
                     <div class="kas-widget-container">
                         @livewire(\App\Filament\Widgets\AccountBalanceChart::class, [
-                            'accountId' => $account['id']
+                            'accountId' => $account['id'],
+                            'filters' => $filters,
                         ], key($account['id']))
-                </div>
-                        </div>
-                    </div>
+                                    </div>
+                                        </div>
+                                    </div>
         @endforeach
     </div>
 </x-filament-panels::page>
