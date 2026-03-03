@@ -55,7 +55,7 @@ class SalesOrderResource extends Resource
                         Section::make('Informasi Utama')
                             ->schema([
                                 Select::make('customer_id')
-                                    ->relationship('customer', 'name')
+                                    ->relationship('customer', 'name', fn($query) => $query->whereIn('type', ['customer', 'both']))
                                     ->required()
                                     ->label('Pelanggan')
                                     ->searchable()
@@ -189,140 +189,135 @@ class SalesOrderResource extends Resource
                                 Repeater::make('items')
                                     ->relationship()
                                     ->schema([
-                                        Select::make('product_id')
-                                            ->relationship('product', 'name', modifyQueryUsing: function (Builder $query, Get $get, $livewire) {
-                                                $warehouseId = $get('../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
-                                                if ($warehouseId) {
-                                                    $query->whereHas('stocks', function ($q) use ($warehouseId) {
-                                                        $q->where('warehouse_id', $warehouseId);
-                                                    });
-                                                }
-                                                return $query->active();
-                                            })
-                                            ->getOptionLabelFromRecordUsing(function ($record, Get $get, $livewire) {
-                                                $warehouseId = $get('../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
-                                                $stock = 0;
-                                                if ($warehouseId) {
-                                                    $stock = $record->stocks()->where('warehouse_id', $warehouseId)->value('quantity') ?? 0;
-                                                }
-                                                $stock = (float) $stock;
-                                                return "<div class='flex justify-between items-center w-full'><span>{$record->name}</span> <span class='text-xs font-medium px-2 py-0.5 rounded bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-400'>Stok: {$stock}</span></div>";
-                                            })
-                                            ->allowHtml()
-                                            ->label('Produk')
-                                            ->preload()
-                                            ->required()
-                                            ->searchable()
-                                            ->live()
-                                            ->afterStateUpdated(function ($state, Set $set, Get $get, $component) {
-                                                if ($product = \App\Models\Product::find($state)) {
-                                                    $set('unit_price', $product->sell_price);
-                                                    $set('description', $product->description);
-                                                    $set('unit_id', $product->unit_id);
-
-                                                    // Auto-populate tax
-                                                    $taxName = null;
-                                                    if ($product->sales_tax_id) {
-                                                        if (is_numeric($product->sales_tax_id)) {
-                                                            $tax = \App\Models\Tax::find($product->sales_tax_id);
-                                                            $taxName = $tax ? $tax->name : null;
-                                                        } else {
-                                                            $taxName = $product->sales_tax_id;
+                                        Grid::make(12)
+                                            ->schema([
+                                                Select::make('product_id')
+                                                    ->relationship('product', 'name', modifyQueryUsing: function (Builder $query, Get $get, $livewire) {
+                                                        $warehouseId = $get('../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
+                                                        if ($warehouseId) {
+                                                            $query->whereHas('stocks', function ($q) use ($warehouseId) {
+                                                                $q->where('warehouse_id', $warehouseId);
+                                                            });
                                                         }
-                                                    }
-                                                    $set('tax_name', $taxName);
-
-                                                    self::calculateLineTotal($get, $set, $component);
-                                                }
-                                            })
-                                            ->columnSpan(3),
-                                        TextInput::make('description')
-                                            ->label('Deskripsi')
-                                            ->columnSpan(2),
-                                        TextInput::make('quantity')
-                                            ->label('Kuantitas')
-                                            ->numeric()
-                                            ->default(1)
-                                            ->minValue(1)
-                                            ->required()
-                                            ->live(debounce: 500)
-                                            ->suffixAction(
-                                                \Filament\Actions\Action::make('checkStock')
-                                                    ->button()
-                                                    ->size('sm')
-                                                    ->color(function (Get $get, $state) {
-                                                        $productId = $get('product_id');
-                                                        $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
-                                                        if (!$productId || !$warehouseId)
-                                                            return 'gray';
-
-                                                        $product = \App\Models\Product::find($productId);
-                                                        if (!$product || !$product->track_inventory)
-                                                            return 'gray';
-
-                                                        $stock = (float) $product->getStockForWarehouse($warehouseId);
-                                                        $requestedQty = (float) $state;
-                                                        return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
+                                                        return $query->active();
                                                     })
-                                                    ->label(function (Get $get) {
-                                                        $productId = $get('product_id');
-                                                        $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
-                                                        if (!$productId || !$warehouseId)
-                                                            return '0';
-
-                                                        $product = \App\Models\Product::find($productId);
-                                                        if (!$product || !$product->track_inventory)
-                                                            return '0';
-
-                                                        $stock = $product->getStockForWarehouse($warehouseId);
-                                                        return number_format($stock);
+                                                    ->getOptionLabelFromRecordUsing(function ($record, Get $get, $livewire) {
+                                                        $warehouseId = $get('../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
+                                                        $stock = 0;
+                                                        if ($warehouseId) {
+                                                            $stock = $record->stocks()->where('warehouse_id', $warehouseId)->value('quantity') ?? 0;
+                                                        }
+                                                        $stock = (float) $stock;
+                                                        return "<div class='flex justify-between items-center w-full'><span>{$record->name}</span> <span class='text-xs font-medium px-2 py-0.5 rounded bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-400'>Stok: " . number_format($stock) . "</span></div>";
                                                     })
-                                            )
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
-                                            ->columnSpan(2),
-                                        Select::make('unit_id')
-                                            ->relationship('unit', 'name')
-                                            ->label('Satuan')
-                                            ->placeholder('Pilih')
-                                            ->searchable(false)
-                                            ->columnSpan(1),
-                                        TextInput::make('discount_percent')
-                                            ->label('Diskon (%)')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->live(debounce: 500)
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
-                                            ->columnSpan(1),
-                                        TextInput::make('unit_price')
-                                            ->label('Harga')
-                                            ->numeric()
-                                            ->required()
-                                            ->readOnly()
-                                            ->live(debounce: 500)
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
-                                            ->columnSpan(1),
-                                        Select::make('tax_name')
-                                            ->label('Pajak')
-                                            ->placeholder('Pilih')
-                                            ->options(\App\Models\Tax::pluck('name', 'name')->toArray())
-                                            ->default(null)
-                                            ->nullable()
-                                            ->live()
-                                            ->searchable(false)
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
-                                            ->columnSpan(1),
-                                        Hidden::make('tax_amount'),
-                                        TextInput::make('total_price')
-                                            ->label('Total')
-                                            ->numeric()
-                                            ->readOnly()
-                                            ->dehydrated()
-                                            ->columnSpan(1),
+                                                    ->allowHtml()
+                                                    ->label('Produk')
+                                                    ->preload()
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->live()
+                                                    ->afterStateUpdated(function ($state, Set $set, Get $get, $component) {
+                                                        if ($product = \App\Models\Product::find($state)) {
+                                                            $set('unit_price', $product->sell_price);
+                                                            $set('description', $product->description);
+                                                            $set('unit_id', $product->unit_id);
+
+                                                            // Auto-populate tax
+                                                            $taxName = 'Bebas Pajak';
+                                                            if ($product->sales_tax_id) {
+                                                                if (is_numeric($product->sales_tax_id)) {
+                                                                    $tax = \App\Models\Tax::find($product->sales_tax_id);
+                                                                    $taxName = $tax ? $tax->name : 'Bebas Pajak';
+                                                                } else {
+                                                                    $taxName = $product->sales_tax_id;
+                                                                }
+                                                            }
+                                                            $set('tax_name', $taxName);
+
+                                                            self::calculateLineTotal($get, $set, $component);
+                                                        }
+                                                    })
+                                                    ->columnSpan(4),
+                                                TextInput::make('description')
+                                                    ->label('Deskripsi')
+                                                    ->columnSpan(4),
+
+                                                TextInput::make('quantity')
+                                                    ->label('Kuantitas')
+                                                    ->numeric()
+                                                    ->default(1)
+                                                    ->minValue(1)
+                                                    ->required()
+                                                    ->live(debounce: 500)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->suffixAction(function (Get $get, $livewire) {
+                                                        $productId = $get('product_id');
+                                                        $warehouseId = $get('../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
+                                                        if ($productId && $warehouseId) {
+                                                            $stock = \App\Models\Stock::where('product_id', $productId)
+                                                                ->where('warehouse_id', $warehouseId)
+                                                                ->value('quantity') ?? 0;
+                                                            return \Filament\Actions\Action::make('stock')
+                                                                ->label((string) $stock)
+                                                                ->color($stock > 0 ? 'success' : 'danger')
+                                                                ->badge()
+                                                                ->disabled();
+                                                        }
+                                                        return null;
+                                                    })
+                                                    ->columnSpan(2),
+                                                Select::make('unit_id')
+                                                    ->relationship('unit', 'name')
+                                                    ->label('Satuan')
+                                                    ->placeholder('Pilih')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->columnSpan(2)
+                                                    ->live(),
+                                            ]),
+
+                                        Grid::make(12)
+                                            ->schema([
+                                                TextInput::make('unit_price')
+                                                    ->label('Harga')
+                                                    ->numeric()
+                                                    ->required()
+                                                    ->readOnly()
+                                                    ->live(debounce: 500)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->columnSpan(3),
+
+                                                TextInput::make('discount_percent')
+                                                    ->label('Diskon (%)')
+                                                    ->numeric()
+                                                    ->default(0)
+                                                    ->live(debounce: 500)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->columnSpan(3),
+
+                                                Select::make('tax_name')
+                                                    ->label('Pajak')
+                                                    ->options(function () {
+                                                        $taxes = \App\Models\Tax::pluck('name', 'name')->toArray();
+                                                        return ['Bebas Pajak' => 'Bebas Pajak'] + $taxes;
+                                                    })
+                                                    ->default('Bebas Pajak')
+                                                    ->selectablePlaceholder(false)
+                                                    ->live()
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->columnSpan(3),
+
+                                                TextInput::make('total_price')
+                                                    ->label('Total')
+                                                    ->numeric()
+                                                    ->readOnly()
+                                                    ->dehydrated()
+                                                    ->columnSpan(3),
+                                            ]),
                                     ])
-                                    ->columns(12)
                                     ->columnSpanFull()
                                     ->addActionLabel('Tambah Item')
-                                    ->live(debounce: 500)
+                                    ->live()
                                     ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set)),
                             ]),
 
@@ -723,12 +718,16 @@ class SalesOrderResource extends Resource
         return $table
             ->modifyQueryUsing(fn(Builder $query) => $query->with(['customer', 'warehouse', 'paymentTerm', 'tags']))
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('number')
                     ->searchable()
                     ->sortable()
                     ->label('Nomor')
                     ->color('primary')
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->url(fn($record) => route('filament.admin.resources.sales-orders.view', $record)),
                 Tables\Columns\TextColumn::make('customer.name')
                     ->sortable()
                     ->searchable()
@@ -754,12 +753,10 @@ class SalesOrderResource extends Resource
                 Tables\Columns\TextColumn::make('due_date')
                     ->date('d/m/Y')
                     ->sortable()
-                    ->label('Tgl. Jatuh Tempo')
-                    ->toggleable(),
+                    ->label('Tgl. Jatuh Tempo'),
                 Tables\Columns\TextColumn::make('paymentTerm.name')
                     ->sortable()
-                    ->label('Termin')
-                    ->toggleable(),
+                    ->label('Termin'),
                 Tables\Columns\TextColumn::make('tags.name')
                     ->badge()
                     ->separator(',')
@@ -797,8 +794,7 @@ class SalesOrderResource extends Resource
                     ->money('IDR')
                     ->sortable()
                     ->alignRight()
-                    ->color(fn($state) => $state > 0 ? 'danger' : 'success')
-                    ->toggleable(),
+                    ->color(fn($state) => $state > 0 ? 'danger' : 'success'),
                 Tables\Columns\TextColumn::make('total_amount')
                     ->numeric()
                     ->sortable()
@@ -807,28 +803,10 @@ class SalesOrderResource extends Resource
                     ->weight('bold')
                     ->alignRight(),
             ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('customer_id')
-                    ->relationship('customer', 'name', modifyQueryUsing: fn($query) => $query->where('type', 'customer'))
-                    ->label('Pelanggan')
-                    ->searchable()
-                    ->preload(),
-                Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'draft' => 'Draf',
-                        'confirmed' => 'Dikonfirmasi',
-                        'processing' => 'Processing',
-                        'completed' => 'Selesai',
-                        'shipped' => 'Dikirim',
-                        'delivered' => 'Terkirim',
-                        'cancelled' => 'Dibatalkan',
-                    ])
-                    ->label('Status'),
-            ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make(),
-                    EditAction::make(),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make(),
+                    \Filament\Actions\EditAction::make(),
                     \Filament\Actions\DeleteAction::make(),
                     Action::make('createDelivery')
                         ->label('Buat Pengiriman')
@@ -859,9 +837,10 @@ class SalesOrderResource extends Resource
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->defaultSort('date', 'desc');
     }

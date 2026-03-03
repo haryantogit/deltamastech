@@ -13,6 +13,7 @@ class Company extends Model
         'address',
         'npwp',
         'logo_path',
+        'login_background_path',
         'notification_settings',
         'invoice_layout_settings',
     ];

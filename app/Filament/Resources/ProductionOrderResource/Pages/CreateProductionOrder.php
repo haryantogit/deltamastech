@@ -14,8 +14,7 @@ class CreateProductionOrder extends CreateRecord
     {
         return [
             url('/admin') => 'Beranda',
-            url('/admin/produksi-page') => 'Produksi',
-            url('/admin/production-orders') => 'Konversi Produk',
+            url('/admin/production-orders') => 'Produksi',
             '#' => 'Buat Konversi Produk',
         ];
     }

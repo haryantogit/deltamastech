@@ -6,7 +6,8 @@
     $transactionPaginator = $data['transactionPaginator'] ?? null;
 
     $fmt = function ($num) {
-        if ($num == 0) return '0';
+        if ($num == 0)
+            return '0';
         return number_format($num, 0, ',', '.');
     };
 @endphp
@@ -15,7 +16,7 @@
     <style>
         .custom-tab-button {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 0.5rem 1.5rem;
+            padding: 0.4rem 1.25rem;
             border-radius: 6px;
             font-size: 0.8125rem;
             font-weight: 700;
@@ -37,125 +38,38 @@
         }
 
         .expand-btn {
-            width: 1.1rem; height: 1.1rem; 
-            background: #1e293b; border: 1px solid rgba(255,255,255,0.1); 
-            border-radius: 4px; display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; color: #3b82f6; font-weight: bold; font-family: monospace;
+            width: 1.25rem; height: 1.25rem; 
+            background: rgba(59, 130, 246, 0.1); 
+            border: 1px solid rgba(59, 130, 246, 0.2); 
+            border-radius: 6px; 
+            display: grid; place-items: center;
+            line-height: 0;
+            cursor: pointer; color: #3b82f6; 
+            font-weight: 800; font-size: 0.95rem;
+            transition: all 0.2s ease;
+            user-select: none;
         }
-        .expand-btn:hover { border-color: #3b82f6; }
-        
-        /* FILAMENT TABLE FOOTER STYLE - Exact Sync */
-        .pagination-footer {
-            margin-top: 1rem;
-            padding: 1rem 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .pagination-status {
-            font-size: 0.8125rem;
-            color: #94a3b8;
-            font-weight: 500;
-        }
-
-        /* Center Per-Page Selector Capsule */
-        .per-page-capsule {
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 0 0.75rem;
-            height: 2.25rem;
-            gap: 0;
-        }
-        .per-page-label {
-            font-size: 0.75rem;
-            color: #94a3b8;
-            font-weight: 500;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            padding-right: 0.75rem;
-            height: 100%;
-            display: flex;
-            align-items: center;
-        }
-        .per-page-capsule select {
-            background: transparent;
-            border: none;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: #f1f5f9;
-            outline: none;
-            cursor: pointer;
-            padding: 0 0.5rem 0 0.75rem;
-            margin: 0;
-            appearance: none;
-            -webkit-appearance: none;
-        }
-
-        /* Right Numeric Pagination Capsule */
-        .numeric-capsule nav { display: flex; align-items: center; }
-        .numeric-capsule nav > div:first-child { display: none !important; }
-        .numeric-capsule nav p { display: none !important; }
-        
-        .numeric-capsule nav div:last-child {
-            display: flex !important;
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 10px !important;
-            overflow: hidden !important;
-        }
-        .numeric-capsule a, .numeric-capsule span {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 2.5rem !important;
-            height: 2.25rem !important;
-            padding: 0 0.75rem !important;
-            font-size: 0.8125rem !important;
-            font-weight: 600 !important;
-            color: #f1f5f9 !important;
-            border: none !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
-            background: transparent !important;
-            transition: all 0.2s !important;
-            text-decoration: none !important;
-        }
-        .numeric-capsule div:last-child > :last-child { border-right: none !important; }
-        
-        .numeric-capsule a:hover { background: rgba(255, 255, 255, 0.05) !important; color: #3b82f6 !important; }
-        
-        .numeric-capsule .active span { 
-            background: rgba(59, 130, 246, 0.1) !important; 
-            color: #3b82f6 !important; 
-            font-weight: 700 !important;
-        }
-
-        .numeric-capsule [aria-disabled="true"] span {
-            color: #475569 !important;
-            cursor: default !important;
+        .expand-btn:hover { 
+            background: #3b82f6; 
+            color: white;
+            border-color: #3b82f6;
+            transform: scale(1.05);
         }
         
-        /* Dark mode specific tweak if needed */
-        .dark .per-page-capsule { background: rgba(0,0,0,0.2); }
-        .dark .numeric-capsule nav div:last-child { background: rgba(0,0,0,0.2); }
+        /* Table Border Sync for Light Mode */
+        table { border-spacing: 0; border: 1px solid #f1f5f9; border-radius: 8px; overflow: hidden; }
+        .dark table { border-color: rgba(255, 255, 255, 0.05); }
+        tr { border-bottom: 1px solid #f1f5f9; }
+        .dark tr { border-bottom-color: rgba(255, 255, 255, 0.05); }
+        thead tr { background: #f8fafc; border-bottom: 2px solid #e2e8f0; }
+        .dark thead tr { background: rgba(255, 255, 255, 0.02); border-bottom-color: rgba(255, 255, 255, 0.1); }
     </style>
 
-    <!-- Secondary Toolbar: Tabs & Range -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <!-- Secondary Toolbar: Tabs -->
+    <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem;">
         <div style="display: flex; align-items: center; background: rgba(128,128,128,0.04); border: 1px solid rgba(128,128,128,0.08); padding: 4px; border-radius: 8px;">
             <button wire:click="setViewMode('compact')" class="custom-tab-button {{ $viewMode === 'compact' ? 'active' : 'inactive' }}">Compact</button>
             <button wire:click="setViewMode('expanded')" class="custom-tab-button {{ $viewMode === 'expanded' ? 'active' : 'inactive' }}">Expanded</button>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(128,128,128,0.04); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid rgba(128,128,128,0.08);">
-            <x-heroicon-o-calendar style="width: 1rem; height: 1rem; color: #94a3b8;"/>
-            <div style="font-size: 0.8125rem; font-weight: 600; color: #64748b;" class="dark:text-gray-400">
-                {{ Carbon\Carbon::parse($startDate)->format('d/m/Y') }} — {{ Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
-            </div>
         </div>
     </div>
 
@@ -291,30 +205,17 @@
             </table>
         </div>
 
-        <div class="pagination-footer">
-            <!-- Left: Status Text -->
-             <div class="pagination-status">
-                Menampilkan {{ $paginator->firstItem() }} sampai {{ $paginator->lastItem() }} dari {{ number_format($totalCount, 0, ',', '.') }} hasil
-            </div>
-
-            <!-- Center: Per Page Capsule - Refined Sync -->
-            <div class="per-page-capsule">
-                <span class="per-page-label">per halaman</span>
-                <select wire:model.live="perPage">
-                    <option value="15">15</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="500">500</option>
-                </select>
-                <x-heroicon-m-chevron-down style="width: 1rem; height: 1rem; color: #64748b; margin-left: -0.25rem;" />
-            </div>
-
-            <!-- Right: Numeric Links - Refined Sync -->
-             <div class="numeric-capsule">
-                 {{ $paginator->links() }}
-             </div>
-        </div>
     </x-filament::section>
+
+    @if ($paginator->hasPages() || count([5, 10, 20, 50, 100, 'all']) > 1)
+        <div style="margin-top: 2rem; margin-bottom: 1rem;">
+            <x-filament::pagination
+                :paginator="$paginator"
+                :page-options="[5, 10, 20, 50, 100, 'all']"
+                current-page-option-property="perPage"
+            />
+        </div>
+    @endif
 
     <style>
         @media print { .x-filament-panels-page-header-actions, .custom-tab-button, .expand-btn, .pagination-footer { display: none !important; } }

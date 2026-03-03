@@ -10,7 +10,7 @@ class EditPurchaseReturn extends EditRecord
 {
     protected static string $resource = PurchaseReturnResource::class;
 
-    protected static ?string $title = 'Edit Retur Pembelian';
+    protected static ?string $title = 'Ubah Retur Pembelian';
 
     public function getMaxContentWidth(): string|null
     {
@@ -23,7 +23,7 @@ class EditPurchaseReturn extends EditRecord
             url('/admin') => 'Beranda',
             url('/admin/pembelian-page') => 'Pembelian',
             PurchaseReturnResource::getUrl('index') => 'Retur Pembelian',
-            '#' => 'Edit Retur',
+            '#' => 'Ubah Retur Pembelian',
         ];
     }
 
@@ -59,6 +59,24 @@ class EditPurchaseReturn extends EditRecord
         $data['sub_total'] = $record->sub_total ?? 0;
         $data['tax_amount'] = $record->tax_amount ?? 0;
         $data['total_amount'] = $record->total_amount ?? 0;
+
+        $data['items'] = $record->items->map(function ($item) {
+            return [
+                'product_id' => $item->product_id,
+                'product_name' => $item->product?->name ?? '-',
+                'unit_id' => $item->unit_id,
+                'unit_name' => $item->unit?->name ?? '-',
+                'invoice_qty' => (float) $item->invoice_qty,
+                'returnable_qty' => (float) $item->returnable_qty,
+                'return_qty' => (float) $item->return_qty,
+                'unit_price' => (float) $item->unit_price,
+                'discount_percent' => (float) $item->discount_percent,
+                'tax_name' => $item->tax_name,
+                'tax_amount' => (float) $item->tax_amount,
+                'total_price' => (float) $item->total_price,
+            ];
+        })->toArray();
+
         return $data;
     }
 

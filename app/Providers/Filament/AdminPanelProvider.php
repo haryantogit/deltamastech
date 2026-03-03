@@ -234,6 +234,52 @@ class AdminPanelProvider extends PanelProvider
                             print-color-adjust: exact !important;
                         }
                     }
+
+                    /* --- LOGIN PAGE FULL SCREEN FIX --- */
+                    /* Force the entire page to be exactly viewport height with no gaps */
+                    /* Only applies when fi-simple-layout exists (login/simple pages) */
+                    body.fi-body:has(.fi-simple-layout) {
+                        height: 100vh !important;
+                        max-height: 100vh !important;
+                        overflow: hidden !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: white !important;
+                    }
+                    html:has(.fi-simple-layout) {
+                        height: 100vh !important;
+                        overflow: hidden !important;
+                    }
+                    .fi-simple-layout {
+                        height: 100vh !important;
+                        min-height: 0 !important;
+                        max-height: 100vh !important;
+                        overflow: hidden !important;
+                        background: transparent !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    .fi-simple-main-ctn {
+                        flex: 1 !important;
+                        min-height: 0 !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        display: flex !important;
+                        height: 100% !important;
+                    }
+                    .fi-simple-main {
+                        flex: 1 !important;
+                        min-height: 0 !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        max-width: 100% !important;
+                        width: 100% !important;
+                        height: 100% !important;
+                    }
+                    .fi-simple-page {
+                        height: 100% !important;
+                        min-height: 0 !important;
+                    }
                 </style>
                 HTML
             )

@@ -58,12 +58,6 @@ class SalesReturnObserver
             if ($salesReturn->sales_invoice_id) {
                 $invoice = \App\Models\SalesInvoice::find($salesReturn->sales_invoice_id);
                 if ($invoice) {
-                    $invoice->balance_due += $salesReturn->total_amount;
-                    if ($invoice->balance_due > 0 && $invoice->payment_status === 'paid') {
-                        $invoice->payment_status = 'partial';
-                    }
-                    $invoice->save();
-
                     // Remove payment
                     $receivable = \App\Models\Receivable::where('reference', $invoice->invoice_number)->first();
                     if ($receivable) {
@@ -186,12 +180,6 @@ class SalesReturnObserver
         if ($return->sales_invoice_id) {
             $invoice = \App\Models\SalesInvoice::find($return->sales_invoice_id);
             if ($invoice) {
-                $invoice->balance_due = max(0, $invoice->balance_due - $return->total_amount);
-                if ($invoice->balance_due == 0) {
-                    $invoice->payment_status = 'paid';
-                }
-                $invoice->save();
-
                 // Update Receivable as well
                 $receivable = \App\Models\Receivable::where('reference', $invoice->invoice_number)->first();
                 if ($receivable) {

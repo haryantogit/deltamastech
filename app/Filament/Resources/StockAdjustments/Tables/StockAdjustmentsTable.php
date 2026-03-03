@@ -17,6 +17,9 @@ class StockAdjustmentsTable
         return $table
             ->modifyQueryUsing(fn(\Illuminate\Database\Eloquent\Builder $query) => $query->with(['warehouse']))
             ->columns([
+                \Filament\Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 \Filament\Tables\Columns\TextColumn::make('number')
                     ->label('Nomor')
                     ->searchable()
@@ -42,16 +45,17 @@ class StockAdjustmentsTable
                 //
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make(),
-                    EditAction::make(),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make(),
+                    \Filament\Actions\EditAction::make(),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 }

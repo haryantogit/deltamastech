@@ -16,11 +16,16 @@ class SalesReturnsTable
     {
         return $table
             ->columns([
+                \Filament\Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 \Filament\Tables\Columns\TextColumn::make('number')
                     ->label('Nomor')
                     ->searchable()
                     ->sortable()
-                    ->copyable(),
+                    ->color('primary')
+                    ->weight('bold')
+                    ->url(fn($record) => route('filament.admin.resources.sales-returns.view', $record)),
                 \Filament\Tables\Columns\TextColumn::make('invoice.invoice_number')
                     ->label('Faktur Asal')
                     ->searchable()
@@ -55,25 +60,18 @@ class SalesReturnsTable
                     }),
             ])
             ->defaultSort('created_at', 'desc')
-            ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('status')
-                    ->label('Status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'confirmed' => 'Disetujui',
-                    ]),
-            ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make()->label('Lihat'),
-                    EditAction::make()->label('Ubah'),
-                    DeleteAction::make()->label('Hapus'),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make()->label('Lihat'),
+                    \Filament\Actions\EditAction::make()->label('Ubah'),
+                    \Filament\Actions\DeleteAction::make()->label('Hapus'),
                 ])->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 }

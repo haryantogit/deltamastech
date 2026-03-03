@@ -15,6 +15,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms\Components\Placeholder;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -28,8 +30,6 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\Tag as TagModel;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Support\HtmlString;
 
 class ProductionOrderResource extends Resource
@@ -38,11 +38,11 @@ class ProductionOrderResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog';
     protected static string|\UnitEnum|null $navigationGroup = null;
-    protected static bool $shouldRegisterNavigation = false;
-    protected static ?string $navigationLabel = 'Konversi Produk';
-    protected static ?string $modelLabel = 'Konversi Produk';
-    protected static ?string $pluralModelLabel = 'Konversi Produk';
-    protected static ?int $navigationSort = 1;
+    protected static bool $shouldRegisterNavigation = true;
+    protected static ?string $navigationLabel = 'Produksi';
+    protected static ?string $modelLabel = 'Produksi';
+    protected static ?string $pluralModelLabel = 'Produksi';
+    protected static ?int $navigationSort = 6;
 
     public static function form(Schema $form): Schema
     {
@@ -220,73 +220,87 @@ class ProductionOrderResource extends Resource
                             ->addable(false)
                             ->deletable(false)
                             ->reorderable(false)
-                            ->schema([
-                                Select::make('product_id')
-                                    ->label('Produk')
-                                    ->relationship('product', 'name')
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->columnSpan(4),
-                                TextInput::make('quantity')
-                                    ->label('Kuantitas')
-                                    ->numeric()
-                                    ->required()
-                                    ->columnSpan(2)
-                                    ->live(onBlur: true)
-                                    ->suffixAction(
-                                        Action::make('checkStock')
-                                            ->button()
-                                            ->size('sm')
-                                            ->color(function (Get $get, $state) {
-                                                $productId = $get('product_id');
-                                                $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
-                                                if (!$productId || !$warehouseId)
-                                                    return 'gray';
-
-                                                $product = Product::find($productId);
-                                                if (!$product)
-                                                    return 'gray';
-
-                                                $stock = (float) $product->getStockForWarehouse($warehouseId);
-                                                $required = (float) $state;
-                                                return ($stock < $required || $stock <= 0) ? 'danger' : 'success';
-                                            })
-                                            ->label(function (Get $get) {
-                                                $productId = $get('product_id');
-                                                $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
-
-                                                if (!$productId || !$warehouseId)
-                                                    return '0';
-
-                                                $product = Product::find($productId);
-                                                if (!$product)
-                                                    return '0';
-
-                                                $stock = (float) $product->getStockForWarehouse($warehouseId);
-                                                return number_format($stock);
-                                            })
-                                    )
-                                    ->afterStateUpdated(function (Set $set, Get $get) {
-                                        $set('total_price', (float) $get('quantity') * (float) $get('unit_price'));
-                                    }),
-                                TextInput::make('unit_name')
-                                    ->label('Satuan')
-                                    ->readOnly()
-                                    ->columnSpan(2),
-                                TextInput::make('unit_price')
-                                    ->label('HPP')
-                                    ->numeric()
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->columnSpan(2),
-                                TextInput::make('total_price')
-                                    ->label('Jumlah')
-                                    ->numeric()
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->columnSpan(2),
+                            ->minItems(1)
+                            ->validationMessages([
+                                'minItems' => 'Bahan baku tidak boleh kosong. Pastikan produk hasil memiliki bahan baku yang terdefinisi.',
                             ])
-                            ->columns(12)
+                            ->rules([
+                                function (Get $get) {
+                                    return function (string $attribute, $value, \Closure $fail) use ($get) {
+                                        $warehouseId = $get('warehouse_id');
+                                        if (!$warehouseId)
+                                            return;
+
+                                        foreach ($value as $item) {
+                                            $productId = $item['product_id'] ?? null;
+                                            $requiredQty = (float) ($item['quantity'] ?? 0);
+
+                                            if ($productId) {
+                                                $stock = \App\Models\Stock::where('product_id', $productId)
+                                                    ->where('warehouse_id', $warehouseId)
+                                                    ->value('quantity') ?? 0;
+
+                                                if ($stock < $requiredQty) {
+                                                    $product = \App\Models\Product::find($productId);
+                                                    $productName = $product?->name ?? 'Produk';
+                                                    $fail("Stok tidak cukup untuk {$productName}. Dibutuhkan: " . number_format($requiredQty) . ", Tersedia: " . number_format($stock));
+                                                }
+                                            }
+                                        }
+                                    };
+                                }
+                            ])
+                            ->schema([
+                                Grid::make(12)
+                                    ->schema([
+                                        Select::make('product_id')
+                                            ->label('Produk')
+                                            ->relationship('product', 'name')
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->columnSpan(4),
+                                        TextInput::make('quantity')
+                                            ->label('Kuantitas')
+                                            ->numeric()
+                                            ->required()
+                                            ->columnSpan(2)
+                                            ->live(onBlur: true)
+                                            ->suffixAction(function (Get $get, $livewire) {
+                                                $productId = $get('product_id');
+                                                $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
+                                                if ($productId && $warehouseId) {
+                                                    $stock = \App\Models\Stock::where('product_id', $productId)
+                                                        ->where('warehouse_id', $warehouseId)
+                                                        ->value('quantity') ?? 0;
+                                                    return \Filament\Actions\Action::make('stock')
+                                                        ->label((string) $stock)
+                                                        ->color($stock > 0 ? 'success' : 'danger')
+                                                        ->badge()
+                                                        ->disabled();
+                                                }
+                                                return null;
+                                            })
+                                            ->afterStateUpdated(function (Set $set, Get $get) {
+                                                $set('total_price', (float) $get('quantity') * (float) $get('unit_price'));
+                                            }),
+                                        TextInput::make('unit_name')
+                                            ->label('Satuan')
+                                            ->readOnly()
+                                            ->columnSpan(2),
+                                        TextInput::make('unit_price')
+                                            ->label('HPP')
+                                            ->numeric()
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->columnSpan(2),
+                                        TextInput::make('total_price')
+                                            ->label('Jumlah')
+                                            ->numeric()
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->columnSpan(2),
+                                    ]),
+                            ])
                             ->live()
                             ->afterStateUpdated(fn(Set $set, Get $get) => static::updateTotalCost($set, $get('items'), $get('costs'), $get('quantity'))),
 
@@ -311,41 +325,43 @@ class ProductionOrderResource extends Resource
                         Repeater::make('costs')
                             ->relationship('costs')
                             ->schema([
-                                Select::make('account_id')
-                                    ->label('Akun')
-                                    ->relationship('account', 'name')
-                                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->code} - {$record->name}")
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->columnSpan(4),
-                                TextInput::make('unit_amount')
-                                    ->label('Per Pcs')
-                                    ->numeric()
-                                    ->required()
-                                    ->live()
-                                    ->afterStateUpdated(function (Set $set, Get $get) {
-                                        $set('amount', (float) ($get('unit_amount') ?? 0) * (float) ($get('multiplier') ?? 1));
-                                    })
-                                    ->columnSpan(2),
-                                TextInput::make('multiplier')
-                                    ->label('Pengali')
-                                    ->numeric()
-                                    ->required()
-                                    ->default(1)
-                                    ->live()
-                                    ->afterStateUpdated(function (Set $set, Get $get) {
-                                        $set('amount', (float) ($get('unit_amount') ?? 0) * (float) ($get('multiplier') ?? 1));
-                                    })
-                                    ->columnSpan(2),
-                                TextInput::make('amount')
-                                    ->label('Jumlah')
-                                    ->numeric()
-                                    ->readOnly()
-                                    ->required()
-                                    ->columnSpan(4),
+                                Grid::make(12)
+                                    ->schema([
+                                        Select::make('account_id')
+                                            ->label('Akun')
+                                            ->relationship('account', 'name')
+                                            ->getOptionLabelFromRecordUsing(fn($record) => "{$record->code} - {$record->name}")
+                                            ->searchable()
+                                            ->preload()
+                                            ->required()
+                                            ->columnSpan(6),
+                                        TextInput::make('unit_amount')
+                                            ->label('Per Pcs')
+                                            ->numeric()
+                                            ->required()
+                                            ->live()
+                                            ->afterStateUpdated(function (Set $set, Get $get) {
+                                                $set('amount', (float) ($get('unit_amount') ?? 0) * (float) ($get('multiplier') ?? 1));
+                                            })
+                                            ->columnSpan(2),
+                                        TextInput::make('multiplier')
+                                            ->label('Pengali')
+                                            ->numeric()
+                                            ->required()
+                                            ->default(1)
+                                            ->live()
+                                            ->afterStateUpdated(function (Set $set, Get $get) {
+                                                $set('amount', (float) ($get('unit_amount') ?? 0) * (float) ($get('multiplier') ?? 1));
+                                            })
+                                            ->columnSpan(2),
+                                        TextInput::make('amount')
+                                            ->label('Jumlah')
+                                            ->numeric()
+                                            ->readOnly()
+                                            ->required()
+                                            ->columnSpan(2),
+                                    ]),
                             ])
-                            ->columns(12)
                             ->live()
                             ->afterStateUpdated(fn(Set $set, Get $get) => static::updateTotalCost($set, $get('items'), $get('costs'), $get('quantity'))),
                         Grid::make(12)
@@ -400,6 +416,9 @@ class ProductionOrderResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('number')
                     ->label('Nomor')
                     ->searchable()
@@ -430,7 +449,7 @@ class ProductionOrderResource extends Resource
                 //
             ])
             ->actions([
-                EditAction::make(),
+                \Filament\Actions\EditAction::make(),
                 Action::make('complete')
                     ->label('Selesaikan Produksi')
                     ->icon('heroicon-o-check-circle')
@@ -473,9 +492,10 @@ class ProductionOrderResource extends Resource
                     }),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 

@@ -27,7 +27,7 @@ class ProduksiPage extends Page
         return 'full';
     }
 
-    protected static bool $shouldRegisterNavigation = true;
+    protected static bool $shouldRegisterNavigation = false;
 
     protected function getHeaderActions(): array
     {

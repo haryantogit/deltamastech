@@ -61,16 +61,17 @@ class PaymentTermResource extends Resource
                 //
             ])
             ->actions([
-                ActionGroup::make([
-                    EditAction::make(),
-                    DeleteAction::make(),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\EditAction::make(),
+                    \Filament\Actions\DeleteAction::make(),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 

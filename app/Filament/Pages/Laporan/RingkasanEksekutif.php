@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class RingkasanEksekutif extends Page
 {
+    public string $statsFilter = 'bulan';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected string $view = 'filament.pages.laporan.ringkasan-eksekutif';
@@ -37,29 +38,67 @@ class RingkasanEksekutif extends Page
         return 'full';
     }
 
+    public ?string $startDate = null;
+    public ?string $endDate = null;
+
+    public function mount(): void
+    {
+        if (!$this->startDate) {
+            $this->startDate = now()->startOfYear()->toDateString();
+        }
+        if (!$this->endDate) {
+            $this->endDate = now()->toDateString();
+        }
+    }
+
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startDate = $this->startDate ?? now()->startOfYear()->toDateString();
+        $endDate = $this->endDate ?? now()->toDateString();
+        $startFmt = \Carbon\Carbon::parse($startDate)->format('d/m/Y');
+        $endFmt = \Carbon\Carbon::parse($endDate)->format('d/m/Y');
+
+        $dateDisplay = $startFmt === $endFmt
+            ? $startFmt
+            : $startFmt . ' &mdash; ' . $endFmt;
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $dateDisplay . '</span>
+            </div>
+        ');
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('panduan')
-                ->label('Panduan')
+            Action::make('filter')
+                ->label('Filter')
+                ->icon('heroicon-m-funnel')
                 ->color('gray')
-                ->icon('heroicon-o-question-mark-circle')
-                ->url('#'),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->color('gray')
-                ->icon('heroicon-o-arrow-top-right-on-square')
-                ->url('#'),
-            Action::make('bagikan')
-                ->label('Bagikan')
-                ->color('gray')
-                ->icon('heroicon-o-share')
-                ->url('#'),
+                ->form([
+                    \Filament\Forms\Components\DatePicker::make('startDate')
+                        ->hiddenLabel()
+                        ->default($this->startDate)
+                        ->required(),
+                    \Filament\Forms\Components\DatePicker::make('endDate')
+                        ->hiddenLabel()
+                        ->default($this->endDate)
+                        ->required(),
+                ])
+                ->action(function (array $data): void {
+                    $this->startDate = $data['startDate'];
+                    $this->endDate = $data['endDate'];
+                    $this->statsFilter = 'custom';
+                }),
             Action::make('print')
                 ->label('Print')
                 ->color('gray')
                 ->icon('heroicon-o-printer')
-                ->url('#'),
+                ->action(fn() => $this->js('window.print()')),
             Action::make('kembali')
                 ->label('Kembali')
                 ->color('gray')
@@ -90,12 +129,16 @@ class RingkasanEksekutif extends Page
 
     public function getViewData(): array
     {
-        $end = Carbon::now();
-        $start = $end->copy()->startOfMonth();
+        $start = Carbon::parse($this->startDate);
+        $end = Carbon::parse($this->endDate);
         $today = $end->format('d/m/Y');
 
+        $daysCount = $start->diffInDays($end) + 1;
         $prevEnd = $start->copy()->subDay();
-        $prevStart = $prevEnd->copy()->startOfMonth();
+        $prevStart = $prevEnd->copy()->subDays($daysCount - 1);
+
+        $activeFilter = $this->statsFilter;
+        $filterLabel = 'vs periode sebelumnya';
 
         // ===== NERACA RATIOS =====
         $kasBank = $this->sumByCategories(['Kas & Bank'], $end);
@@ -168,6 +211,8 @@ class RingkasanEksekutif extends Page
         $kasBankIds = Account::where('category', 'Kas & Bank')->pluck('id')->toArray();
         $kasIn = 0;
         $kasOut = 0;
+        $prevKasIn = 0;
+        $prevKasOut = 0;
         if (!empty($kasBankIds)) {
             $kasIn = (float) JournalItem::whereIn('account_id', $kasBankIds)
                 ->whereHas('journalEntry', fn($q) => $q->whereBetween('transaction_date', [$start, $end]))
@@ -175,8 +220,15 @@ class RingkasanEksekutif extends Page
             $kasOut = (float) JournalItem::whereIn('account_id', $kasBankIds)
                 ->whereHas('journalEntry', fn($q) => $q->whereBetween('transaction_date', [$start, $end]))
                 ->sum('credit');
+            $prevKasIn = (float) JournalItem::whereIn('account_id', $kasBankIds)
+                ->whereHas('journalEntry', fn($q) => $q->whereBetween('transaction_date', [$prevStart, $prevEnd]))
+                ->sum('debit');
+            $prevKasOut = (float) JournalItem::whereIn('account_id', $kasBankIds)
+                ->whereHas('journalEntry', fn($q) => $q->whereBetween('transaction_date', [$prevStart, $prevEnd]))
+                ->sum('credit');
         }
         $kasTotal = $kasIn - $kasOut;
+        $prevKasTotal = $prevKasIn - $prevKasOut;
 
         // ===== PROFITABILITAS =====
         $pendapatan = $this->sumByCategoriesPeriod(['Pendapatan', 'Pendapatan Lainnya'], $start, $end, 'credit - debit');
@@ -185,15 +237,28 @@ class RingkasanEksekutif extends Page
         $biaya = $this->sumByCategoriesPeriod(['Beban', 'Beban Lainnya'], $start, $end, 'debit - credit');
         // $labaBersih already calculated above
 
+        $prevPendapatan = $this->sumByCategoriesPeriod(['Pendapatan', 'Pendapatan Lainnya'], $prevStart, $prevEnd, 'credit - debit');
+        $prevHpp = $this->sumByCategoriesPeriod(['Harga Pokok Penjualan'], $prevStart, $prevEnd, 'debit - credit');
+        $prevLabaKotor = $prevPendapatan - $prevHpp;
+        $prevBiaya = $this->sumByCategoriesPeriod(['Beban', 'Beban Lainnya'], $prevStart, $prevEnd, 'debit - credit');
+
         // ===== PERFORMA =====
         $marginLabaKotor = $pendapatan != 0 ? round(($labaKotor / $pendapatan) * 100, 1) : 0;
         $marginLabaBersih = $pendapatan != 0 ? round(($labaBersih / $pendapatan) * 100, 1) : 0;
+
+        $prevMarginLabaKotor = $prevPendapatan != 0 ? round(($prevLabaKotor / $prevPendapatan) * 100, 1) : 0;
+        $prevMarginLabaBersih = $prevPendapatan != 0 ? round(($prevLabaBersih / $prevPendapatan) * 100, 1) : 0;
 
         // ===== POSISI =====
         $rasioAsetKewajiban = $totalKewajibanLancar != 0 ? round($totalAsetLancar / $totalKewajibanLancar, 2) : 0;
         $rasioHutangEkuitas = $ekuitas != 0 ? round($totalLiabilitas / $ekuitas, 2) : 0;
         $rasioHutangAset = $totalAset != 0 ? round($totalLiabilitas / $totalAset, 2) : 0;
         $rasioAsetLiabilitas = $totalLiabilitas != 0 ? round($totalAset / $totalLiabilitas, 2) : 0;
+
+        $prevRasioAsetKewajiban = $prevTotalKewajibanLancar != 0 ? round($prevTotalAsetLancar / $prevTotalKewajibanLancar, 2) : 0;
+        $prevRasioHutangEkuitas = $prevEkuitas != 0 ? round($prevTotalLiabilitas / $prevEkuitas, 2) : 0;
+        $prevRasioHutangAset = $prevTotalAset != 0 ? round($prevTotalLiabilitas / $prevTotalAset, 2) : 0;
+        $prevRasioAsetLiabilitas = $prevTotalLiabilitas != 0 ? round($prevTotalAset / $prevTotalLiabilitas, 2) : 0;
 
         // ===== PENDAPATAN STATS =====
         $jumlahInvoice = SalesInvoice::whereBetween('transaction_date', [$start, $end])->count();
@@ -215,8 +280,14 @@ class RingkasanEksekutif extends Page
             $avgDPO = round(($apBalance / ($totalPurchases / 30)), 1);
         }
 
+        // Previous neraca summary
+        $prevTotalAsetVal = $prevTotalAset;
+        $prevTotalLiabilitasVal = $prevTotalLiabilitas;
+        $prevEkuitasVal = $prevEkuitas;
+
         return [
             'today' => $today,
+            'filterLabel' => $filterLabel,
             'startDate' => $start->format('d/m/Y'),
             'endDate' => $end->format('d/m/Y'),
             // Neraca Ratios
@@ -243,16 +314,27 @@ class RingkasanEksekutif extends Page
             'kasIn' => $kasIn,
             'kasOut' => $kasOut,
             'kasTotal' => $kasTotal,
+            'prevKasIn' => $prevKasIn,
+            'prevKasOut' => $prevKasOut,
+            'prevKasTotal' => $prevKasTotal,
             // Profitabilitas
             'pendapatan' => $pendapatan,
             'hpp' => $hpp,
             'labaKotor' => $labaKotor,
             'biaya' => $biaya,
             'labaBersih' => $labaBersih,
+            'prevPendapatan' => $prevPendapatan,
+            'prevHpp' => $prevHpp,
+            'prevLabaKotor' => $prevLabaKotor,
+            'prevBiaya' => $prevBiaya,
+            'prevLabaBersih' => $prevLabaBersih,
             // Neraca summary
             'totalAset' => $totalAset,
             'totalLiabilitas' => $totalLiabilitas,
             'ekuitas' => $ekuitas,
+            'prevTotalAset' => $prevTotalAsetVal,
+            'prevTotalLiabilitas' => $prevTotalLiabilitasVal,
+            'prevEkuitas' => $prevEkuitasVal,
             // Pendapatan
             'jumlahInvoice' => $jumlahInvoice,
             'avgInvoice' => $avgInvoice,
@@ -263,11 +345,18 @@ class RingkasanEksekutif extends Page
             // Performa
             'marginLabaKotor' => $marginLabaKotor,
             'marginLabaBersih' => $marginLabaBersih,
+            'prevMarginLabaKotor' => $prevMarginLabaKotor,
+            'prevMarginLabaBersih' => $prevMarginLabaBersih,
             // Posisi
             'rasioAsetKewajiban' => $rasioAsetKewajiban,
             'rasioHutangEkuitas' => $rasioHutangEkuitas,
             'rasioHutangAset' => $rasioHutangAset,
             'rasioAsetLiabilitas' => $rasioAsetLiabilitas,
+            'prevRasioAsetKewajiban' => $prevRasioAsetKewajiban,
+            'prevRasioHutangEkuitas' => $prevRasioHutangEkuitas,
+            'prevRasioHutangAset' => $prevRasioHutangAset,
+            'prevRasioAsetLiabilitas' => $prevRasioAsetLiabilitas,
         ];
     }
 }
+

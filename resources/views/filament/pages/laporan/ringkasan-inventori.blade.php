@@ -1,82 +1,28 @@
+@php
+    $data = $this->getViewData();
+    $products = $data['products'];
+    $paginator = $data['paginator'];
+    $totalQty = $data['totalQty'];
+    $totalValue = $data['totalValue'];
+
+    $fmt = function ($num) {
+        if ($num == 0)
+            return '0';
+        return number_format($num, 0, ',', '.');
+    };
+@endphp
+
 <x-filament-panels::page>
     <style>
-        .report-content {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .report-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .search-container {
-            position: relative;
-            flex: 1;
-            min-width: 250px;
-            max-width: 400px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 0.5rem 1rem 0.5rem 2.5rem;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            background: white;
-            font-size: 0.875rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .dark .search-input {
-            background: #1e293b;
-            border-color: #334155;
-            color: #f1f5f9;
-        }
-
-        .search-input:focus {
-            border-color: #3b82f6;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-        }
-
-        .date-display {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            font-size: 0.875rem;
-            color: #64748b;
-            gap: 0.5rem;
-        }
-
-        .dark .date-display {
-            background: #1e293b;
-            border-color: #334155;
-            color: #94a3b8;
-        }
-
-        .report-section {
+        .delivery-report-container {
             background: white;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
-            overflow-x: auto;
+            overflow: hidden;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
         }
 
-        .dark .report-section {
+        .dark .delivery-report-container {
             background: #111827;
             border-color: #374151;
         }
@@ -88,23 +34,23 @@
         }
 
         .report-table th {
-            padding: 1rem;
+            padding: 0.875rem 1.25rem;
             font-size: 0.75rem;
             font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
+            color: #64748b;
+            text-transform: capitalize;
             background: #f8fafc;
             border-bottom: 2px solid #f1f5f9;
-            text-align: left;
         }
 
         .dark .report-table th {
             background: #1f2937;
             border-bottom-color: #374151;
+            color: #94a3b8;
         }
 
         .report-table td {
-            padding: 1rem;
+            padding: 0.75rem 1.25rem;
             font-size: 0.8125rem;
             border-bottom: 1px solid #f1f5f9;
             color: #1e293b;
@@ -117,7 +63,7 @@
 
         .product-name {
             color: #3b82f6;
-            font-weight: 500;
+            font-weight: 700;
             text-decoration: none;
         }
 
@@ -125,78 +71,65 @@
             text-decoration: underline;
         }
 
-        .number-col {
-            text-align: right !important;
-        }
-
-        .report-table th.number-col,
-        .report-table td.number-col {
-            text-align: right;
-            padding-right: 2rem;
-        }
-
         .total-row {
+            border-top: 2px solid rgba(128, 128, 128, 0.2);
             background: #f8fafc;
-            font-weight: 700;
         }
 
         .dark .total-row {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.05);
+            border-top-color: #374151;
         }
 
-        .sub-total-label {
-            color: #64748b;
-            font-weight: 500;
+        .total-row td {
+            padding: 1rem 1.25rem !important;
+            font-weight: 700;
         }
 
         @media print {
 
-            .report-toolbar,
-            .fi-header-actions {
+            .fi-header-actions,
+            .search-row {
                 display: none !important;
             }
 
-            .report-section {
+            .delivery-report-container {
                 border: none !important;
                 box-shadow: none !important;
             }
         }
     </style>
 
-    @php
-        $data = $this->getViewData();
-        $products = $data['products'];
-        $totalQty = $data['totalQty'];
-        $totalValue = $data['totalValue'];
-    @endphp
-
-    <div class="report-content">
-        <div class="report-toolbar">
-            <div class="search-container">
-                <x-filament::icon icon="heroicon-m-magnifying-glass" class="w-5 h-5 search-icon" />
-                <input type="text" wire:model.live.debounce.500ms="search" placeholder="Cari produk..."
-                    class="search-input">
-            </div>
-            <div class="date-display">
-                <x-filament::icon icon="heroicon-m-calendar" class="w-4 h-4" />
-                {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
+    <div class="delivery-report-container">
+        {{-- Search row --}}
+        <div style="padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: flex-end;"
+            class="dark:border-gray-800 search-row">
+            <div style="position: relative; width: 280px;">
+                <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" wire:model.live.debounce.500ms="search" placeholder="Cari"
+                    style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.8125rem; background: white; color: #1e293b; outline: none;"
+                    class="dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100">
             </div>
         </div>
 
-        <div class="report-section">
+        <div style="overflow-x: auto;">
             <table class="report-table">
                 <thead>
                     <tr>
-                        <th>Nama Produk</th>
-                        <th>Kode</th>
-                        <th class="number-col">Kuantitas</th>
-                        <th class="number-col">Harga Rata-rata</th>
-                        <th class="number-col">Nilai Produk</th>
+                        <th style="text-align: left;">Nama Produk</th>
+                        <th style="text-align: left;">Kode</th>
+                        <th style="text-align: right;">Kuantitas</th>
+                        <th style="text-align: right;">Harga Rata-Rata</th>
+                        <th style="text-align: right;">Nilai Produk</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($products as $product)
-                        <tr>
+                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                             <td>
                                 <a href="{{ \App\Filament\Resources\ProductResource::getUrl('view', ['record' => $product->id]) }}"
                                     target="_blank" class="product-name">
@@ -204,40 +137,42 @@
                                 </a>
                             </td>
                             <td style="color: #64748b;">{{ $product->sku }}</td>
-                            <td class="number-col">{{ number_format($product->stock, 0, ',', '.') }}</td>
-                            <td class="number-col">{{ number_format($product->hpp, 0, ',', '.') }}</td>
-                            <td class="number-col">{{ number_format($product->value, 0, ',', '.') }}</td>
+                            <td style="text-align: right;">{{ $fmt($product->stock) }}</td>
+                            <td style="text-align: right;">{{ $fmt($product->hpp) }}</td>
+                            <td style="text-align: right;">{{ $fmt($product->value) }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" style="text-align: center; color: #94a3b8; padding: 3rem;">
-                                Tidak ada data produk.
+                            <td colspan="5" style="text-align: center; padding: 4rem; color: #94a3b8;">
+                                <div class="flex flex-col items-center">
+                                    <svg style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.2;" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                    <span style="font-size: 0.875rem; font-weight: 500;">Tidak ada data produk.</span>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
 
-                    @if($products->count() > 0)
+                    @if(count($products) > 0)
                         <tr class="total-row">
-                            <td colspan="2" class="sub-total-label">Subtotal</td>
-                            <td class="number-col">{{ number_format($totalQty, 0, ',', '.') }}</td>
-                            <td class="number-col"></td>
-                            <td class="number-col">{{ number_format($totalValue, 0, ',', '.') }}</td>
-                        </tr>
-                        <tr class="total-row" style="border-top: 2px solid #f1f5f9;">
                             <td colspan="2">Total</td>
-                            <td class="number-col">{{ number_format($totalQty, 0, ',', '.') }}</td>
-                            <td class="number-col"></td>
-                            <td class="number-col">{{ number_format($totalValue, 0, ',', '.') }}</td>
+                            <td style="text-align: right; font-weight: 700;">{{ $fmt($totalQty) }}</td>
+                            <td></td>
+                            <td style="text-align: right; font-weight: 700; color: #3b82f6;">{{ $fmt($totalValue) }}</td>
                         </tr>
                     @endif
                 </tbody>
             </table>
         </div>
-
-        @if($products->count() > 0)
-            <div style="text-align: right; color: #94a3b8; font-size: 0.75rem; margin-top: 0.5rem;">
-                Total {{ $products->count() }} data
-            </div>
-        @endif
     </div>
+
+    @if ($paginator->hasPages() || count([5, 10, 20, 50, 100, 'all']) > 1)
+        <div style="margin-top: 1.5rem; margin-bottom: 1rem;">
+            <x-filament::pagination :paginator="$paginator" :page-options="[5, 10, 20, 50, 100, 'all']"
+                current-page-option-property="perPage" />
+        </div>
+    @endif
 </x-filament-panels::page>

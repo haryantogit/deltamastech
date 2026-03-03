@@ -45,6 +45,9 @@ class StockMovementResource extends Resource
         return $table
             ->modifyQueryUsing(fn(Builder $query) => $query->with(['product', 'warehouse', 'user', 'reference']))
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Waktu')
                     ->dateTime('d M Y H:i')

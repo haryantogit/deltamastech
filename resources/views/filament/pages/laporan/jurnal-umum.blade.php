@@ -1,41 +1,42 @@
-@php
-    $data = $this->getViewData();
-    $entries = $data['entries'];
-    $paginator = $data['paginator'];
-    $stats = $data['stats'];
-    $totalCount = $data['totalCount'];
-    $totalDebit = $data['totalDebit'];
-    $totalCredit = $data['totalCredit'];
-    $difference = $totalDebit - $totalCredit;
-
-    $fmt = function ($num) {
-        if ($num == 0)
-            return '0';
-        return number_format($num, 0, ',', '.');
-    };
-@endphp
-
 <x-filament-panels::page>
+    @php
+        $data = $this->getViewData();
+        $entries = $data['entries'];
+        $paginator = $data['paginator'];
+        $stats = $data['stats'];
+        $totalCount = $data['totalCount'];
+        $totalDebit = $data['totalDebit'];
+        $totalCredit = $data['totalCredit'];
+        $difference = $totalDebit - $totalCredit;
+        $filterLabel = $data['filterLabel'] ?? 'vs periode sebelumnya';
+
+        $fmt = function ($num) {
+            if ($num == 0)
+                return '0';
+            return number_format($num, 0, ',', '.');
+        };
+    @endphp
+
     <style>
         /* Neraca-style Statistics Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 1.25rem;
-            margin-bottom: 2rem;
+            margin-bottom: 0.75rem;
         }
 
         .stat-card {
             background: white;
             border-radius: 12px;
-            padding: 1.5rem;
+            padding: 1rem;
             border: 1px solid #e2e8f0;
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 130px;
+            min-height: 110px;
         }
 
         .dark .stat-card {
@@ -97,7 +98,7 @@
         .journal-container {
             display: flex;
             flex-direction: column;
-            gap: 2rem;
+            gap: 1rem;
         }
 
         .journal-entry-block {
@@ -233,150 +234,6 @@
         .footer-total {
             color: #3b82f6;
         }
-
-        .pagination-footer {
-            margin-top: 2rem;
-            padding: 1rem 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            border-top: 1px solid rgba(128, 128, 128, 0.1);
-        }
-
-        .pagination-status {
-            font-size: 0.8125rem;
-            color: #64748b;
-            /* Light theme */
-            font-weight: 500;
-        }
-
-        .dark .pagination-status {
-            color: #94a3b8;
-        }
-
-        /* Center Per-Page Selector Capsule */
-        .per-page-capsule {
-            display: flex;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.02);
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 0 0.75rem;
-            height: 2.25rem;
-            gap: 0;
-        }
-
-        .dark .per-page-capsule {
-            background: rgba(255, 255, 255, 0.03);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .per-page-label {
-            font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 500;
-            border-right: 1px solid #e2e8f0;
-            padding-right: 0.75rem;
-            height: 100%;
-            display: flex;
-            align-items: center;
-        }
-
-        .dark .per-page-label {
-            color: #94a3b8;
-            border-right-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .per-page-capsule select {
-            background: transparent;
-            border: none;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: #1e293b;
-            outline: none;
-            cursor: pointer;
-            padding: 0 0.5rem 0 0.75rem;
-            margin: 0;
-            appearance: none;
-            -webkit-appearance: none;
-        }
-
-        .dark .per-page-capsule select {
-            color: #f1f5f9;
-        }
-
-        /* Right Numeric Pagination Capsule */
-        .numeric-capsule nav {
-            display: flex;
-            align-items: center;
-        }
-
-        .numeric-capsule nav>div:first-child {
-            display: none !important;
-        }
-
-        /* Hide standard p (Showing X to Y) */
-        .numeric-capsule nav p {
-            display: none !important;
-        }
-
-        .numeric-capsule nav div:last-child {
-            display: flex !important;
-            background: rgba(0, 0, 0, 0.02) !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 10px !important;
-            overflow: hidden !important;
-        }
-
-        .dark .numeric-capsule nav div:last-child {
-            background: rgba(255, 255, 255, 0.03) !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        .numeric-capsule a,
-        .numeric-capsule span {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 2.5rem !important;
-            height: 2.25rem !important;
-            padding: 0 0.75rem !important;
-            font-size: 0.8125rem !important;
-            font-weight: 600 !important;
-            color: #1e293b !important;
-            border: none !important;
-            border-right: 1px solid #e2e8f0 !important;
-            background: transparent !important;
-            transition: all 0.2s !important;
-            text-decoration: none !important;
-        }
-
-        .dark .numeric-capsule a,
-        .dark .numeric-capsule span {
-            color: #f1f5f9 !important;
-            border-right-color: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        .numeric-capsule div:last-child> :last-child {
-            border-right: none !important;
-        }
-
-        .numeric-capsule a:hover {
-            background: rgba(59, 130, 246, 0.05) !important;
-            color: #3b82f6 !important;
-        }
-
-        .numeric-capsule .active span {
-            background: rgba(59, 130, 246, 0.1) !important;
-            color: #3b82f6 !important;
-            font-weight: 700 !important;
-        }
-
-        .numeric-capsule [aria-disabled="true"] span {
-            color: #94a3b8 !important;
-            cursor: default !important;
-        }
     </style>
 
     <!-- Statistics Grid -->
@@ -396,7 +253,7 @@
                                 style="width: 0.875rem; height: 0.875rem;" />
                             {{ abs($stat['trend']['pct']) }}%
                         </div>
-                        <span class="stat-comparison">vs bulan lalu</span>
+                        <span class="stat-comparison">{{ $filterLabel ?? 'vs periode sebelumnya' }}</span>
                     </div>
                 </div>
             @endif
@@ -456,7 +313,8 @@
                                     </div>
                                     @if($item->description && $item->description !== $entry->description)
                                         <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">
-                                            {{ $item->description }}</div>
+                                            {{ $item->description }}
+                                        </div>
                                     @endif
                                 </td>
                                 <td class="cell-amount {{ $item->debit == 0 ? 'amount-zero' : '' }}">
@@ -483,28 +341,10 @@
         @endforelse
     </div>
 
-    <!-- Pagination -->
-    <div class="pagination-footer">
-        <div class="pagination-status">
-            Menampilkan {{ $paginator->firstItem() ?? 0 }} sampai {{ $paginator->lastItem() ?? 0 }} dari
-            {{ number_format($totalCount, 0, ',', '.') }} hasil
+    @if ($paginator->hasPages() || count([5, 10, 20, 50, 100, 'all']) > 1)
+        <div style="margin-top: 2rem; margin-bottom: 1rem;">
+            <x-filament::pagination :paginator="$paginator" :page-options="[5, 10, 20, 50, 100, 'all']"
+                current-page-option-property="perPage" />
         </div>
-
-        <div class="per-page-capsule">
-            <span class="per-page-label">per halaman</span>
-            <select wire:model.live="perPage">
-                <option value="15">15</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="500">500</option>
-            </select>
-            <x-heroicon-m-chevron-down style="width: 1rem; height: 1rem; color: #64748b; margin-left: -0.25rem;" />
-        </div>
-
-        <div style="display: flex; gap: 1rem; align-items: center;">
-            <div class="numeric-capsule">
-                {{ $paginator->links() }}
-            </div>
-        </div>
-    </div>
+    @endif
 </x-filament-panels::page>

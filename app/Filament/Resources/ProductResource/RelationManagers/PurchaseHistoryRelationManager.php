@@ -37,7 +37,7 @@ class PurchaseHistoryRelationManager extends RelationManager
                     ->url(fn(PurchaseInvoiceItem $record) => \App\Filament\Resources\PurchaseInvoiceResource::getUrl('view', ['record' => $record->purchase_invoice_id])),
 
                 Tables\Columns\TextColumn::make('invoice.supplier.name')
-                    ->label('Pemasok')
+                    ->label('Vendor')
                     ->searchable()
                     ->sortable(),
 

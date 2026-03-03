@@ -59,28 +59,33 @@ class JournalEntryResource extends Resource
                             ->relationship('items')
                             ->label('')
                             ->schema([
-                                Select::make('account_id')
-                                    ->label('Akun')
-                                    ->options(\App\Models\Account::get()->mapWithKeys(fn($account) => [$account->id => $account->code . ' - ' . $account->name]))
-                                    ->disabled()
-                                    ->dehydrated(false)
-                                    ->columnSpan(6),
+                                \Filament\Schemas\Components\Grid::make(12)
+                                    ->schema([
+                                        Select::make('account_id')
+                                            ->label('Akun')
+                                            ->options(\App\Models\Account::get()->mapWithKeys(fn($account) => [$account->id => $account->code . ' - ' . $account->name]))
+                                            ->disabled()
+                                            ->dehydrated(false)
+                                            ->columnSpan(12),
+                                    ]),
 
-                                TextInput::make('debit')
-                                    ->label('Debit')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->readOnly()
-                                    ->columnSpan(3),
+                                \Filament\Schemas\Components\Grid::make(12)
+                                    ->schema([
+                                        TextInput::make('debit')
+                                            ->label('Debit')
+                                            ->numeric()
+                                            ->prefix('Rp')
+                                            ->readOnly()
+                                            ->columnSpan(6),
 
-                                TextInput::make('credit')
-                                    ->label('Kredit')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->readOnly()
-                                    ->columnSpan(3),
+                                        TextInput::make('credit')
+                                            ->label('Kredit')
+                                            ->numeric()
+                                            ->prefix('Rp')
+                                            ->readOnly()
+                                            ->columnSpan(6),
+                                    ]),
                             ])
-                            ->columns(12)
                             ->disableItemCreation()
                             ->disableItemDeletion()
                             ->disableItemMovement(),
@@ -92,6 +97,9 @@ class JournalEntryResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('transaction_date')
                     ->label('Tanggal')
                     ->date('d M Y')
@@ -133,8 +141,8 @@ class JournalEntryResource extends Resource
                     })
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make(),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make(),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])

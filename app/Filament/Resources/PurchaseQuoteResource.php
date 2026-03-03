@@ -52,7 +52,7 @@ class PurchaseQuoteResource extends Resource
                         Section::make('Informasi Utama')
                             ->schema([
                                 Select::make('supplier_id')
-                                    ->relationship('supplier', 'name')
+                                    ->relationship('supplier', 'name', fn($query) => $query->whereIn('type', ['vendor', 'both']))
                                     ->required()
                                     ->label('Vendor')
                                     ->searchable()
@@ -192,127 +192,117 @@ class PurchaseQuoteResource extends Resource
                                 Repeater::make('items')
                                     ->relationship()
                                     ->schema([
-                                        Select::make('product_id')
-                                            ->relationship('product', 'name')
-                                            ->label('Produk')
-                                            ->searchable()
-                                            ->preload()
-                                            ->required()
-                                            ->reactive()
-                                            ->afterStateUpdated(function ($state, Set $set, Get $get, $component) {
-                                                $product = \App\Models\Product::find($state);
-                                                if ($product) {
-                                                    $price = $product->cost_price ?? $product->buy_price ?? $product->price ?? 0;
-                                                    $set('unit_price', $price);
-                                                    $set('description', $product->description);
-                                                    $set('unit_id', $product->unit_id);
-
-                                                    // Auto-populate tax
-                                                    $taxId = $product->purchase_tax_id ?? null;
-                                                    $set('tax_id', $taxId);
-
-                                                    // Trigger calculation to update totals immediately
-                                                    self::calculateLineTotal($get, $set, $component, ['unit_price' => $price, 'tax_id' => $taxId]);
-                                                }
-                                            })
-                                            ->columnSpan(3),
-                                        TextInput::make('description')
-                                            ->label('Deskripsi')
-                                            ->columnSpan(2),
-                                        TextInput::make('quantity')
-                                            ->label('Kuantitas')
-                                            ->numeric()
-                                            ->default(1)
-                                            ->required()
-                                            ->live(debounce: 500)
-                                            ->suffixAction(
-                                                \Filament\Actions\Action::make('checkStock')
-                                                    ->button()
-                                                    ->size('sm')
-                                                    ->color(function (Get $get, $state) {
-                                                        $productId = $get('product_id');
-                                                        if (!$productId)
-                                                            return 'gray';
-                                                        $product = \App\Models\Product::find($productId);
-                                                        if (!$product || !$product->track_inventory)
-                                                            return 'gray';
-                                                        $stock = (float) $product->getStockForWarehouse();
-                                                        $requestedQty = (float) $state;
-                                                        return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
+                                        Grid::make(12)
+                                            ->schema([
+                                                Select::make('product_id')
+                                                    ->label('Produk')
+                                                    ->relationship('product', 'name', modifyQueryUsing: function ($query) {
+                                                        $query->active();
                                                     })
-                                                    ->label(function (Get $get) {
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->required()
+                                                    ->columnSpan(4)
+                                                    ->live()
+                                                    ->afterStateUpdated(function ($state, Set $set, Get $get, $component) {
+                                                        if ($product = \App\Models\Product::with('unit')->find($state)) {
+                                                            $set('description', $product->description);
+                                                            $set('unit_id', $product->unit_id);
+                                                            $set('unit_price', $product->cost_price ?? $product->buy_price ?? $product->price ?? 0);
+                                                            $set('quantity', 1);
+
+                                                            // Auto-populate tax
+                                                            $taxName = 'Bebas Pajak';
+                                                            if ($product->purchase_tax_id) {
+                                                                if (is_numeric($product->purchase_tax_id)) {
+                                                                    $tax = \App\Models\Tax::find($product->purchase_tax_id);
+                                                                    $taxName = $tax ? $tax->name : 'Bebas Pajak';
+                                                                } else {
+                                                                    $taxName = $product->purchase_tax_id;
+                                                                }
+                                                            }
+                                                            $set('tax_name', $taxName);
+
+                                                            self::calculateLineTotal($get, $set, $component);
+                                                        }
+                                                    }),
+
+                                                TextInput::make('description')
+                                                    ->label('Deskripsi')
+                                                    ->columnSpan(4),
+
+                                                TextInput::make('quantity')
+                                                    ->label('Kuantitas')
+                                                    ->numeric()
+                                                    ->default(1)
+                                                    ->required()
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->suffixAction(function (Get $get) {
                                                         $productId = $get('product_id');
-                                                        if (!$productId)
-                                                            return '0';
-                                                        $product = \App\Models\Product::find($productId);
-                                                        if (!$product || !$product->track_inventory)
-                                                            return '0';
-                                                        $stock = $product->getStockForWarehouse();
-                                                        return number_format($stock);
+                                                        if ($productId) {
+                                                            $stock = \App\Models\Stock::where('product_id', $productId)->sum('quantity') ?? 0;
+                                                            return \Filament\Actions\Action::make('stock')
+                                                                ->label((string) $stock)
+                                                                ->color($stock > 0 ? 'success' : 'danger')
+                                                                ->badge()
+                                                                ->disabled();
+                                                        }
+                                                        return null;
                                                     })
-                                            )
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
-                                            ->columnSpan(2),
-                                        Select::make('unit_id')
-                                            ->relationship('unit', 'name')
-                                            ->label('Satuan')
-                                            ->placeholder('Pilih')
-                                            ->columnSpan(1),
-                                        TextInput::make('discount_percent')
-                                            ->label('Diskon (%)')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->suffix('%')
-                                            ->live(debounce: 500)
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
-                                            ->columnSpan(1),
-                                        TextInput::make('unit_price')
-                                            ->label('Harga')
-                                            ->numeric()
-                                            ->required()
-                                            ->readOnly()
-                                            ->live(debounce: 500)
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
-                                            ->columnSpan(1),
-                                        Select::make('tax_id')
-                                            ->label('Pajak')
-                                            ->placeholder('Pilih')
-                                            ->options(\App\Models\Tax::pluck('name', 'id')->toArray())
-                                            ->default(null)
-                                            ->nullable()
-                                            ->preload()
-                                            ->live()
-                                            ->afterStateUpdated(function ($state, Set $set, Get $get, $component) {
-                                                $taxRate = 0;
-                                                if ($state) {
-                                                    $tax = \App\Models\Tax::find($state);
-                                                    $taxRate = $tax ? ($tax->rate / 100) : 0;
-                                                }
+                                                    ->columnSpan(2),
 
-                                                $price = (float) $get('unit_price');
-                                                $qty = (float) $get('quantity');
-                                                $discount = (float) $get('discount_percent');
+                                                Select::make('unit_id')
+                                                    ->label('Satuan')
+                                                    ->relationship('unit', 'name')
+                                                    ->placeholder('Pilih')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->columnSpan(2)
+                                                    ->live(),
+                                            ]),
 
-                                                $subtotal = $price * $qty;
-                                                $discountAmount = $subtotal * ($discount / 100);
-                                                $taxBase = $subtotal - $discountAmount;
-                                                $taxAmount = $taxBase * $taxRate;
+                                        Grid::make(12)
+                                            ->schema([
+                                                TextInput::make('unit_price')
+                                                    ->label('Harga')
+                                                    ->numeric()
+                                                    ->required()
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->columnSpan(3),
 
-                                                $set('tax_amount', $taxAmount);
-                                                self::calculateLineTotal($get, $set, $component);
-                                            })
-                                            ->columnSpan(1),
-                                        Hidden::make('tax_amount'),
-                                        TextInput::make('total_price')
-                                            ->label('Total')
-                                            ->numeric()
-                                            ->readOnly()
-                                            ->dehydrated()
-                                            ->columnSpan(1),
+                                                TextInput::make('discount_percent')
+                                                    ->label('Diskon (%)')
+                                                    ->numeric()
+                                                    ->default(0)
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->columnSpan(3),
+
+                                                Select::make('tax_name')
+                                                    ->label('Pajak')
+                                                    ->options(function () {
+                                                        $taxes = \App\Models\Tax::pluck('name', 'name')->toArray();
+                                                        return ['Bebas Pajak' => 'Bebas Pajak'] + $taxes;
+                                                    })
+                                                    ->default('Bebas Pajak')
+                                                    ->selectablePlaceholder(false)
+                                                    ->dehydrated()
+                                                    ->live()
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->columnSpan(3),
+
+                                                TextInput::make('total_price')
+                                                    ->label('Total')
+                                                    ->numeric()
+                                                    ->readOnly()
+                                                    ->dehydrated()
+                                                    ->columnSpan(3),
+                                            ]),
                                     ])
-                                    ->columns(12)
                                     ->columnSpanFull()
-                                    ->live(debounce: 500)
+                                    ->live()
                                     ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set))
                                     ->addActionLabel('Tambah Item'),
                             ])->columnSpanFull(),
@@ -565,7 +555,7 @@ class PurchaseQuoteResource extends Resource
                                 TextEntry::make('number')->label('No. Penawaran'),
                                 TextEntry::make('date')->label('Tanggal')->date(),
                                 TextEntry::make('due_date')->label('Jatuh Tempo')->date(),
-                                TextEntry::make('supplier.name')->label('Pemasok'),
+                                TextEntry::make('supplier.name')->label('Vendor'),
                                 TextEntry::make('status')->badge(),
                                 TextEntry::make('reference')->label('Referensi'),
                             ]),
@@ -612,8 +602,13 @@ class PurchaseQuoteResource extends Resource
         return $table
             ->modifyQueryUsing(fn(Builder $query) => $query->with(['supplier', 'paymentTerm', 'tags']))
             ->columns([
-                Tables\Columns\TextColumn::make('number')->searchable()->label('Nomor'),
-                Tables\Columns\TextColumn::make('supplier.name')->sortable()->label('Pemasok'),
+                Tables\Columns\TextColumn::make('number')
+                    ->searchable()
+                    ->label('Nomor')
+                    ->color('primary')
+                    ->weight('bold')
+                    ->url(fn($record) => Pages\ViewTransaction::getUrl(['record' => $record])),
+                Tables\Columns\TextColumn::make('supplier.name')->sortable()->label('Vendor'),
                 Tables\Columns\TextColumn::make('reference')
                     ->searchable()
                     ->label('Referensi')
@@ -631,14 +626,14 @@ class PurchaseQuoteResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn(string $state): string => match (strtolower($state)) {
                         'draft' => 'Draf',
-                        'approved' => 'Disetujui',
+                        'approved', 'accepted' => 'Disetujui',
                         'rejected' => 'Ditolak',
                         'finished' => 'Selesai',
                         default => ucfirst($state),
                     })
                     ->color(fn(string $state): string => match (strtolower($state)) {
                         'draft' => 'gray',
-                        'approved' => 'success',
+                        'approved', 'accepted' => 'success',
                         'rejected' => 'danger',
                         'finished' => 'info',
                         default => 'gray',
@@ -652,24 +647,12 @@ class PurchaseQuoteResource extends Resource
                 Tables\Columns\TextColumn::make('total_amount')->money('IDR')->sortable()->label('Total'),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('supplier_id')
-                    ->relationship('supplier', 'name', modifyQueryUsing: fn($query) => $query->where('type', 'vendor'))
-                    ->label('Pemasok')
-                    ->searchable()
-                    ->preload(),
-                Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'draft' => 'Draf',
-                        'approved' => 'Disetujui',
-                        'rejected' => 'Ditolak',
-                        'finished' => 'Selesai',
-                    ])
-                    ->label('Status'),
+                // Filters moved to tabs
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make(),
-                    EditAction::make(),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make(),
+                    \Filament\Actions\EditAction::make(),
                     TablesAction::make('confirm')
                         ->label('Konfirmasi')
                         ->icon('heroicon-o-check-circle')
@@ -721,9 +704,10 @@ class PurchaseQuoteResource extends Resource
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 

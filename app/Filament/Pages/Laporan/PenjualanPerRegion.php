@@ -28,27 +28,48 @@ class PenjualanPerRegion extends Page implements HasActions
 
     public $startDate;
     public $endDate;
-    public $perPage = 15;
+    public $search = '';
+    public $perPage = 10;
+
+    protected $queryString = [
+        'startDate' => ['except' => ''],
+        'endDate' => ['except' => ''],
+        'perPage' => ['except' => 10],
+        'search' => ['except' => ''],
+    ];
 
     public function mount()
     {
-        $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
-        $this->endDate = Carbon::now()->format('Y-m-d');
+        if (!$this->startDate) {
+            $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
+        }
+        if (!$this->endDate) {
+            $this->endDate = Carbon::now()->format('Y-m-d');
+        }
     }
 
-    public function updatedStartDate(): void
+    public function updatedSearch()
     {
         $this->resetPage();
     }
 
-    public function updatedEndDate(): void
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
     {
-        $this->resetPage();
-    }
+        $startFmt = Carbon::parse($this->startDate)->format('d/m/Y');
+        $endFmt = Carbon::parse($this->endDate)->format('d/m/Y');
 
-    public function updatedPerPage(): void
-    {
-        $this->resetPage();
+        $dateDisplay = $startFmt === $endFmt
+            ? $startFmt
+            : $startFmt . ' &mdash; ' . $endFmt;
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $dateDisplay . '</span>
+            </div>
+        ');
     }
 
     public function getBreadcrumbs(): array
@@ -87,10 +108,6 @@ class PenjualanPerRegion extends Page implements HasActions
                     $this->endDate = $data['endDate'];
                     $this->resetPage();
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->icon('heroicon-o-printer')
@@ -110,6 +127,9 @@ class PenjualanPerRegion extends Page implements HasActions
             ->join('contacts as c', 'si.contact_id', '=', 'c.id')
             ->whereBetween('si.transaction_date', [$this->startDate, $this->endDate])
             ->where('si.status', '!=', 'cancelled')
+            ->when($this->search, function ($q) {
+                $q->where(DB::raw("COALESCE(NULLIF(c.province, ''), 'Lainnya')"), 'like', "%{$this->search}%");
+            })
             ->select(
                 DB::raw("COALESCE(NULLIF(c.province, ''), 'Lainnya') as region"),
                 DB::raw('COUNT(si.id) as transaction_count'),
@@ -118,13 +138,17 @@ class PenjualanPerRegion extends Page implements HasActions
             ->groupBy('region')
             ->orderBy('total_amount', 'desc');
 
-        $paginator = $query->paginate($this->perPage);
+        $perPage = $this->perPage === 'all' ? max(1, $query->count()) : $this->perPage;
+        $paginator = $query->paginate($perPage);
 
         // Global Totals for the footer
         $globalTotals = DB::table('sales_invoices as si')
             ->join('contacts as c', 'si.contact_id', '=', 'c.id')
             ->whereBetween('si.transaction_date', [$this->startDate, $this->endDate])
             ->where('si.status', '!=', 'cancelled')
+            ->when($this->search, function ($q) {
+                $q->where(DB::raw("COALESCE(NULLIF(c.province, ''), 'Lainnya')"), 'like', "%{$this->search}%");
+            })
             ->select(
                 DB::raw('COUNT(si.id) as total_count'),
                 DB::raw('SUM(si.total_amount) as total_amount')
@@ -139,3 +163,4 @@ class PenjualanPerRegion extends Page implements HasActions
         ];
     }
 }
+

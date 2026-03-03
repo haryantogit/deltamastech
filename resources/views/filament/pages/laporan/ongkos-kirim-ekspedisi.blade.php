@@ -27,82 +27,8 @@
             border-color: #374151;
         }
 
-        /* Filter & Search row */
-        .filter-search-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid #f1f5f9;
-            gap: 1rem;
-        }
 
-        .dark .filter-search-row {
-            border-color: #374151;
-        }
 
-        .right-controls {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .mode-select-capsule {
-            display: flex;
-            align-items: center;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            height: 2.25rem;
-            padding: 0 0.5rem;
-        }
-
-        .dark .mode-select-capsule {
-            background: #1f2937;
-            border-color: #374151;
-        }
-
-        .mode-select-capsule select {
-            background: transparent;
-            border: none;
-            font-size: 0.8125rem;
-            font-weight: 500;
-            color: #3b82f6;
-            outline: none;
-            cursor: pointer;
-            padding-right: 0.5rem;
-            appearance: none;
-            -webkit-appearance: none;
-        }
-
-        .dark .mode-select-capsule select {
-            color: #60a5fa;
-        }
-
-        .date-display {
-            font-size: 0.8125rem;
-            color: #64748b;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: white;
-            border: 1px solid #e2e8f0;
-            padding: 0.4rem 0.75rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .date-display:hover {
-            border-color: #3b82f6;
-            color: #3b82f6;
-        }
-
-        .dark .date-display {
-            background: #1f2937;
-            border-color: #374151;
-        }
 
         /* Tables & Groups */
         .report-table {
@@ -177,33 +103,38 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 1.25rem;
-            height: 1.25rem;
-            border: 1px solid #3b82f6;
-            border-radius: 4px;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 6px;
             margin-right: 0.5rem;
-            font-size: 0.75rem;
+            font-size: 1rem;
             color: #3b82f6;
-            background: rgba(59, 130, 246, 0.05);
+            background: rgba(59, 130, 246, 0.1);
             cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 700;
+            transition: all 0.2s ease;
+            font-weight: 800;
+            line-height: 0;
+            user-select: none;
         }
 
         .toggle-btn:hover {
             background: #3b82f6;
             color: white;
+            border-color: #3b82f6;
+            transform: scale(1.05);
         }
 
         .dark .toggle-btn {
-            border-color: #60a5fa;
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.3);
             color: #60a5fa;
-            background: rgba(96, 165, 250, 0.1);
         }
 
         .dark .toggle-btn:hover {
-            background: #60a5fa;
-            color: #111827;
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
         }
 
         .grand-total-container {
@@ -219,160 +150,26 @@
             background: #111827;
         }
 
-        /* Pagination */
-        .pagination-container {
-            padding: 1rem 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .pagination-status {
-            font-size: 0.8125rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .per-page-capsule {
-            display: flex;
-            align-items: center;
-            background: rgba(128, 128, 128, 0.05);
-            border: 1px solid rgba(128, 128, 128, 0.1);
-            border-radius: 10px;
-            padding: 0 0.75rem;
-            height: 2.25rem;
-            gap: 0;
-        }
-
-        .per-page-label {
-            font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 500;
-            border-right: 1px solid rgba(128, 128, 128, 0.1);
-            padding-right: 0.75rem;
-            height: 100%;
-            display: flex;
-            align-items: center;
-        }
-
-        .per-page-capsule select {
-            background: transparent;
-            border: none;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: #1e293b;
-            outline: none;
-            cursor: pointer;
-            padding: 0 0.5rem 0 0.75rem;
-            margin: 0;
-            appearance: none;
-            -webkit-appearance: none;
-        }
-
-        .dark .per-page-capsule select {
-            color: #f1f5f9;
-        }
-
-        .numeric-capsule nav {
-            display: flex;
-            align-items: center;
-        }
-
-        .numeric-capsule nav>div:first-child,
-        .numeric-capsule nav p,
-        .numeric-capsule [class*="hidden sm:flex-1"] {
-            display: none !important;
-        }
-
-        .numeric-capsule nav div:last-child {
-            display: flex !important;
-            background: rgba(128, 128, 128, 0.05) !important;
-            border: 1px solid rgba(128, 128, 128, 0.1) !important;
-            border-radius: 10px !important;
-            overflow: hidden !important;
-        }
-
-        .numeric-capsule a,
-        .numeric-capsule span {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 2.5rem !important;
-            height: 2.25rem !important;
-            padding: 0 0.75rem !important;
-            font-size: 0.8125rem !important;
-            font-weight: 600 !important;
-            color: #1e293b !important;
-            border: none !important;
-            border-right: 1px solid rgba(128, 128, 128, 0.1) !important;
-            background: transparent !important;
-            transition: all 0.2s !important;
-            text-decoration: none !important;
-        }
-
-        .dark .numeric-capsule a,
-        .dark .numeric-capsule span {
-            color: #f1f5f9 !important;
-        }
-
-        .numeric-capsule div:last-child> :last-child {
-            border-right: none !important;
-        }
-
-        .numeric-capsule a:hover {
-            background: rgba(59, 130, 246, 0.05) !important;
-            color: #3b82f6 !important;
-        }
-
-        .numeric-capsule .active span,
-        .numeric-capsule [aria-current="page"] span {
-            background: rgba(59, 130, 246, 0.1) !important;
-            color: #3b82f6 !important;
-            font-weight: 700 !important;
-        }
-
-        .numeric-capsule svg {
-            width: 1rem !important;
-            height: 1rem !important;
-        }
-
         @media print {
-
-            .fi-header-actions,
-            .filter-search-row,
-            .pagination-container {
+            .fi-header-actions {
                 display: none !important;
             }
         }
     </style>
 
     <div class="delivery-report-container">
-        {{-- Controls Row --}}
-        <div class="filter-search-row" style="justify-content: flex-end;">
-            <div class="right-controls">
-                <div class="mode-select-capsule">
-                    <select wire:model.live="dateMode">
-                        <option value="transaksi">Tanggal Transaksi</option>
-                        <option value="pengiriman">Tanggal Pengiriman</option>
-                    </select>
-                    <svg style="width: 0.875rem; height: 0.875rem; color: #3b82f6;" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </div>
 
-                <div class="date-display" wire:click="mountAction('filter')">
-                    {{ \Carbon\Carbon::parse($this->startDate)->format('d/m/Y') }} —
-                    {{ \Carbon\Carbon::parse($this->endDate)->format('d/m/Y') }}
-                    <svg style="width: 1rem; height: 1rem; color: #94a3b8;" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                        </path>
-                    </svg>
-                </div>
+        {{-- Search Row --}}
+        <div style="display: flex; justify-content: flex-end; padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9;">
+            <div style="position: relative; width: 280px;">
+                <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" wire:model.live.debounce.500ms="search" placeholder="Cari"
+                    style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.8125rem; background: white; color: #1e293b; outline: none; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
             </div>
         </div>
 
@@ -447,15 +244,17 @@
                                                         <tr class="nested-table-row">
                                                             <td
                                                                 style="padding: 0.5rem 1.25rem 0.5rem 4rem; font-size: 0.75rem; color: #3b82f6;">
-                                                                {{ $invoice['invoice_number'] }}</td>
+                                                                {{ $invoice['invoice_number'] }}
+                                                            </td>
                                                             <td style="padding: 0.5rem 1.25rem; font-size: 0.75rem;">
-                                                                {{ $invoice['customer_name'] }}</td>
-                                                            <td
-                                                                style="padding: 0.5rem 1.25rem; text-align: right; font-size: 0.75rem;">
-                                                                {{ $fmt($invoice['total_tagihan']) }}</td>
-                                                            <td
-                                                                style="padding: 0.5rem 1.25rem; text-align: right; font-size: 0.75rem;">
-                                                                {{ $fmt($invoice['total_ongkir']) }}</td>
+                                                                {{ $invoice['customer_name'] }}
+                                                            </td>
+                                                            <td style="padding: 0.5rem 1.25rem; text-align: right; font-size: 0.75rem;">
+                                                                {{ $fmt($invoice['total_tagihan']) }}
+                                                            </td>
+                                                            <td style="padding: 0.5rem 1.25rem; text-align: right; font-size: 0.75rem;">
+                                                                {{ $fmt($invoice['total_ongkir']) }}
+                                                            </td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
@@ -471,49 +270,33 @@
                                 kirim.</td>
                         </tr>
                     @endforelse
+                    {{-- Grand Total row --}}
+                    <tr style="border-top: 2px solid rgba(128,128,128,0.2);">
+                        <td style="padding:16px 14px;"></td>
+                        <td style="padding:16px 14px; text-align: center; font-size: 13px; font-weight: 700;"
+                            class="text-gray-900 dark:text-gray-100">
+                            {{ $globalTotals['jumlah_pengiriman'] }}
+                        </td>
+                        <td style="padding:16px 14px; text-align: right; font-size: 13px; font-weight: 700;"
+                            class="text-gray-900 dark:text-gray-100">
+                            {{ $fmt($globalTotals['total_tagihan']) }}
+                        </td>
+                        <td style="padding:16px 14px; text-align: right; font-size: 13px; font-weight: 700;"
+                            class="text-gray-900 dark:text-gray-100">
+                            {{ $fmt($globalTotals['total_ongkir']) }}
+                        </td>
+                    </tr>
                 </tbody>
             </table>
-
-            {{-- Grand Total row --}}
-            <div class="grand-total-container">
-                <div style="flex: 1; visibility: hidden;">Spacer</div>
-                <div style="flex: 1; text-align: center; font-weight: 700;" class="text-slate-900 dark:text-white">
-                    {{ $globalTotals['jumlah_pengiriman'] }}
-                </div>
-                <div style="flex: 1; text-align: right; font-weight: 700;" class="text-slate-900 dark:text-white">
-                    {{ $fmt($globalTotals['total_tagihan']) }}
-                </div>
-                <div style="flex: 1; text-align: right; font-weight: 700;" class="text-slate-900 dark:text-white">
-                    {{ $fmt($globalTotals['total_ongkir']) }}
-                </div>
-            </div>
         </div>
     </div>
 
-    {{-- Pagination Footer --}}
-    <div class="pagination-container">
-        <div class="pagination-status">
-            Total {{ number_format($totalCount, 0, ',', '.') }} data
+    @if ($paginator->hasPages() || count([5, 10, 20, 50, 100, 'all']) > 1)
+        <div style="margin-top: 2rem; margin-bottom: 1rem;">
+            <x-filament::pagination :paginator="$paginator" :page-options="[5, 10, 20, 50, 100, 'all']"
+                current-page-option-property="perPage" />
         </div>
-
-        <div class="per-page-capsule">
-            <span class="per-page-label">per halaman</span>
-            <select wire:model.live="perPage">
-                <option value="15">15</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="500">500</option>
-            </select>
-            <svg style="width: 1rem; height: 1rem; color: #64748b; margin-left: -0.25rem;" fill="none"
-                stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-        </div>
-
-        <div class="numeric-capsule">
-            {{ $paginator->links() }}
-        </div>
-    </div>
+    @endif
 
     <x-filament-actions::modals />
 </x-filament-panels::page>

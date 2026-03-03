@@ -2,13 +2,11 @@
 
 namespace App\Filament\Resources\PurchaseReturns\Tables;
 
-use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
+use Filament\Tables\Table;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use App\Filament\Resources\PurchaseReturns\PurchaseReturnResource;
 
 class PurchaseReturnsTable
 {
@@ -16,10 +14,16 @@ class PurchaseReturnsTable
     {
         return $table
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('number')
+                TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
+                TextColumn::make('number')
                     ->label('Nomor')
                     ->searchable()
                     ->sortable()
+                    ->color('primary')
+                    ->weight('bold')
+                    ->url(fn($record) => PurchaseReturnResource::getUrl('view', ['record' => $record]))
                     ->copyable(),
                 \Filament\Tables\Columns\TextColumn::make('invoice.number')
                     ->label('Faktur Asal')
@@ -56,21 +60,16 @@ class PurchaseReturnsTable
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('status')
-                    ->label('Status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'confirmed' => 'Disetujui',
-                    ]),
+                //
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make()->label('Lihat'),
-                    EditAction::make()->label('Ubah'),
-                    DeleteAction::make()->label('Hapus'),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make()->label('Lihat'),
+                    \Filament\Actions\EditAction::make()->label('Ubah'),
+                    \Filament\Actions\DeleteAction::make()->label('Hapus'),
                 ])->icon('heroicon-m-ellipsis-vertical'),
             ])
-            ->toolbarActions([
+            ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),

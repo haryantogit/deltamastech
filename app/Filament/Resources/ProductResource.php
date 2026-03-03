@@ -1249,6 +1249,9 @@ class ProductResource extends Resource
             ->modifyQueryUsing(fn(Builder $query) => $query->visibleInProductList()->with(['category', 'unit']))
             ->defaultSort('created_at', 'desc')
             ->columns([
+                TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 ImageColumn::make('image')
                     ->label('Foto')
                     ->circular()
@@ -1530,10 +1533,10 @@ class ProductResource extends Resource
                     ->toggle(),
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make()
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make()
                         ->label('Lihat'),
-                    EditAction::make()
+                    \Filament\Actions\EditAction::make()
                         ->label('Ubah'),
                     \Filament\Actions\Action::make('sync_to_product')
                         ->label(fn($record) => $record->show_in_products ? 'Nonaktifkan di Produk' : 'Aktifkan di Produk')
@@ -1542,19 +1545,19 @@ class ProductResource extends Resource
                         ->visible(fn($record) => (bool) $record->is_fixed_asset && $record->status === 'registered')
                         ->requiresConfirmation()
                         ->action(fn($record) => $record->update(['show_in_products' => !$record->show_in_products])),
-                    DeleteAction::make()
+                    \Filament\Actions\DeleteAction::make()
                         ->label('Hapus'),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
+                \Filament\Actions\BulkActionGroup::make([
                     BulkAction::make('print')
                         ->label('Cetak Terpilih')
                         ->icon('heroicon-o-printer')
                         ->action(fn() => null)
                         ->extraAttributes(['onclick' => 'window.print(); return false;']),
-                    DeleteBulkAction::make(),
+                    \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->poll('10s')

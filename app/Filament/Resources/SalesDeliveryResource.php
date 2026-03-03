@@ -54,7 +54,7 @@ class SalesDeliveryResource extends Resource
                         Grid::make(3)
                             ->schema([
                                 Select::make('customer_id_select')
-                                    ->relationship('customer', 'name')
+                                    ->relationship('customer', 'name', fn($query) => $query->whereIn('type', ['customer', 'both']))
                                     ->required()
                                     ->label('Pelanggan')
                                     ->searchable()
@@ -145,14 +145,14 @@ class SalesDeliveryResource extends Resource
                         Repeater::make('items')
                             ->relationship()
                             ->schema([
-                                Grid::make(11)
+                                Grid::make(12)
                                     ->schema([
                                         Hidden::make('product_id'),
                                         TextInput::make('product_name')
                                             ->label('Produk')
                                             ->disabled()
                                             ->dehydrated(false)
-                                            ->columnSpan(3)
+                                            ->columnSpan(4)
                                             ->visible(fn(Get $get) => filled($get('../../sales_order_id'))),
                                         Select::make('product_id_select')
                                             ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
@@ -160,7 +160,7 @@ class SalesDeliveryResource extends Resource
                                             ->searchable()
                                             ->preload()
                                             ->label('Produk')
-                                            ->columnSpan(3)
+                                            ->columnSpan(4)
                                             ->visible(fn(Get $get) => !filled($get('../../sales_order_id')))
                                             ->live()
                                             ->afterStateUpdated(function ($state, Set $set) {
@@ -175,7 +175,7 @@ class SalesDeliveryResource extends Resource
                                         Textarea::make('description')
                                             ->label('Deskripsi')
                                             ->rows(1)
-                                            ->columnSpan(3),
+                                            ->columnSpan(4),
 
                                         TextInput::make('quantity')
                                             ->numeric()
@@ -184,45 +184,28 @@ class SalesDeliveryResource extends Resource
                                             ->default(1)
                                             ->columnSpan(2)
                                             ->live(debounce: 500)
-                                            ->suffixAction(
-                                                Action::make('checkStock')
-                                                    ->button()
-                                                    ->size('sm')
-                                                    ->color(function (Get $get, $state) {
-                                                        $productId = $get('product_id');
-                                                        $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
-                                                        if (!$productId || !$warehouseId)
-                                                            return 'gray';
-
-                                                        $product = \App\Models\Product::find($productId);
-                                                        if (!$product || !$product->track_inventory)
-                                                            return 'gray';
-
-                                                        $stock = (float) $product->getStockForWarehouse($warehouseId);
-                                                        $requestedQty = (float) $state;
-                                                        return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
-                                                    })
-                                                    ->label(function (Get $get) {
-                                                        $productId = $get('product_id');
-                                                        $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
-                                                        if (!$productId || !$warehouseId)
-                                                            return '0';
-
-                                                        $product = \App\Models\Product::find($productId);
-                                                        if (!$product || !$product->track_inventory)
-                                                            return '0';
-
-                                                        $stock = $product->getStockForWarehouse($warehouseId);
-                                                        return number_format($stock);
-                                                    })
-                                            ),
+                                            ->suffixAction(function (Get $get, $livewire) {
+                                                $productId = $get('product_id');
+                                                $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
+                                                if ($productId && $warehouseId) {
+                                                    $stock = \App\Models\Stock::where('product_id', $productId)
+                                                        ->where('warehouse_id', $warehouseId)
+                                                        ->value('quantity') ?? 0;
+                                                    return \Filament\Actions\Action::make('stock')
+                                                        ->label((string) $stock)
+                                                        ->color($stock > 0 ? 'success' : 'danger')
+                                                        ->badge()
+                                                        ->disabled();
+                                                }
+                                                return null;
+                                            }),
 
                                         Hidden::make('unit_id'),
                                         TextInput::make('unit_name')
                                             ->label('Satuan')
                                             ->disabled()
                                             ->dehydrated(false)
-                                            ->columnSpan(3)
+                                            ->columnSpan(2)
                                             ->visible(fn(Get $get) => filled($get('../../sales_order_id'))),
                                         Select::make('unit_id_select')
                                             ->relationship('unit', 'name')
@@ -230,7 +213,7 @@ class SalesDeliveryResource extends Resource
                                             ->placeholder('Pilih')
                                             ->searchable()
                                             ->preload()
-                                            ->columnSpan(3)
+                                            ->columnSpan(2)
                                             ->visible(fn(Get $get) => !filled($get('../../sales_order_id')))
                                             ->live()
                                             ->afterStateUpdated(fn($state, Set $set) => $set('unit_id', $state)),
@@ -340,14 +323,18 @@ class SalesDeliveryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn(Builder $query) => $query->with(['customer', 'salesOrder', 'warehouse']))
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['customer', 'salesOrder.paymentTerm', 'warehouse']))
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('number')
                     ->searchable()
                     ->label('Nomor')
                     ->sortable()
                     ->color('primary')
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->url(fn($record) => route('filament.admin.resources.sales-deliveries.view', $record)),
                 Tables\Columns\TextColumn::make('customer.name')
                     ->sortable()
                     ->label('Pelanggan'),
@@ -363,6 +350,9 @@ class SalesDeliveryResource extends Resource
                     ->date('d/m/Y')
                     ->sortable()
                     ->label('Tanggal'),
+                Tables\Columns\TextColumn::make('salesOrder.paymentTerm.name')
+                    ->label('Termin')
+                    ->placeholder('-'),
                 Tables\Columns\TextColumn::make('tags.name')
                     ->label('Tag')
                     ->badge()
@@ -397,25 +387,9 @@ class SalesDeliveryResource extends Resource
                     ->money('IDR')
                     ->sortable(),
             ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('customer_id')
-                    ->relationship('customer', 'name', modifyQueryUsing: fn($query) => $query->where('type', 'customer'))
-                    ->label('Pelanggan')
-                    ->searchable()
-                    ->preload(),
-                Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'pending' => 'Menunggu',
-                        'shipped' => 'Dikirim',
-                        'delivered' => 'Terkirim',
-                        'cancelled' => 'Dibatalkan',
-                    ])
-                    ->label('Status'),
-            ])
             ->defaultSort('date', 'desc')
             ->actions([
-                ActionGroup::make([
+                \Filament\Actions\ActionGroup::make([
                     Action::make('deliver')
                         ->label('Barang Terkirim')
                         ->icon('heroicon-o-truck')
@@ -437,8 +411,8 @@ class SalesDeliveryResource extends Resource
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

@@ -52,7 +52,7 @@ class HutangResource extends Resource
                 Section::make('Informasi Hutang')
                     ->schema([
                         Select::make('supplier_id')
-                            ->relationship('supplier', 'name')
+                            ->relationship('supplier', 'name', fn($query) => $query->whereIn('type', ['vendor', 'both']))
                             ->required()
                             ->label('Pelanggan / Vendor')
                             ->searchable()
@@ -96,31 +96,33 @@ class HutangResource extends Resource
                         Repeater::make('items')
                             ->relationship()
                             ->schema([
-                                Select::make('account_id')
-                                    ->label('Akun')
-                                    ->options(Account::query()
-                                        ->get()
-                                        ->mapWithKeys(fn($account) => [$account->id => "{$account->code} - {$account->name}"]))
-                                    ->searchable()
-                                    ->required()
-                                    ->columnSpan(2),
-                                TextInput::make('description')
-                                    ->label('Deskripsi')
-                                    ->columnSpan(3),
-                                TextInput::make('total_price')
-                                    ->label('Jumlah')
-                                    ->numeric()
-                                    ->required()
-                                    ->columnSpan(2)
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(function ($state, Set $set) {
-                                        $set('unit_price', $state);
-                                        $set('quantity', 1);
-                                    }),
-                                Hidden::make('quantity')->default(1),
-                                Hidden::make('unit_price')->default(0),
+                                \Filament\Schemas\Components\Grid::make(12)
+                                    ->schema([
+                                        Select::make('account_id')
+                                            ->label('Akun')
+                                            ->options(Account::query()
+                                                ->get()
+                                                ->mapWithKeys(fn($account) => [$account->id => "{$account->code} - {$account->name}"]))
+                                            ->searchable()
+                                            ->required()
+                                            ->columnSpan(4),
+                                        TextInput::make('description')
+                                            ->label('Deskripsi')
+                                            ->columnSpan(5),
+                                        TextInput::make('total_price')
+                                            ->label('Jumlah')
+                                            ->numeric()
+                                            ->required()
+                                            ->columnSpan(3)
+                                            ->live(onBlur: true)
+                                            ->afterStateUpdated(function ($state, Set $set) {
+                                                $set('unit_price', $state);
+                                                $set('quantity', 1);
+                                            }),
+                                        Hidden::make('quantity')->default(1),
+                                        Hidden::make('unit_price')->default(0),
+                                    ]),
                             ])
-                            ->columns(7)
                             ->live()
                             ->afterStateUpdated(function (Get $get, Set $set) {
                                 $items = $get('items') ?? [];
@@ -269,6 +271,9 @@ class HutangResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('number')->label('No. Invoice')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('supplier.name')->label('Supplier')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('date')->label('Tanggal')->date('d/m/Y')->sortable(),
@@ -304,14 +309,14 @@ class HutangResource extends Resource
                     ]),
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make(),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make(),
                     \Filament\Actions\Action::make('print')
                         ->label('Cetak')
                         ->icon('heroicon-o-printer')
                         ->url(fn(Debt $record) => static::getUrl('view', ['record' => $record]))
                         ->openUrlInNewTab(),
-                    EditAction::make(),
+                    \Filament\Actions\EditAction::make(),
                     Action::make('bayar')
                         ->label('Bayar')
                         ->icon('heroicon-o-banknotes')
@@ -364,13 +369,13 @@ class HutangResource extends Resource
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
+                \Filament\Actions\BulkActionGroup::make([
                     BulkAction::make('print')
                         ->label('Cetak Terpilih')
                         ->icon('heroicon-o-printer')
                         ->action(fn() => null)
                         ->extraAttributes(['onclick' => 'window.print(); return false;']),
-                    DeleteBulkAction::make(),
+                    \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

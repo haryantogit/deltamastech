@@ -12,9 +12,15 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
 
-class PerputaranPersediaan extends Page implements HasActions
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Livewire\WithPagination;
+
+class PerputaranPersediaan extends Page implements HasActions, HasForms
 {
     use InteractsWithActions;
+    use InteractsWithForms;
+    use WithPagination;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-path';
 
@@ -29,12 +35,28 @@ class PerputaranPersediaan extends Page implements HasActions
     public $startDate;
     public $endDate;
     public $search = '';
+    public $perPage = 10;
+    public $warehouseId;
     public $expandedRows = [];
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'perPage' => ['except' => 10],
+    ];
 
     public function mount()
     {
-        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
+        $this->endDate = Carbon::now()->format('Y-m-d');
+
+        $firstWarehouse = Warehouse::orderBy('name')->first();
+        $this->warehouseId = $firstWarehouse?->id;
+    }
+
+    public function setWarehouse($id)
+    {
+        $this->warehouseId = $id;
+        $this->expandedRows = [];
     }
 
     public function toggleRow($id): void
@@ -60,6 +82,27 @@ class PerputaranPersediaan extends Page implements HasActions
         return 'full';
     }
 
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startDate = $this->startDate ?? now()->startOfyear()->toDateString();
+        $endDate = $this->endDate ?? now()->toDateString();
+        $startFmt = \Carbon\Carbon::parse($startDate)->format('d/m/Y');
+        $endFmt = \Carbon\Carbon::parse($endDate)->format('d/m/Y');
+
+        $dateDisplay = $startFmt === $endFmt
+            ? $startFmt
+            : $startFmt . ' &mdash; ' . $endFmt;
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $dateDisplay . '</span>
+            </div>
+        ');
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -81,10 +124,6 @@ class PerputaranPersediaan extends Page implements HasActions
                     $this->startDate = $data['startDate'];
                     $this->endDate = $data['endDate'];
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->icon('heroicon-o-printer')
@@ -100,17 +139,44 @@ class PerputaranPersediaan extends Page implements HasActions
 
     public function getViewData(): array
     {
-        $warehouses = Warehouse::orderBy('name')->get();
+        if (!$this->warehouseId) {
+            return [
+                'summary' => collect(),
+                'warehouses' => Warehouse::orderBy('name')->get(),
+                'paginator' => null,
+            ];
+        }
+
         $daysInPeriod = Carbon::parse($this->startDate)->diffInDays(Carbon::parse($this->endDate)) ?: 1;
 
-        $summary = $warehouses->map(function ($warehouse) {
-            // Initial Stock (sum across all products in this warehouse)
-            $initialQty = (float) StockMovement::where('warehouse_id', $warehouse->id)
+        $productsQuery = Product::query()
+            ->with(['category'])
+            ->where('track_inventory', true)
+            ->where('is_fixed_asset', false)
+            ->where('is_active', true);
+
+        if ($this->search) {
+            $productsQuery->where(function ($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('sku', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('category', function ($cq) {
+                        $cq->where('name', 'like', '%' . $this->search . '%');
+                    });
+            });
+        }
+
+        $allProducts = $productsQuery->get();
+
+        $allSummary = $allProducts->map(function ($product) use ($daysInPeriod) {
+            // Initial Stock in specific warehouse
+            $initialQty = (float) StockMovement::where('product_id', $product->id)
+                ->where('warehouse_id', $this->warehouseId)
                 ->where('created_at', '<', $this->startDate . ' 00:00:00')
                 ->sum('quantity');
 
             // Net Movement within period
-            $netMovement = (float) StockMovement::where('warehouse_id', $warehouse->id)
+            $netMovement = (float) StockMovement::where('product_id', $product->id)
+                ->where('warehouse_id', $this->warehouseId)
                 ->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])
                 ->sum('quantity');
 
@@ -118,10 +184,8 @@ class PerputaranPersediaan extends Page implements HasActions
             $avgStock = ($initialQty + $finalQty) / 2;
 
             // Qty Terjual (Negative movements from Sales)
-            // We'll consider movements where quantity < 0 and reference type is sales-related or simple decrease
-            // For general turnover, we usually look at COGS or Qty Sold. 
-            // Here we'll sum ABS of negative movements linked to sales documents.
-            $qtyTerjual = (float) StockMovement::where('warehouse_id', $warehouse->id)
+            $qtyTerjual = (float) StockMovement::where('product_id', $product->id)
+                ->where('warehouse_id', $this->warehouseId)
                 ->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])
                 ->where('quantity', '<', 0)
                 ->whereIn('reference_type', [
@@ -134,12 +198,13 @@ class PerputaranPersediaan extends Page implements HasActions
             $qtyTerjual = abs($qtyTerjual);
 
             $turnoverRatio = $avgStock > 0 ? $qtyTerjual / $avgStock : 0;
-            $daysInPeriod = Carbon::parse($this->startDate)->diffInDays(Carbon::parse($this->endDate)) ?: 1;
             $storageDuration = $turnoverRatio > 0 ? $daysInPeriod / $turnoverRatio : 0;
 
             return (object) [
-                'id' => $warehouse->id,
-                'name' => $warehouse->name,
+                'id' => $product->id,
+                'name' => $product->name,
+                'category' => $product->category->name ?? '-',
+                'sku' => $product->sku,
                 'initial_qty' => $initialQty,
                 'final_qty' => $finalQty,
                 'avg_qty' => $avgStock,
@@ -147,56 +212,28 @@ class PerputaranPersediaan extends Page implements HasActions
                 'ratio' => $turnoverRatio,
                 'duration' => $storageDuration,
             ];
-        });
+        })->filter(function ($row) {
+            // Only show products that have movements or existing stock to avoid clutter
+            return $row->initial_qty != 0 || $row->final_qty != 0 || $row->qty_sold != 0;
+        })->sortBy('name');
 
-        // Detailed product breakdown for expanded rows
-        $details = [];
-        foreach ($this->expandedRows as $warehouseId) {
-            $topProducts = StockMovement::where('warehouse_id', $warehouseId)
-                ->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])
-                ->where('quantity', '<', 0)
-                ->whereIn('reference_type', [
-                    'App\Models\SalesInvoiceItem',
-                    'App\Models\SalesDeliveryItem',
-                    'App\Models\PosOrderItem'
-                ])
-                ->select('product_id', DB::raw('SUM(ABS(quantity)) as total_sold'))
-                ->groupBy('product_id')
-                ->orderByDesc('total_sold')
-                ->limit(5)
-                ->with('product')
-                ->get();
-
-            $details[$warehouseId] = $topProducts->map(function ($m) use ($warehouseId) {
-                $pId = $m->product_id;
-
-                $pInitial = (float) StockMovement::where('warehouse_id', $warehouseId)
-                    ->where('product_id', $pId)
-                    ->where('created_at', '<', $this->startDate . ' 00:00:00')
-                    ->sum('quantity');
-
-                $pNet = (float) StockMovement::where('warehouse_id', $warehouseId)
-                    ->where('product_id', $pId)
-                    ->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])
-                    ->sum('quantity');
-
-                $pFinal = $pInitial + $pNet;
-                $pAvg = ($pInitial + $pFinal) / 2;
-                $pRatio = $pAvg > 0 ? $m->total_sold / $pAvg : 0;
-
-                return (object) [
-                    'name' => $m->product->name ?? 'Unknown',
-                    'sku' => $m->product->sku ?? '-',
-                    'sold' => $m->total_sold,
-                    'avg_stock' => $pAvg,
-                    'ratio' => $pRatio,
-                ];
-            });
-        }
+        // Pagination
+        $perPageCount = $this->perPage === 'all' ? max(1, $allSummary->count()) : (int) $this->perPage;
+        $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1;
+        $paginatedSummary = new \Illuminate\Pagination\LengthAwarePaginator(
+            $allSummary->forPage($currentPage, $perPageCount),
+            $allSummary->count(),
+            $perPageCount,
+            $currentPage,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
 
         return [
-            'summary' => $summary,
-            'details' => $details,
+            'summary' => $paginatedSummary,
+            'paginator' => $paginatedSummary,
+            'warehouses' => Warehouse::orderBy('name')->get(),
         ];
     }
 }
+
+

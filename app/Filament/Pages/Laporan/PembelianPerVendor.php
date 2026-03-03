@@ -32,33 +32,34 @@ class PembelianPerVendor extends Page implements HasActions
 
     public ?string $startDate = null;
     public ?string $endDate = null;
-    public ?string $search = null;
-    public int $perPage = 15;
+    public string $search = '';
+    public $perPage = 10;
     public array $expandedVendors = [];
+
+    protected $queryString = [
+        'startDate' => ['except' => ''],
+        'endDate' => ['except' => ''],
+        'perPage' => ['except' => 10],
+        'search' => ['except' => ''],
+    ];
 
     public function mount(): void
     {
-        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->format('Y-m-d');
+        if (!$this->startDate) {
+            $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
+        }
+        if (!$this->endDate) {
+            $this->endDate = Carbon::now()->format('Y-m-d');
+        }
     }
 
     public function toggleVendor($id): void
     {
         if (in_array($id, $this->expandedVendors)) {
-            $this->expandedVendors = array_diff($this->expandedVendors, [$id]);
+            $this->expandedVendors = array_values(array_diff($this->expandedVendors, [$id]));
         } else {
             $this->expandedVendors[] = $id;
         }
-    }
-
-    public function updatedStartDate(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedEndDate(): void
-    {
-        $this->resetPage();
     }
 
     public function updatedSearch(): void
@@ -69,6 +70,25 @@ class PembelianPerVendor extends Page implements HasActions
     public function updatedPerPage(): void
     {
         $this->resetPage();
+    }
+
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startFmt = Carbon::parse($this->startDate)->format('d/m/Y');
+        $endFmt = Carbon::parse($this->endDate)->format('d/m/Y');
+
+        $dateDisplay = $startFmt === $endFmt
+            ? $startFmt
+            : $startFmt . ' &mdash; ' . $endFmt;
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $dateDisplay . '</span>
+            </div>
+        ');
     }
 
     public function getBreadcrumbs(): array
@@ -107,14 +127,6 @@ class PembelianPerVendor extends Page implements HasActions
                     $this->endDate = $data['endDate'];
                     $this->resetPage();
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
-            Action::make('bagikan')
-                ->label('Bagikan')
-                ->icon('heroicon-o-share')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->color('gray')
@@ -152,7 +164,8 @@ class PembelianPerVendor extends Page implements HasActions
         $query->groupBy('contacts.id', 'contacts.name', 'contacts.company')
             ->orderBy('total_amount', 'desc');
 
-        $paginator = $query->paginate($this->perPage);
+        $perPage = $this->perPage === 'all' ? max(1, $candidateCount = $query->count()) : $this->perPage;
+        $paginator = $query->paginate($perPage);
 
         // Nested data for expanded vendors
         $nestedData = [];
@@ -180,7 +193,17 @@ class PembelianPerVendor extends Page implements HasActions
                 ->get();
 
             foreach ($results as $item) {
-                $nestedData[$item->supplier_id][] = $item;
+                $nestedData[$item->supplier_id][] = [
+                    'invoice_number' => $item->invoice_number,
+                    'invoice_date' => Carbon::parse($item->invoice_date)->format('d/m/Y'),
+                    'product_name' => $item->product_name,
+                    'product_sku' => $item->product_sku,
+                    'category_name' => $item->category_name,
+                    'description' => $item->description,
+                    'quantity' => (float) $item->quantity,
+                    'unit_price' => (float) $item->unit_price,
+                    'total_price' => (float) $item->total_price,
+                ];
             }
         }
 
@@ -195,11 +218,18 @@ class PembelianPerVendor extends Page implements HasActions
             ->first();
 
         return [
-            'vendors' => $paginator->items(),
+            'vendors' => collect($paginator->items())->map(fn($v) => [
+                'vendor_id' => $v->vendor_id,
+                'vendor_name' => $v->vendor_name,
+                'company_name' => $v->company_name,
+                'transaction_count' => (int) $v->transaction_count,
+                'total_amount' => (float) $v->total_amount,
+            ]),
             'paginator' => $paginator,
             'nestedData' => $nestedData,
-            'grandTotalCount' => $globalTotals->grand_total_count ?? 0,
-            'grandTotalAmount' => $globalTotals->grand_total_amount ?? 0,
+            'grandTotalCount' => (int) ($globalTotals->grand_total_count ?? 0),
+            'grandTotalAmount' => (float) ($globalTotals->grand_total_amount ?? 0),
         ];
     }
 }
+

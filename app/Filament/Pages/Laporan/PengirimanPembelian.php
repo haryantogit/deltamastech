@@ -33,24 +33,26 @@ class PengirimanPembelian extends Page implements HasActions
 
     public ?string $startDate = null;
     public ?string $endDate = null;
-    public ?string $search = null;
+    public string $search = '';
     public string $viewType = 'pengiriman'; // pengiriman, vendor, produk
-    public int $perPage = 15;
+    public $perPage = 10;
+
+    protected $queryString = [
+        'startDate' => ['except' => ''],
+        'endDate' => ['except' => ''],
+        'viewType' => ['except' => 'pengiriman'],
+        'search' => ['except' => ''],
+        'perPage' => ['except' => 10],
+    ];
 
     public function mount(): void
     {
-        $this->startDate = \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = \Carbon\Carbon::now()->format('Y-m-d');
-    }
-
-    public function updatedStartDate(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedEndDate(): void
-    {
-        $this->resetPage();
+        if (!$this->startDate) {
+            $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
+        }
+        if (!$this->endDate) {
+            $this->endDate = Carbon::now()->format('Y-m-d');
+        }
     }
 
     public function updatedSearch(): void
@@ -63,6 +65,30 @@ class PengirimanPembelian extends Page implements HasActions
         $this->resetPage();
     }
 
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startFmt = Carbon::parse($this->startDate)->format('d/m/Y');
+        $endFmt = Carbon::parse($this->endDate)->format('d/m/Y');
+
+        $dateDisplay = $startFmt === $endFmt
+            ? $startFmt
+            : $startFmt . ' &mdash; ' . $endFmt;
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $dateDisplay . '</span>
+            </div>
+        ');
+    }
+
     public function getBreadcrumbs(): array
     {
         return [
@@ -70,6 +96,11 @@ class PengirimanPembelian extends Page implements HasActions
             \App\Filament\Pages\ReportPage::getUrl() => 'Laporan',
             'Pengiriman Pembelian',
         ];
+    }
+
+    public function getMaxContentWidth(): string
+    {
+        return 'full';
     }
 
     protected function getHeaderActions(): array
@@ -88,20 +119,22 @@ class PengirimanPembelian extends Page implements HasActions
                         ->label('Tanggal Akhir')
                         ->default($this->endDate)
                         ->required(),
+                    \Filament\Forms\Components\Select::make('viewType')
+                        ->label('Tipe Tampilan')
+                        ->options([
+                            'pengiriman' => 'Pengiriman',
+                            'vendor' => 'Vendor',
+                            'produk' => 'Produk',
+                        ])
+                        ->default($this->viewType)
+                        ->required(),
                 ])
                 ->action(function (array $data): void {
                     $this->startDate = $data['startDate'];
                     $this->endDate = $data['endDate'];
+                    $this->viewType = $data['viewType'];
                     $this->resetPage();
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
-            Action::make('bagikan')
-                ->label('Bagikan')
-                ->icon('heroicon-o-share')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->color('gray')
@@ -153,12 +186,19 @@ class PengirimanPembelian extends Page implements HasActions
             });
         }
 
-        $paginator = $query->orderBy('date', 'desc')->paginate($this->perPage);
+        $perPage = $this->perPage === 'all' ? max(1, $query->count()) : $this->perPage;
+        $paginator = $query->orderBy('date', 'desc')->paginate($perPage);
 
         return [
-            'items' => $paginator->items(),
+            'items' => collect($paginator->items())->map(fn($item) => [
+                'id' => $item->id,
+                'date' => Carbon::parse($item->date)->format('d/m/Y'),
+                'number' => $item->number,
+                'vendor_name' => $item->vendor_name,
+                'total_value' => (float) $item->total_value,
+            ]),
             'paginator' => $paginator,
-            'grandTotal' => $this->getGrandTotalValue(),
+            'grandTotal' => (float) $this->getGrandTotalValue(),
         ];
     }
 
@@ -189,7 +229,8 @@ class PengirimanPembelian extends Page implements HasActions
             });
         }
 
-        $paginator = $query->orderBy('total_value', 'desc')->paginate($this->perPage);
+        $perPage = $this->perPage === 'all' ? max(1, $query->count()) : $this->perPage;
+        $paginator = $query->orderBy('total_value', 'desc')->paginate($perPage);
 
         $vendorIds = collect($paginator->items())->pluck('group_id')->toArray();
         $nestedData = [];
@@ -218,15 +259,30 @@ class PengirimanPembelian extends Page implements HasActions
                 ->get();
 
             foreach ($results as $res) {
-                $nestedData[$res->group_id][] = $res;
+                $nestedData[$res->group_id][] = [
+                    'doc_number' => $res->doc_number,
+                    'doc_date' => Carbon::parse($res->doc_date)->format('d/m/Y'),
+                    'product_name' => $res->product_name,
+                    'product_sku' => $res->product_sku,
+                    'unit_name' => $res->unit_name,
+                    'quantity' => (float) $res->quantity,
+                    'price' => (float) $res->price,
+                    'row_total' => (float) $res->row_total,
+                ];
             }
         }
 
         return [
-            'items' => $paginator->items(),
+            'items' => collect($paginator->items())->map(fn($item) => [
+                'group_id' => $item->group_id,
+                'group_name' => $item->group_name,
+                'company_name' => $item->company_name,
+                'transaction_count' => (int) $item->transaction_count,
+                'total_value' => (float) $item->total_value,
+            ]),
             'paginator' => $paginator,
             'nestedData' => $nestedData,
-            'grandTotal' => $this->getGrandTotalValue(),
+            'grandTotal' => (float) $this->getGrandTotalValue(),
         ];
     }
 
@@ -257,7 +313,8 @@ class PengirimanPembelian extends Page implements HasActions
             });
         }
 
-        $paginator = $query->orderBy('total_value', 'desc')->paginate($this->perPage);
+        $perPage = $this->perPage === 'all' ? max(1, $query->count()) : $this->perPage;
+        $paginator = $query->orderBy('total_value', 'desc')->paginate($perPage);
 
         $productIds = collect($paginator->items())->pluck('group_id')->toArray();
         $nestedData = [];
@@ -285,15 +342,29 @@ class PengirimanPembelian extends Page implements HasActions
                 ->get();
 
             foreach ($results as $res) {
-                $nestedData[$res->group_id][] = $res;
+                $nestedData[$res->group_id][] = [
+                    'doc_number' => $res->doc_number,
+                    'doc_date' => Carbon::parse($res->doc_date)->format('d/m/Y'),
+                    'vendor_name' => $res->vendor_name,
+                    'unit_name' => $res->unit_name,
+                    'quantity' => (float) $res->quantity,
+                    'price' => (float) $res->price,
+                    'row_total' => (float) $res->row_total,
+                ];
             }
         }
 
         return [
-            'items' => $paginator->items(),
+            'items' => collect($paginator->items())->map(fn($item) => [
+                'group_id' => $item->group_id,
+                'group_name' => $item->group_name,
+                'product_sku' => $item->product_sku,
+                'total_qty' => (float) $item->total_qty,
+                'total_value' => (float) $item->total_value,
+            ]),
             'paginator' => $paginator,
             'nestedData' => $nestedData,
-            'grandTotal' => $this->getGrandTotalValue(),
+            'grandTotal' => (float) $this->getGrandTotalValue(),
         ];
     }
 
@@ -310,3 +381,4 @@ class PengirimanPembelian extends Page implements HasActions
             ->sum(DB::raw('purchase_delivery_items.quantity * IFNULL(purchase_order_items.unit_price, 0)'));
     }
 }
+

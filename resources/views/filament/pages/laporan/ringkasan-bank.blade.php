@@ -17,11 +17,47 @@
         };
     @endphp
 
-    <x-filament::section>
+    <style>
+        /* Tab Buttons Styling */
+        .custom-tab-button {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0.4rem 1.25rem;
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+        }
+
+        .custom-tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2), 0 2px 4px -1px rgba(59, 130, 246, 0.1);
+        }
+
+        .custom-tab-button.inactive {
+            background-color: transparent;
+            color: #64748b;
+        }
+
+        .custom-tab-button.inactive:hover {
+            color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .dark .custom-tab-button.inactive {
+            color: #94a3b8;
+        }
+
+        .dark .custom-tab-button.inactive:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+
+
+    <x-filament::section class="-mt-4">
         <x-slot name="heading">
-            <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
-                <span style="color:#3b82f6;font-weight:700;font-size:15px;">Ringkasan Bank</span>
-            </div>
+            <span style="color: #16a34a; font-weight: 700; font-size: 15px;">Ringkasan Kas &amp; Bank</span>
         </x-slot>
 
         <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
@@ -35,9 +71,9 @@
 
             {{-- Header --}}
             <thead>
-                <tr style="border-bottom:2px solid rgba(128,128,128,0.15);">
+                <tr style="background: rgba(148, 163, 184, 0.15); border-bottom: 2px solid rgba(128,128,128,0.2);">
                     <th style="padding:12px 8px;font-size:12px;font-weight:600;text-align:left;"
-                        class="text-gray-500 dark:text-gray-400">Akun Bank</th>
+                        class="text-gray-500 dark:text-gray-400"></th>
                     <th style="padding:12px 8px;font-size:12px;font-weight:600;text-align:right;"
                         class="text-gray-500 dark:text-gray-400">Saldo Awal</th>
                     <th style="padding:12px 8px;font-size:12px;font-weight:600;text-align:right;"

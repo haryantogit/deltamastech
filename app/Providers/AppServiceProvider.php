@@ -56,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
         \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {
             $table
                 ->paginated([5, 10, 20, 50, 100, 'all'])
-                ->defaultPaginationPageOption(50);
+                ->defaultPaginationPageOption(10);
         });
     }
 }

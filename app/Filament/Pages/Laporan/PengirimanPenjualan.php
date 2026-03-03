@@ -28,13 +28,14 @@ class PengirimanPenjualan extends Page implements HasActions
     public $startDate;
     public $endDate;
     public $search = '';
-    public $perPage = 15;
+    public $perPage = 10;
     public $groupBy = 'pelanggan'; // 'pelanggan', 'pengiriman', 'produk'
+    public array $expandedGroups = [];
 
     public function mount()
     {
-        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
+        $this->endDate = Carbon::now()->format('Y-m-d');
     }
 
     public function getBreadcrumbs(): array
@@ -59,6 +60,36 @@ class PengirimanPenjualan extends Page implements HasActions
     public function updatedGroupBy()
     {
         $this->resetPage();
+        $this->expandedGroups = [];
+    }
+
+    public function toggleGroup($id): void
+    {
+        if (in_array($id, $this->expandedGroups)) {
+            $this->expandedGroups = array_values(array_diff($this->expandedGroups, [$id]));
+        } else {
+            $this->expandedGroups[] = $id;
+        }
+    }
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startDate = $this->startDate ?? now()->startOfYear()->toDateString();
+        $endDate = $this->endDate ?? now()->toDateString();
+        $startFmt = \Carbon\Carbon::parse($startDate)->format('d/m/Y');
+        $endFmt = \Carbon\Carbon::parse($endDate)->format('d/m/Y');
+
+        $dateDisplay = $startFmt === $endFmt
+            ? $startFmt
+            : $startFmt . ' &mdash; ' . $endFmt;
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $dateDisplay . '</span>
+            </div>
+        ');
     }
 
     protected function getHeaderActions(): array
@@ -70,23 +101,29 @@ class PengirimanPenjualan extends Page implements HasActions
                 ->color('gray')
                 ->form([
                     \Filament\Forms\Components\DatePicker::make('startDate')
-                        ->label('Tanggal Mulai')
+                        ->hiddenLabel()
                         ->default($this->startDate)
                         ->required(),
                     \Filament\Forms\Components\DatePicker::make('endDate')
-                        ->label('Tanggal Akhir')
+                        ->hiddenLabel()
                         ->default($this->endDate)
+                        ->required(),
+                    \Filament\Forms\Components\Select::make('groupBy')
+                        ->hiddenLabel()
+                        ->options([
+                            'pelanggan' => 'Pelanggan',
+                            'pengiriman' => 'Pengiriman',
+                            'produk' => 'Produk',
+                        ])
+                        ->default($this->groupBy)
                         ->required(),
                 ])
                 ->action(function (array $data): void {
                     $this->startDate = $data['startDate'];
                     $this->endDate = $data['endDate'];
+                    $this->groupBy = $data['groupBy'];
                     $this->resetPage();
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->icon('heroicon-o-printer')
@@ -167,7 +204,8 @@ class PengirimanPenjualan extends Page implements HasActions
             ->distinct()
             ->orderBy('c.name');
 
-        $paginator = $customerQuery->paginate($this->perPage);
+        $perPage = $this->perPage === 'all' ? max(1, $customerQuery->count()) : $this->perPage;
+        $paginator = $customerQuery->paginate($perPage);
         $customerIds = collect($paginator->items())->pluck('id')->toArray();
 
         // Get children details for these customers
@@ -223,7 +261,8 @@ class PengirimanPenjualan extends Page implements HasActions
             ->select('sd.id', 'sd.number', 'sd.date', 'c.name as customer_name')
             ->orderBy('sd.date', 'desc');
 
-        $paginator = $deliveryQuery->paginate($this->perPage);
+        $perPage = $this->perPage === 'all' ? max(1, $deliveryQuery->count()) : $this->perPage;
+        $paginator = $deliveryQuery->paginate($perPage);
         $deliveryIds = collect($paginator->items())->pluck('id')->toArray();
 
         // For "Pengiriman" flat view, we just need the aggregated totals per delivery
@@ -285,7 +324,8 @@ class PengirimanPenjualan extends Page implements HasActions
             ->distinct()
             ->orderBy('p.name');
 
-        $paginator = $productQuery->paginate($this->perPage);
+        $perPage = $this->perPage === 'all' ? max(1, $productQuery->count()) : $this->perPage;
+        $paginator = $productQuery->paginate($perPage);
         $productIds = collect($paginator->items())->pluck('id')->toArray();
 
         // Get children details for these products
@@ -328,3 +368,5 @@ class PengirimanPenjualan extends Page implements HasActions
         return $viewData;
     }
 }
+
+

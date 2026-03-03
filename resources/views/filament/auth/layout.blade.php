@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 
 <head>
     <meta charset="utf-8">
@@ -21,9 +21,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+        /* Reset any Filament wrapper styles on the login page */
+        .fi-simple-layout,
+        .fi-simple-main-ctn,
+        .fi-simple-main,
+        .fi-simple-page {
+            min-height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: contents !important;
+        }
+    </style>
 </head>
 
-<body class="font-sans antialiased text-gray-900 bg-gray-50">
+<body class="font-sans antialiased text-gray-900 bg-white h-full m-0 p-0 overflow-hidden">
     {{ $slot }}
 
     @filamentScripts

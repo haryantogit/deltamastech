@@ -14,6 +14,9 @@ class ClosingsTable
     {
         return $table
             ->columns([
+                TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('period_start')
                     ->date()
                     ->sortable(),

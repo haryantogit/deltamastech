@@ -33,13 +33,35 @@ class PembelianProdukPerVendor extends Page implements HasActions
     public ?string $startDate = null;
     public ?string $endDate = null;
     public ?string $search = null;
-    public int $perPage = 15;
+    public $perPage = 10;
     public array $expandedVendors = [];
+
+    protected $queryString = [
+        'startDate' => ['except' => ''],
+        'endDate' => ['except' => ''],
+        'perPage' => ['except' => 10],
+        'search' => ['except' => ''],
+    ];
 
     public function mount(): void
     {
-        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
         $this->endDate = Carbon::now()->format('Y-m-d');
+    }
+
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startFmt = Carbon::parse($this->startDate)->format('d/m/Y');
+        $endFmt = Carbon::parse($this->endDate)->format('d/m/Y');
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $startFmt . ' &mdash; ' . $endFmt . '</span>
+            </div>
+        ');
     }
 
     public function toggleVendor($id): void
@@ -51,6 +73,11 @@ class PembelianProdukPerVendor extends Page implements HasActions
         }
     }
 
+    public function getMaxContentWidth(): string
+    {
+        return 'full';
+    }
+
     public function updatedStartDate(): void
     {
         $this->resetPage();
@@ -60,6 +87,8 @@ class PembelianProdukPerVendor extends Page implements HasActions
     {
         $this->resetPage();
     }
+
+
 
     public function updatedSearch(): void
     {
@@ -97,14 +126,6 @@ class PembelianProdukPerVendor extends Page implements HasActions
                     $this->endDate = $data['endDate'];
                     $this->resetPage();
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
-            Action::make('bagikan')
-                ->label('Bagikan')
-                ->icon('heroicon-o-share')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->color('gray')
@@ -120,38 +141,37 @@ class PembelianProdukPerVendor extends Page implements HasActions
 
     public function getViewData(): array
     {
-        // 1. Chart Data: Pembelian Produk per Vendor (Quantity)
-        $chartData = DB::table('purchase_invoice_items as pii')
-            ->join('purchase_invoices as pi', 'pii.purchase_invoice_id', '=', 'pi.id')
-            ->join('contacts as c', 'pi.supplier_id', '=', 'c.id')
-            ->whereBetween('pi.date', [$this->startDate, $this->endDate])
-            ->where('pi.status', '!=', 'cancelled')
-            ->select('c.name', DB::raw('SUM(pii.quantity) as total_qty'))
-            ->groupBy('c.id', 'c.name')
+        // 1. Build Base Query for filtering
+        $baseQuery = Contact::query()
+            ->join('purchase_invoices', 'contacts.id', '=', 'purchase_invoices.supplier_id')
+            ->join('purchase_invoice_items', 'purchase_invoices.id', '=', 'purchase_invoice_items.purchase_invoice_id')
+            ->whereBetween('purchase_invoices.date', [$this->startDate, $this->endDate])
+            ->where('purchase_invoices.status', '!=', 'cancelled');
+
+        if ($this->search) {
+            $baseQuery->where('contacts.name', 'like', "%{$this->search}%");
+        }
+
+        // 2. Chart Data: Pembelian Produk per Vendor (Quantity)
+        $chartData = (clone $baseQuery)
+            ->select('contacts.name', DB::raw('SUM(purchase_invoice_items.quantity) as total_qty'))
+            ->groupBy('contacts.id', 'contacts.name')
             ->orderBy('total_qty', 'desc')
             ->limit(10)
             ->get();
 
-        // 2. Table Data (Paginated Vendors)
-        $query = Contact::query()
-            ->join('purchase_invoices', 'contacts.id', '=', 'purchase_invoices.supplier_id')
-            ->join('purchase_invoice_items', 'purchase_invoices.id', '=', 'purchase_invoice_items.purchase_invoice_id')
-            ->whereBetween('purchase_invoices.date', [$this->startDate, $this->endDate])
-            ->where('purchase_invoices.status', '!=', 'cancelled')
+        $perPage = $this->perPage === 'all' ? max(1, (clone $baseQuery)->count()) : $this->perPage;
+        $paginator = (clone $baseQuery)
             ->select(
                 'contacts.id as vendor_id',
                 'contacts.name as vendor_name',
                 DB::raw('SUM(purchase_invoice_items.quantity) as total_qty')
             )
-            ->groupBy('contacts.id', 'contacts.name');
+            ->groupBy('contacts.id', 'contacts.name')
+            ->orderBy('total_qty', 'desc')
+            ->paginate($perPage);
 
-        if ($this->search) {
-            $query->where('contacts.name', 'like', "%{$this->search}%");
-        }
-
-        $paginator = $query->orderBy('total_qty', 'desc')->paginate($this->perPage);
-
-        // 3. Nested Data for expanded vendors
+        // 4. Nested Data for expanded vendors
         $nestedData = [];
         if (!empty($this->expandedVendors)) {
             $results = PurchaseInvoiceItem::query()
@@ -182,3 +202,4 @@ class PembelianProdukPerVendor extends Page implements HasActions
         ];
     }
 }
+

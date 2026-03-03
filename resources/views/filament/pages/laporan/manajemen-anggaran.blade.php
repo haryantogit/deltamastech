@@ -204,7 +204,7 @@
             <div class="report-toolbar">
                 <div class="search-container">
                     <x-filament::icon icon="heroicon-m-magnifying-glass" class="w-5 h-5 search-icon" />
-                    <input type="text" wire:model.live.debounce.500ms="search" placeholder="Cari akun..." class="search-input">
+                    <input type="text" wire:model.live.debounce.500ms="search" placeholder="Cari" class="search-input">
                 </div>
             </div>
 
@@ -265,3 +265,4 @@
 
     <x-filament-actions::modals />
 </x-filament-panels::page>
+

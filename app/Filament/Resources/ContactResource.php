@@ -205,6 +205,9 @@ class ContactResource extends Resource
         return $table
             ->columnToggleFormColumns(2)
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 Tables\Columns\ImageColumn::make('photo')
                     ->label('Foto')
                     ->circular()
@@ -308,29 +311,31 @@ class ContactResource extends Resource
                     ]),
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make()
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make()
                         ->label('Lihat'),
                     \Filament\Actions\Action::make('print')
                         ->label('Cetak')
                         ->icon('heroicon-o-printer')
-                        ->url(fn(Contact $record) => static::getUrl('view', ['record' => $record]))
+                        ->url(fn(Contact $record) => static::getUrl('view', ['record' => $record])
+                    ->icon('heroicon-m-ellipsis-vertical'))
                         ->openUrlInNewTab(),
-                    EditAction::make()
+                    \Filament\Actions\EditAction::make()
                         ->label('Ubah'),
-                    DeleteAction::make()
+                    \Filament\Actions\DeleteAction::make()
                         ->label('Hapus'),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
+                \Filament\Actions\BulkActionGroup::make([
                     BulkAction::make('print')
                         ->label('Cetak Terpilih')
                         ->icon('heroicon-o-printer')
                         ->action(fn() => null)
-                        ->extraAttributes(['onclick' => 'window.print(); return false;']),
-                    DeleteBulkAction::make(),
+                        ->extraAttributes(['onclick' => 'window.print(); return false;'])
+                    ->icon('heroicon-m-ellipsis-vertical'),
+                    \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

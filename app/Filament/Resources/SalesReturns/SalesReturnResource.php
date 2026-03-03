@@ -48,6 +48,7 @@ class SalesReturnResource extends Resource
         return [
             'index' => ListSalesReturns::route('/'),
             'create' => CreateSalesReturn::route('/create'),
+            'view' => Pages\ViewSalesReturn::route('/{record}'),
             'edit' => EditSalesReturn::route('/{record}/edit'),
         ];
     }

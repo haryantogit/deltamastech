@@ -14,8 +14,7 @@ class EditProductionOrder extends EditRecord
     {
         return [
             url('/admin') => 'Beranda',
-            url('/admin/produksi-page') => 'Produksi',
-            url('/admin/production-orders') => 'Konversi Produk',
+            url('/admin/production-orders') => 'Produksi',
             '#' => 'Edit Konversi Produk',
         ];
     }

@@ -49,6 +49,21 @@ class RingkasanAsetTetap extends Page implements HasActions
         return 'full';
     }
 
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $date = $this->date ?? now()->toDateString();
+        $dateFmt = \Carbon\Carbon::parse($date)->format('d/m/Y');
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Per ' . $dateFmt . '</span>
+            </div>
+        ');
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -71,10 +86,6 @@ class RingkasanAsetTetap extends Page implements HasActions
                     $this->date = $data['date'];
                     $this->categoryId = $data['categoryId'];
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->icon('heroicon-o-printer')

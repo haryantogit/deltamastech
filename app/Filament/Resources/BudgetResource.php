@@ -68,22 +68,26 @@ class BudgetResource extends Resource
                 Forms\Components\Repeater::make('items')
                     ->relationship()
                     ->schema([
-                        Forms\Components\Select::make('account_id')
-                            ->label('Akun')
-                            ->options(
-                                Account::whereIn('category', ['Pendapatan', 'Beban', 'Harga Pokok Penjualan', 'Pendapatan Lainnya', 'Beban Lainnya'])
-                                    ->pluck('name', 'id')
-                            )
-                            ->searchable()
-                            ->required()
-                            ->columnSpan(2),
-                        Forms\Components\TextInput::make('amount')
-                            ->label('Target Nominal')
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->required(),
+                        \Filament\Schemas\Components\Grid::make(12)
+                            ->schema([
+                                Forms\Components\Select::make('account_id')
+                                    ->label('Akun')
+                                    ->options(
+                                        Account::whereIn('category', ['Pendapatan', 'Beban', 'Harga Pokok Penjualan', 'Pendapatan Lainnya', 'Beban Lainnya'])
+                                            ->pluck('name', 'id')
+                                    )
+                                    ->searchable()
+                                    ->required()
+                                    ->columnSpan(6),
+
+                                Forms\Components\TextInput::make('amount')
+                                    ->label('Target Nominal')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->required()
+                                    ->columnSpan(6),
+                            ]),
                     ])
-                    ->columns(3)
                     ->columnSpanFull()
                     ->label('Rincian Target Anggaran'),
             ]);
@@ -93,6 +97,9 @@ class BudgetResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('name')
                     ->label('Nama Anggaran')
                     ->searchable()
@@ -130,13 +137,14 @@ class BudgetResource extends Resource
                 //
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                \Filament\Actions\EditAction::make(),
+                \Filament\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 

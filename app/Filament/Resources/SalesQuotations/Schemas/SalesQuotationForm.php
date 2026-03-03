@@ -29,7 +29,7 @@ class SalesQuotationForm
                     ->schema([
                         Select::make('contact_id')
                             ->label('Pelanggan')
-                            ->relationship('contact', 'name')
+                            ->relationship('contact', 'name', fn($query) => $query->whereIn('type', ['customer', 'both']))
                             ->required()
                             ->searchable()
                             ->preload(),
@@ -169,111 +169,113 @@ class SalesQuotationForm
                             ->relationship()
                             ->label(null)
                             ->schema([
-                                Select::make('product_id')
-                                    ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
-                                    ->label('Produk')
-                                    ->required()
-                                    ->searchable()
-                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                        if ($product = \App\Models\Product::find($state)) {
-                                            $set('unit_price', $product->sell_price);
-                                            $set('description', $product->description);
-                                            $set('unit_id', $product->unit_id);
+                                Grid::make(12)
+                                    ->schema([
+                                        Select::make('product_id')
+                                            ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
+                                            ->getOptionLabelFromRecordUsing(function ($record) {
+                                                $stock = $record->stocks()->sum('quantity') ?? 0;
+                                                $stock = (float) $stock;
+                                                return "<div class='flex justify-between items-center w-full'><span>{$record->name}</span> <span class='text-xs font-medium px-2 py-0.5 rounded bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-400'>Stok: " . number_format($stock) . "</span></div>";
+                                            })
+                                            ->allowHtml()
+                                            ->label('Produk')
+                                            ->required()
+                                            ->searchable()
+                                            ->preload()
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                if ($product = \App\Models\Product::find($state)) {
+                                                    $set('unit_price', $product->sell_price);
+                                                    $set('description', $product->description);
+                                                    $set('unit_id', $product->unit_id);
 
-                                            // Auto-populate tax
-                                            $taxName = null;
-                                            if ($product->sales_tax_id) {
-                                                // Handle if sales_tax_id is an ID or a name
-                                                if (is_numeric($product->sales_tax_id)) {
-                                                    $tax = \App\Models\Tax::find($product->sales_tax_id);
-                                                    $taxName = $tax ? $tax->name : null;
-                                                } else {
-                                                    $taxName = $product->sales_tax_id;
+                                                    // Auto-populate tax
+                                                    $taxName = 'Bebas Pajak';
+                                                    if ($product->sales_tax_id) {
+                                                        if (is_numeric($product->sales_tax_id)) {
+                                                            $tax = \App\Models\Tax::find($product->sales_tax_id);
+                                                            $taxName = $tax ? $tax->name : 'Bebas Pajak';
+                                                        } else {
+                                                            $taxName = $product->sales_tax_id;
+                                                        }
+                                                    }
+                                                    $set('tax_name', $taxName);
+
+                                                    self::calculateItemTotal($set, $get);
                                                 }
-                                            }
-                                            $set('tax_name', $taxName);
+                                            })
+                                            ->columnSpan(4),
+                                        TextInput::make('description')
+                                            ->label('Deskripsi')
+                                            ->columnSpan(4),
+                                        TextInput::make('quantity')
+                                            ->label('Kuantitas')
+                                            ->numeric()
+                                            ->default(1)
+                                            ->required()
+                                            ->live(onBlur: true)
+                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
+                                            ->suffixAction(function (Get $get) {
+                                                $productId = $get('product_id');
+                                                if ($productId) {
+                                                    $stock = \App\Models\Stock::where('product_id', $productId)->sum('quantity') ?? 0;
+                                                    return \Filament\Actions\Action::make('stock')
+                                                        ->label((string) $stock)
+                                                        ->color($stock > 0 ? 'success' : 'danger')
+                                                        ->badge()
+                                                        ->disabled();
+                                                }
+                                                return null;
+                                            })
+                                            ->columnSpan(2),
+                                        Select::make('unit_id')
+                                            ->label('Satuan')
+                                            ->relationship('unit', 'name')
+                                            ->placeholder('Pilih')
+                                            ->searchable()
+                                            ->preload()
+                                            ->columnSpan(2)
+                                            ->live(),
+                                    ]),
 
-                                            self::calculateItemTotal($set, $get);
-                                        }
-                                    })
-                                    ->columnSpan(3),
-                                TextInput::make('description')
-                                    ->label('Deskripsi')
-                                    ->columnSpan(2),
-                                TextInput::make('quantity')
-                                    ->label('Kuantitas')
-                                    ->numeric()
-                                    ->default(1)
-                                    ->required()
-                                    ->live()
-                                    ->suffixAction(
-                                        Action::make('checkStock')
-                                            ->button()
-                                            ->size('sm')
-                                            ->color(function (Get $get, $state) {
-                                                $productId = $get('product_id');
-                                                if (!$productId)
-                                                    return 'gray';
-                                                $product = \App\Models\Product::find($productId);
-                                                if (!$product || !$product->track_inventory)
-                                                    return 'gray';
-                                                $stock = (float) $product->getStockForWarehouse();
-                                                $requestedQty = (float) $state;
-                                                return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
+                                Grid::make(12)
+                                    ->schema([
+                                        TextInput::make('unit_price')
+                                            ->label('Harga')
+                                            ->numeric()
+                                            ->required()
+                                            ->readOnly()
+                                            ->live()
+                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
+                                            ->columnSpan(3),
+                                        TextInput::make('discount_percent')
+                                            ->label('Diskon (%)')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->suffix('%')
+                                            ->live()
+                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
+                                            ->columnSpan(3),
+                                        Select::make('tax_name')
+                                            ->label('Pajak')
+                                            ->options(function () {
+                                                $taxes = \App\Models\Tax::pluck('name', 'name')->toArray();
+                                                return ['Bebas Pajak' => 'Bebas Pajak'] + $taxes;
                                             })
-                                            ->label(function (Get $get) {
-                                                $productId = $get('product_id');
-                                                if (!$productId)
-                                                    return '0';
-                                                $product = \App\Models\Product::find($productId);
-                                                if (!$product || !$product->track_inventory)
-                                                    return '0';
-                                                $stock = $product->getStockForWarehouse();
-                                                return number_format($stock);
-                                            })
-                                    )
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
-                                    ->columnSpan(2),
-                                Select::make('unit_id')
-                                    ->label('Satuan')
-                                    ->relationship('unit', 'name')
-                                    ->placeholder('Pilih')
-                                    ->columnSpan(1),
-                                TextInput::make('discount_percent')
-                                    ->label('Diskon (%)')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->suffix('%')
-                                    ->live()
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
-                                    ->columnSpan(1),
-                                TextInput::make('unit_price')
-                                    ->label('Harga')
-                                    ->numeric()
-                                    ->required()
-                                    ->readOnly()
-                                    ->live()
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
-                                    ->columnSpan(1),
-                                Select::make('tax_name')
-                                    ->label('Pajak')
-                                    ->options(function () {
-                                        return \App\Models\Tax::pluck('name', 'name')->toArray();
-                                    })
-                                    ->placeholder('Pilih')
-                                    ->default(null)
-                                    ->nullable()
-                                    ->live()
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
-                                    ->columnSpan(1),
-                                Hidden::make('tax_amount'),
-                                TextInput::make('total_price')
-                                    ->label('Total')
-                                    ->numeric()
-                                    ->readOnly()
-                                    ->columnSpan(1),
+                                            ->default('Bebas Pajak')
+                                            ->selectablePlaceholder(false)
+                                            ->live()
+                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
+                                            ->columnSpan(3),
+                                        Hidden::make('tax_amount'),
+                                        TextInput::make('total_price')
+                                            ->label('Total')
+                                            ->numeric()
+                                            ->readOnly()
+                                            ->columnSpan(3),
+                                    ]),
                             ])
-                            ->columns(12)
+                            ->columnSpanFull()
                             ->live()
                             ->afterStateUpdated(fn(Get $get, Set $set) => self::updateTotal($get, $set))
                             ->addActionLabel('Tambah Item'),

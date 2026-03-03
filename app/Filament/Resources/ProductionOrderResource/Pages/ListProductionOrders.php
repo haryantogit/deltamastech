@@ -14,8 +14,7 @@ class ListProductionOrders extends ListRecords
     {
         return [
             url('/admin') => 'Beranda',
-            url('/admin/produksi-page') => 'Produksi',
-            '#' => 'Konversi Produk',
+            '' => 'Produksi',
         ];
     }
 
@@ -28,17 +27,12 @@ class ListProductionOrders extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('Buat Konversi Produk'),
+                ->label('Produksi'),
             Actions\Action::make('cetak')
                 ->label('Cetak')
                 ->icon('heroicon-o-printer')
                 ->color('gray')
                 ->action(fn() => $this->js('window.print()')),
-            Actions\Action::make('kembali')
-                ->label('Kembali')
-                ->color('gray')
-                ->icon('heroicon-o-arrow-left')
-                ->url(url('/admin/produksi-page')),
         ];
     }
 }

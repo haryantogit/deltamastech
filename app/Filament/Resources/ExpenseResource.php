@@ -71,7 +71,7 @@ class ExpenseResource extends Resource
                                     ->columnSpan(6),
 
                                 Select::make('contact_id')
-                                    ->relationship('contact', 'name')
+                                    ->relationship('contact', 'name', fn($query) => $query->whereIn('type', ['vendor', 'both']))
                                     ->label('Penerima')
                                     ->searchable()
                                     ->preload()
@@ -165,7 +165,7 @@ class ExpenseResource extends Resource
                                             ->searchable(['code', 'name'])
                                             ->preload()
                                             ->required()
-                                            ->columnSpan(3),
+                                            ->columnSpan(4),
 
                                         TextInput::make('description')
                                             ->label('Deskripsi')
@@ -188,7 +188,7 @@ class ExpenseResource extends Resource
                                             ->required()
                                             ->reactive()
                                             ->afterStateUpdated(fn($set, $get) => static::calculateTotals($set, $get))
-                                            ->columnSpan(3),
+                                            ->columnSpan(2),
                                     ]),
                             ])
                             ->addActionLabel('+ Tambah baris')
@@ -309,6 +309,9 @@ class ExpenseResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('transaction_date')
                     ->label('Tanggal')
                     ->date('d/m/Y')
@@ -376,15 +379,17 @@ class ExpenseResource extends Resource
                     ->preload(),
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make(),
-                    EditAction::make(),
-                ]),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make(),
+                    \Filament\Actions\EditAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 

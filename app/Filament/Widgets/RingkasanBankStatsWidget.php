@@ -9,16 +9,37 @@ use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
 
+use Livewire\Attributes\On;
+
 class RingkasanBankStatsWidget extends BaseWidget
 {
+    use \Filament\Widgets\Concerns\InteractsWithPageFilters;
+
     protected int|string|array $columnSpan = 'full';
+
+    protected function getColumns(): int
+    {
+        return 4;
+    }
+
+    public string $statsFilter = 'bulan';
+
+    #[On('updateStatsFilter')]
+    public function updateStatsFilter(string $filter): void
+    {
+        $this->statsFilter = $filter;
+    }
 
     protected function getStats(): array
     {
-        $start = Carbon::now()->startOfMonth();
-        $end = Carbon::now();
-        $prevStart = Carbon::now()->subMonth()->startOfMonth();
-        $prevEnd = Carbon::now()->subMonth()->endOfMonth();
+        $activeFilter = $this->statsFilter;
+
+        $start = Carbon::parse($this->filters['startDate'] ?? now()->startOfMonth());
+        $end = Carbon::parse($this->filters['endDate'] ?? now());
+
+        $daysCount = $start->diffInDays($end) + 1;
+        $prevEnd = $start->copy()->subDay();
+        $prevStart = $prevEnd->copy()->subDays($daysCount - 1);
 
         $bankIds = Account::where('category', 'Kas & Bank')
             ->where('is_active', true)
@@ -77,27 +98,29 @@ class RingkasanBankStatsWidget extends BaseWidget
         $trend = fn($curr, $prev) => $curr >= $prev ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down';
         $trendColor = fn($curr, $prev) => $curr >= $prev ? 'success' : 'danger';
 
+        $label = 'vs periode sebelumnya';
+
         return [
             Stat::make('Saldo', $fmt($saldo))
-                ->description('Bulan ini')
+                ->description($label)
                 ->descriptionIcon($trend($saldo, $prevSaldo))
                 ->color($trendColor($saldo, $prevSaldo))
                 ->chart([4, 5, 6, 3, 7, 5, 6]),
 
             Stat::make('Net', $fmt($net))
-                ->description('Bulan ini')
+                ->description($label)
                 ->descriptionIcon($trend($net, $prevNet))
                 ->color($trendColor($net, $prevNet))
                 ->chart([3, 5, 4, 6, 5, 7, 6]),
 
             Stat::make('Masuk', $fmt($masuk))
-                ->description('Bulan ini')
+                ->description($label)
                 ->descriptionIcon($trend($masuk, $prevMasuk))
                 ->color('success')
                 ->chart([5, 6, 7, 8, 7, 6, 5]),
 
             Stat::make('Keluar', $fmt($keluar))
-                ->description('Bulan ini')
+                ->description($label)
                 ->descriptionIcon($trend($keluar, $prevKeluar))
                 ->color('danger')
                 ->chart([6, 7, 8, 7, 9, 8, 10]),

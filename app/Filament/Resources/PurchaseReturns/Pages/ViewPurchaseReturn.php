@@ -16,4 +16,14 @@ class ViewPurchaseReturn extends ViewRecord
             EditAction::make(),
         ];
     }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin') => 'Beranda',
+            url('/admin/pembelian-page') => 'Pembelian',
+            static::getResource()::getUrl('index') => 'Retur Pembelian',
+            '#' => 'Lihat Retur Pembelian',
+        ];
+    }
 }

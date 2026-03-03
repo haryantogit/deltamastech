@@ -47,6 +47,12 @@ class DataPerusahaan extends Page implements HasForms
                             ->image()
                             ->directory('company-logos')
                             ->visibility('public'),
+                        FileUpload::make('login_background_path')
+                            ->label('Gambar Background Login (Opsional)')
+                            ->image()
+                            ->directory('company-logos')
+                            ->visibility('public')
+                            ->helperText('Gambar ini akan ditampilkan di halaman login.'),
                     ]),
                 Section::make('Data Perusahaan')
                     ->extraAttributes(['class' => 'mt-4'])

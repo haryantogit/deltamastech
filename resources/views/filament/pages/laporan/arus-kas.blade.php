@@ -11,13 +11,11 @@
         $today = now()->format('d/m/Y');
     @endphp
 
+
     {{-- =================== ARUS KAS TABLE =================== --}}
-    <x-filament::section>
+    <x-filament::section class="-mt-4">
         <x-slot name="heading">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <span style="color: #16a34a; font-weight: 700; font-size: 15px;">Arus Kas</span>
-                <span style="font-size: 13px; color: #94a3b8;">{{ $today }}</span>
-            </div>
+            <span style="color: #16a34a; font-weight: 700; font-size: 15px;">Arus Kas</span>
         </x-slot>
 
         <table style="width: 100%; border-collapse: collapse;">
@@ -72,10 +70,7 @@
     {{-- =================== KAS DAN SETARA KAS =================== --}}
     <x-filament::section>
         <x-slot name="heading">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <span style="color: #3b82f6; font-weight: 700; font-size: 15px;">Kas dan Setara Kas</span>
-                <span style="font-size: 13px; color: #94a3b8;">{{ $today }}</span>
-            </div>
+            <span style="color: #3b82f6; font-weight: 700; font-size: 15px;">Kas dan Setara Kas</span>
         </x-slot>
 
         <table style="width: 100%; border-collapse: collapse;">

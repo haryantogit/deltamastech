@@ -60,7 +60,7 @@ class PurchaseDeliveryResource extends Resource
                                     ->schema([
                                         Hidden::make('supplier_id'),
                                         Select::make('supplier_id_select')
-                                            ->relationship('supplier', 'name')
+                                            ->relationship('supplier', 'name', fn($query) => $query->whereIn('type', ['vendor', 'both']))
                                             ->required()
                                             ->searchable()
                                             ->preload()
@@ -211,14 +211,14 @@ class PurchaseDeliveryResource extends Resource
                                 Repeater::make('items')
                                     ->relationship()
                                     ->schema([
-                                        Grid::make(11)
+                                        Grid::make(12)
                                             ->schema([
                                                 Hidden::make('product_id'),
                                                 TextInput::make('product_name')
                                                     ->label('Produk')
                                                     ->disabled()
                                                     ->dehydrated(false)
-                                                    ->columnSpan(3)
+                                                    ->columnSpan(4)
                                                     ->hidden(fn(Get $get) => !filled($get('../../purchase_order_id'))),
                                                 Select::make('product_id_select')
                                                     ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
@@ -226,7 +226,7 @@ class PurchaseDeliveryResource extends Resource
                                                     ->searchable()
                                                     ->preload()
                                                     ->label('Produk')
-                                                    ->columnSpan(3)
+                                                    ->columnSpan(4)
                                                     ->hidden(fn(Get $get) => filled($get('../../purchase_order_id')))
                                                     ->live()
                                                     ->afterStateUpdated(function ($state, Set $set) {
@@ -241,7 +241,7 @@ class PurchaseDeliveryResource extends Resource
                                                 Textarea::make('description')
                                                     ->label('Deskripsi')
                                                     ->rows(1)
-                                                    ->columnSpan(3),
+                                                    ->columnSpan(4),
 
                                                 TextInput::make('quantity')
                                                     ->numeric()
@@ -250,53 +250,28 @@ class PurchaseDeliveryResource extends Resource
                                                     ->default(1)
                                                     ->columnSpan(2)
                                                     ->live(debounce: 500)
-                                                    ->suffixAction(
-                                                        Action::make('checkStock')
-                                                            ->button()
-                                                            ->size('sm')
-                                                            ->color(function (Get $get, $state) {
-                                                                $productId = $get('product_id');
-                                                                $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
-                                                                if (!$warehouseId) {
-                                                                    $warehouseId = $get('../../warehouse_id_select') ?? $get('warehouse_id_select');
-                                                                }
-
-                                                                if (!$productId || !$warehouseId)
-                                                                    return 'gray';
-
-                                                                $product = \App\Models\Product::find($productId);
-                                                                if (!$product || !$product->track_inventory)
-                                                                    return 'gray';
-
-                                                                $stock = (float) $product->getStockForWarehouse($warehouseId);
-                                                                $requestedQty = (float) $state;
-                                                                return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
-                                                            })
-                                                            ->label(function (Get $get) {
-                                                                $productId = $get('product_id');
-                                                                $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id');
-                                                                if (!$warehouseId) {
-                                                                    $warehouseId = $get('../../warehouse_id_select') ?? $get('warehouse_id_select');
-                                                                }
-
-                                                                if (!$productId || !$warehouseId)
-                                                                    return '0';
-
-                                                                $product = \App\Models\Product::find($productId);
-                                                                if (!$product || !$product->track_inventory)
-                                                                    return '0';
-
-                                                                $stock = $product->getStockForWarehouse($warehouseId);
-                                                                return number_format($stock);
-                                                            })
-                                                    ),
+                                                    ->suffixAction(function (Get $get, $livewire) {
+                                                        $productId = $get('product_id');
+                                                        $warehouseId = $get('warehouse_id') ?? $get('../warehouse_id') ?? $get('../../warehouse_id') ?? $get('../../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
+                                                        if ($productId && $warehouseId) {
+                                                            $stock = \App\Models\Stock::where('product_id', $productId)
+                                                                ->where('warehouse_id', $warehouseId)
+                                                                ->value('quantity') ?? 0;
+                                                            return \Filament\Actions\Action::make('stock')
+                                                                ->label((string) $stock)
+                                                                ->color($stock > 0 ? 'success' : 'danger')
+                                                                ->badge()
+                                                                ->disabled();
+                                                        }
+                                                        return null;
+                                                    }),
 
                                                 Hidden::make('unit_id'),
                                                 TextInput::make('unit_name')
                                                     ->label('Satuan')
                                                     ->disabled()
                                                     ->dehydrated(false)
-                                                    ->columnSpan(3)
+                                                    ->columnSpan(2)
                                                     ->hidden(fn(Get $get) => !filled($get('../../purchase_order_id'))),
                                                 Select::make('unit_id_select')
                                                     ->relationship('unit', 'name')
@@ -304,7 +279,7 @@ class PurchaseDeliveryResource extends Resource
                                                     ->placeholder('Pilih')
                                                     ->searchable()
                                                     ->preload()
-                                                    ->columnSpan(3)
+                                                    ->columnSpan(2)
                                                     ->hidden(fn(Get $get) => filled($get('../../purchase_order_id')))
                                                     ->live()
                                                     ->afterStateUpdated(fn($state, Set $set) => $set('unit_id', $state)),
@@ -523,6 +498,9 @@ class PurchaseDeliveryResource extends Resource
             ->modifyQueryUsing(fn(Builder $query) => $query->with(['supplier', 'purchaseOrder.paymentTerm', 'warehouse', 'tags', 'shippingMethod']))
             ->defaultSort('date', 'desc')
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('number')
                     ->label('Nomor')
                     ->searchable()
@@ -540,16 +518,13 @@ class PurchaseDeliveryResource extends Resource
                     ->sortable()
                     ->placeholder('-'),
                 Tables\Columns\TextColumn::make('warehouse.name')
-                    ->label('Nama Gudang')
+                    ->label('Gudang')
                     ->sortable()
                     ->placeholder('Unassigned'),
                 Tables\Columns\TextColumn::make('date')
                     ->label('Tanggal')
                     ->date('d/m/Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('purchaseOrder.paymentTerm.name')
-                    ->label('Termin')
-                    ->placeholder('-'),
                 Tables\Columns\TextColumn::make('tags.name')
                     ->label('Tag')
                     ->badge()
@@ -581,62 +556,16 @@ class PurchaseDeliveryResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('supplier_id')
-                    ->relationship('supplier', 'name', modifyQueryUsing: fn($query) => $query->where('type', 'vendor'))
-                    ->label('Pemasok')
-                    ->searchable()
-                    ->preload(),
-                Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'pending' => 'Menunggu',
-                        'received' => 'Diterima',
-                        'cancelled' => 'Dibatalkan',
-                    ])
-                    ->label('Status'),
+                //
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make(),
-                    EditAction::make()
-                        ->visible(fn($record) => $record->status === 'draft'),
-                    Action::make('confirm')
-                        ->label('Konfirmasi')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('info')
-                        ->action(function ($record) {
-                            $updateData = ['status' => 'pending'];
-                            if (!$record->shipping_date) {
-                                $updateData['shipping_date'] = now();
-                            }
-                            $record->update($updateData);
-                        })
-                        ->visible(fn($record) => $record->status === 'draft')
-                        ->requiresConfirmation(),
-                    Action::make('receive')
-                        ->label('Terima Barang')
-                        ->icon('heroicon-o-archive-box-arrow-down')
-                        ->color('success')
-                        ->action(fn($record) => $record->update([
-                            'status' => 'received',
-                            'date' => now(),
-                        ]))
-                        ->visible(fn($record) => $record->status === 'pending')
-                        ->requiresConfirmation(),
-                    Action::make('cancel')
-                        ->label('Batalkan')
-                        ->icon('heroicon-o-x-circle')
-                        ->color('danger')
-                        ->action(fn($record) => $record->update(['status' => 'cancelled']))
-                        ->visible(fn($record) => in_array($record->status, ['draft', 'pending']))
-                        ->requiresConfirmation(),
-                ])
-                    ->icon('heroicon-m-ellipsis-vertical'),
+                //
             ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make(),
-                ]),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 

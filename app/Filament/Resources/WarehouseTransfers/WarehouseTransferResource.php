@@ -21,7 +21,8 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -107,56 +108,76 @@ class WarehouseTransferResource extends Resource
                         Repeater::make('items')
                             ->relationship()
                             ->schema([
-                                Select::make('product_id')
-                                    ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
-                                    ->required()
-                                    ->searchable()
-                                    ->preload()
-                                    ->label('Produk')
-                                    ->columnSpan(['md' => 8]),
-
-                                TextInput::make('quantity')
-                                    ->required()
-                                    ->numeric()
-                                    ->minValue(0.01)
-                                    ->label('Kuantitas')
-                                    ->suffix(fn($get) => \App\Models\Product::find($get('product_id'))?->unit_name ?? 'pcs')
-                                    ->columnSpan(['md' => 4])
-                                    ->rules(fn(Get $get): array => [
-                                        function (string $attribute, $value, Closure $fail) use ($get) {
-                                            $fromWarehouseId = $get('../../from_warehouse_id');
-                                            $productId = $get('product_id');
-
-                                            if (!$productId)
-                                                return;
-
-                                            if (!$fromWarehouseId || $fromWarehouseId === 'unassigned') {
-                                                // Check Unassigned Stock (Total Product Stock - Sum of All Warehouse Stocks)
-                                                $product = \App\Models\Product::find($productId);
-                                                if (!$product)
-                                                    return;
-
-                                                $totalAssigned = $product->stocks()->sum('quantity');
-                                                $available = $product->stock - $totalAssigned;
-
-                                                // Allow a tiny float margin error if needed, but for now strict
-                                                if ($value > $available) {
-                                                    $fail("Stok unassigned tidak mencukupi (Tersedia: {$available})");
+                                \Filament\Schemas\Components\Grid::make(12)
+                                    ->schema([
+                                        Select::make('product_id')
+                                            ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
+                                            ->required()
+                                            ->searchable()
+                                            ->preload()
+                                            ->label('Produk')
+                                            ->columnSpan(8)
+                                            ->live()
+                                            ->afterStateUpdated(fn($state, Set $set) => $set('product_id', $state)),
+                                        TextInput::make('quantity')
+                                            ->required()
+                                            ->numeric()
+                                            ->minValue(0.01)
+                                            ->label('Kuantitas')
+                                            ->suffix(fn($get) => \App\Models\Product::find($get('product_id'))?->unit_name ?? 'pcs')
+                                            ->columnSpan(4)
+                                            ->live(onBlur: true)
+                                            ->suffixAction(function (Get $get, $livewire) {
+                                                $productId = $get('product_id');
+                                                $warehouseId = $get('../../from_warehouse_id') ?? $livewire->data['from_warehouse_id'] ?? null;
+                                                if ($productId && $warehouseId) {
+                                                    $stock = \App\Models\Stock::where('product_id', $productId)
+                                                        ->where('warehouse_id', $warehouseId)
+                                                        ->value('quantity') ?? 0;
+                                                    return \Filament\Actions\Action::make('stock')
+                                                        ->label((string) $stock)
+                                                        ->color($stock > 0 ? 'success' : 'danger')
+                                                        ->badge()
+                                                        ->disabled();
                                                 }
-                                            } else {
-                                                // Check Specific Warehouse Stock
-                                                $stock = \App\Models\Stock::where('warehouse_id', $fromWarehouseId)
-                                                    ->where('product_id', $productId)
-                                                    ->value('quantity') ?? 0;
+                                                return null;
+                                            })
+                                            ->rules(fn(Get $get): array => [
+                                                function (string $attribute, $value, Closure $fail) use ($get) {
+                                                    $fromWarehouseId = $get('../../from_warehouse_id');
+                                                    $productId = $get('product_id');
 
-                                                if ($value > $stock) {
-                                                    $fail("Stok tidak mencukupi (Tersedia: {$stock})");
-                                                }
-                                            }
-                                        },
+                                                    if (!$productId)
+                                                        return;
+
+                                                    if (!$fromWarehouseId || $fromWarehouseId === 'unassigned') {
+                                                        // Check Unassigned Stock (Total Product Stock - Sum of All Warehouse Stocks)
+                                                        $product = \App\Models\Product::find($productId);
+                                                        if (!$product)
+                                                            return;
+
+                                                        $totalAssigned = $product->stocks()->sum('quantity');
+                                                        $available = $product->stock - $totalAssigned;
+
+                                                        // Allow a tiny float margin error if needed, but for now strict
+                                                        if ($value > $available) {
+                                                            $fail("Stok unassigned tidak mencukupi (Tersedia: {$available})");
+                                                        }
+                                                    } else {
+                                                        // Check Specific Warehouse Stock
+                                                        $stock = \App\Models\Stock::where('warehouse_id', $fromWarehouseId)
+                                                            ->where('product_id', $productId)
+                                                            ->value('quantity') ?? 0;
+
+                                                        if ($value > $stock) {
+                                                            $fail("Stok tidak mencukupi (Tersedia: {$stock})");
+                                                        }
+                                                    }
+                                                },
+                                            ]),
                                     ]),
                             ])
-                            ->columns(12)
+                            ->columnSpanFull()
                             ->addActionLabel('Tambah Item')
                             ->collapsible()
                             ->itemLabel(fn(array $state): ?string => (\App\Models\Product::find($state['product_id'])?->name ?? 'Item') . ($state['quantity'] ? " ({$state['quantity']})" : '')),
@@ -169,6 +190,9 @@ class WarehouseTransferResource extends Resource
         return $table
             ->modifyQueryUsing(fn(Builder $query) => $query->with(['fromWarehouse', 'toWarehouse']))
             ->columns([
+                TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('number')
                     ->label('Nomor')
                     ->searchable()

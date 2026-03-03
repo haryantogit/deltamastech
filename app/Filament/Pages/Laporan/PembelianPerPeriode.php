@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 class PembelianPerPeriode extends Page implements HasActions
 {
     use InteractsWithActions;
-    // use WithPagination; // Since we usually want to see all periods in the charts/table together, we might not need pagination or we handle it differently.
+    use WithPagination;
 
     protected string $view = 'filament.pages.laporan.pembelian-per-periode';
 
@@ -29,12 +29,41 @@ class PembelianPerPeriode extends Page implements HasActions
 
     public ?string $startDate = null;
     public ?string $endDate = null;
-    public string $periodType = 'monthly'; // daily, weekly, monthly, yearly
+    public $perPage = 10;
+    public $search = '';
+
+    protected $queryString = [
+        'startDate' => ['except' => ''],
+        'endDate' => ['except' => ''],
+        'perPage' => ['except' => 10],
+        'search' => ['except' => ''],
+        'periodType' => ['except' => 'monthly'],
+    ];
 
     public function mount(): void
     {
         $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
         $this->endDate = Carbon::now()->format('Y-m-d');
+    }
+
+    public function getMaxContentWidth(): string
+    {
+        return 'full';
+    }
+
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startFmt = Carbon::parse($this->startDate)->format('d/m/Y');
+        $endFmt = Carbon::parse($this->endDate)->format('d/m/Y');
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $startFmt . ' &mdash; ' . $endFmt . '</span>
+            </div>
+        ');
     }
 
     public function getBreadcrumbs(): array
@@ -77,15 +106,8 @@ class PembelianPerPeriode extends Page implements HasActions
                     $this->periodType = $data['periodType'];
                     $this->startDate = $data['startDate'];
                     $this->endDate = $data['endDate'];
+                    $this->resetPage();
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
-            Action::make('bagikan')
-                ->label('Bagikan')
-                ->icon('heroicon-o-share')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->color('gray')
@@ -99,21 +121,32 @@ class PembelianPerPeriode extends Page implements HasActions
         ];
     }
 
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
     public function getViewData(): array
     {
         $dateFormat = match ($this->periodType) {
             'daily' => '%Y-%m-%d',
-            'weekly' => '%Y-W%u',
+            'weekly' => '%x-W%v', // ISO Year and Week
             'monthly' => '%Y-%m',
             'yearly' => '%Y',
             default => '%Y-%m',
         };
 
-        // Query for value and quantity aggregated by period
+        // 1. Query for value and quantity aggregated by period
         $results = DB::table('purchase_invoices as pi')
             ->join('purchase_invoice_items as pii', 'pi.id', '=', 'pii.purchase_invoice_id')
             ->whereBetween('pi.date', [$this->startDate, $this->endDate])
             ->where('pi.status', '!=', 'cancelled')
+            ->when($this->search, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('pi.invoice_number', 'like', "%{$this->search}%")
+                        ->orWhere('pi.reference', 'like', "%{$this->search}%");
+                });
+            })
             ->select(
                 DB::raw("DATE_FORMAT(pi.date, '{$dateFormat}') as period"),
                 DB::raw('SUM(pii.quantity) as total_qty'),
@@ -121,31 +154,67 @@ class PembelianPerPeriode extends Page implements HasActions
             )
             ->groupBy('period')
             ->orderBy('period', 'asc')
-            ->get();
+            ->get()
+            ->keyBy('period');
 
-        // Format periods for display
-        $formattedResults = $results->map(function ($item) {
-            $periodLabel = $item->period;
-            try {
-                if ($this->periodType === 'monthly') {
-                    $periodLabel = Carbon::createFromFormat('Y-m', $item->period)->translatedFormat('M Y');
-                } elseif ($this->periodType === 'daily') {
-                    $periodLabel = Carbon::parse($item->period)->translatedFormat('d M Y');
-                } elseif ($this->periodType === 'yearly') {
-                    $periodLabel = $item->period;
-                }
-            } catch (\Exception $e) {
-                // Keep original if parsing fails
+        // 2. Generate all periods in range for padding
+        $allPeriods = collect();
+        $start = Carbon::parse($this->startDate);
+        $end = Carbon::parse($this->endDate);
+
+        $current = $start->copy();
+        while ($current <= $end) {
+            $periodKey = match ($this->periodType) {
+                'daily' => $current->format('Y-m-d'),
+                'weekly' => $current->format('o-W'), // ISO Year-Week
+                'yearly' => $current->format('Y'),
+                default => $current->format('Y-m'),
+            };
+
+            if (!$allPeriods->has($periodKey)) {
+                $label = match ($this->periodType) {
+                    'daily' => $current->translatedFormat('d M Y'),
+                    'weekly' => 'W' . $current->format('W') . ' ' . $current->format('Y'),
+                    'yearly' => $current->format('Y'),
+                    default => $current->translatedFormat('M Y'),
+                };
+
+                $data = $results->get($periodKey);
+
+                $allPeriods->put($periodKey, (object) [
+                    'period' => $periodKey,
+                    'period_label' => $label,
+                    'total_qty' => $data ? (float) $data->total_qty : 0,
+                    'total_value' => $data ? (float) $data->total_value : 0,
+                ]);
             }
 
-            $item->period_label = $periodLabel;
-            return $item;
-        });
+            match ($this->periodType) {
+                'daily' => $current->addDay(),
+                'weekly' => $current->addWeek(),
+                'yearly' => $current->addYear(),
+                default => $current->addMonth(),
+            };
+        }
+
+        $finalResults = $allPeriods->values();
+
+        // Pagination for the table
+        $currentPage = $this->getPage();
+        $perPage = $this->perPage === 'all' ? max(1, $finalResults->count()) : $this->perPage;
+        $paginatedResults = new \Illuminate\Pagination\LengthAwarePaginator(
+            $finalResults->forPage($currentPage, $perPage),
+            $finalResults->count(),
+            $perPage,
+            $currentPage,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
 
         return [
-            'results' => $formattedResults,
-            'grandTotalQty' => $formattedResults->sum('total_qty'),
-            'grandTotalValue' => $formattedResults->sum('total_value'),
+            'results' => $paginatedResults,
+            'chartResults' => $finalResults,
+            'grandTotalQty' => $finalResults->sum('total_qty'),
+            'grandTotalValue' => $finalResults->sum('total_value'),
         ];
     }
 }

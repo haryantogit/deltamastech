@@ -31,20 +31,42 @@ class PergerakanStokGudang extends Page implements HasActions
     public $search = '';
     public $warehouseId;
     public $expandedRows = [];
+    public $perPage = 10;
 
     public function mount()
     {
-        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
+        $this->endDate = Carbon::now()->format('Y-m-d');
 
-        $firstWarehouse = Warehouse::orderBy('name')->first();
-        $this->warehouseId = $firstWarehouse?->id;
+        $gudangUtama = Warehouse::where('name', 'like', '%Gudang Utama%')->first();
+        if ($gudangUtama) {
+            $this->warehouseId = $gudangUtama->id;
+        } else {
+            $firstWarehouse = Warehouse::orderBy('name')->first();
+            $this->warehouseId = $firstWarehouse?->id;
+        }
+    }
+
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startFmt = Carbon::parse($this->startDate)->format('d/m/Y');
+        $endFmt = Carbon::parse($this->endDate)->format('d/m/Y');
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $startFmt . ' — ' . $endFmt . '</span>
+            </div>
+        ');
     }
 
     public function setWarehouse($id)
     {
         $this->warehouseId = $id;
         $this->expandedRows = []; // Reset expanded rows when changing warehouse
+        $this->resetPage();
     }
 
     public function toggleRow($id): void
@@ -54,6 +76,16 @@ class PergerakanStokGudang extends Page implements HasActions
         } else {
             $this->expandedRows = [$id];
         }
+    }
+
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage()
+    {
+        $this->resetPage();
     }
 
     public function getBreadcrumbs(): array
@@ -90,11 +122,8 @@ class PergerakanStokGudang extends Page implements HasActions
                 ->action(function (array $data): void {
                     $this->startDate = $data['startDate'];
                     $this->endDate = $data['endDate'];
+                    $this->resetPage();
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->icon('heroicon-o-printer')
@@ -133,7 +162,7 @@ class PergerakanStokGudang extends Page implements HasActions
 
         $products = $productsQuery->get();
 
-        $summary = $products->map(function ($product) {
+        $allSummary = $products->map(function ($product) {
             // Initial Qty (before startDate) in specific warehouse
             $initialQty = (float) StockMovement::where('product_id', $product->id)
                 ->where('warehouse_id', $this->warehouseId)
@@ -170,6 +199,17 @@ class PergerakanStokGudang extends Page implements HasActions
             // Only show products that have movements or stock in this period
             return $row->initial_qty != 0 || $row->movement_qty != 0;
         });
+
+        // Pagination for summary
+        $perPage = $this->perPage === 'all' ? max(1, $allSummary->count()) : $this->perPage;
+        $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage();
+        $paginatedSummary = new \Illuminate\Pagination\LengthAwarePaginator(
+            $allSummary->forPage($currentPage, $perPage),
+            $allSummary->count(),
+            $perPage,
+            $currentPage,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
 
         $details = [];
         foreach ($this->expandedRows as $productId) {
@@ -232,15 +272,18 @@ class PergerakanStokGudang extends Page implements HasActions
         }
 
         return [
-            'summary' => $summary,
+            'summary' => $paginatedSummary->items(),
+            'paginator' => $paginatedSummary,
             'details' => $details,
             'warehouses' => Warehouse::orderBy('name')->get(),
-            'totalInitialQty' => $summary->sum('initial_qty'),
-            'totalMovementQty' => $summary->sum('movement_qty'),
-            'totalFinalQty' => $summary->sum('final_qty'),
-            'totalInitialValue' => $summary->sum('initial_value'),
-            'totalMovementValue' => $summary->sum('movement_value'),
-            'totalFinalValue' => $summary->sum('final_value'),
+            'totalInitialQty' => $allSummary->sum('initial_qty'),
+            'totalMovementQty' => $allSummary->sum('movement_qty'),
+            'totalFinalQty' => $allSummary->sum('final_qty'),
+            'totalInitialValue' => $allSummary->sum('initial_value'),
+            'totalMovementValue' => $allSummary->sum('movement_value'),
+            'totalFinalValue' => $allSummary->sum('final_value'),
         ];
     }
 }
+
+

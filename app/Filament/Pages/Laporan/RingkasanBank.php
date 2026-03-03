@@ -9,14 +9,16 @@ use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
-
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Illuminate\Contracts\View\View;
 
-class RingkasanBank extends Page implements HasActions
+class RingkasanBank extends Page implements HasForms
 {
     use InteractsWithActions;
+
+    public string $statsFilter = 'bulan';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-library';
 
     protected string $view = 'filament.pages.laporan.ringkasan-bank';
@@ -27,13 +29,30 @@ class RingkasanBank extends Page implements HasActions
 
     protected static bool $shouldRegisterNavigation = false;
 
-    public ?string $startDate = null;
-    public ?string $endDate = null;
+    public array $filters = [];
+
+    public function setFilterBulan(): void
+    {
+        $this->statsFilter = 'bulan';
+        $this->filters['startDate'] = now()->startOfYear()->toDateString();
+        $this->filters['endDate'] = now()->toDateString();
+        $this->dispatch('updateStatsFilter', filter: 'bulan');
+    }
+
+    public function setFilterTahun(): void
+    {
+        $this->statsFilter = 'tahun';
+        $this->filters['startDate'] = now()->startOfYear()->toDateString();
+        $this->filters['endDate'] = now()->toDateString();
+        $this->dispatch('updateStatsFilter', filter: 'tahun');
+    }
 
     public function mount(): void
     {
-        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->format('Y-m-d');
+        $this->filters = [
+            'startDate' => now()->startOfYear()->toDateString(),
+            'endDate' => now()->toDateString(),
+        ];
     }
 
     public function getBreadcrumbs(): array
@@ -43,6 +62,27 @@ class RingkasanBank extends Page implements HasActions
             \App\Filament\Pages\ReportPage::getUrl() => 'Laporan',
             'Ringkasan Bank',
         ];
+    }
+
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startDate = $this->filters['startDate'] ?? now()->startOfYear()->toDateString();
+        $endDate = $this->filters['endDate'] ?? now()->toDateString();
+        $startFmt = \Carbon\Carbon::parse($startDate)->format('d/m/Y');
+        $endFmt = \Carbon\Carbon::parse($endDate)->format('d/m/Y');
+
+        $dateDisplay = $startFmt === $endFmt
+            ? $startFmt
+            : $startFmt . ' &mdash; ' . $endFmt;
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $dateDisplay . '</span>
+            </div>
+        ');
     }
 
     public function getMaxContentWidth(): string
@@ -60,21 +100,25 @@ class RingkasanBank extends Page implements HasActions
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('panduan')
-                ->label('Panduan')
+            Action::make('filter')
+                ->label('Filter')
+                ->icon('heroicon-m-funnel')
                 ->color('gray')
-                ->icon('heroicon-o-question-mark-circle')
-                ->url('#'),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->color('gray')
-                ->icon('heroicon-o-arrow-top-right-on-square')
-                ->url('#'),
-            Action::make('bagikan')
-                ->label('Bagikan')
-                ->color('gray')
-                ->icon('heroicon-o-share')
-                ->url('#'),
+                ->form([
+                    \Filament\Forms\Components\DatePicker::make('startDate')
+                        ->hiddenLabel()
+                        ->default($this->filters['startDate'])
+                        ->required(),
+                    \Filament\Forms\Components\DatePicker::make('endDate')
+                        ->hiddenLabel()
+                        ->default($this->filters['endDate'])
+                        ->required(),
+                ])
+                ->action(function (array $data): void {
+                    $this->filters['startDate'] = $data['startDate'];
+                    $this->filters['endDate'] = $data['endDate'];
+                    $this->statsFilter = 'custom';
+                }),
             Action::make('print')
                 ->label('Print')
                 ->color('gray')
@@ -104,8 +148,8 @@ class RingkasanBank extends Page implements HasActions
                     abort(404);
                 }
 
-                $start = Carbon::parse($this->startDate);
-                $end = Carbon::parse($this->endDate);
+                $start = Carbon::parse($this->filters['startDate'] ?? now()->startOfYear()->toDateString());
+                $end = Carbon::parse($this->filters['endDate'] ?? now()->toDateString());
 
                 // Calculate Saldo Awal (before start date)
                 $saldoAwal = (float) JournalItem::where('account_id', $account->id)
@@ -165,9 +209,12 @@ class RingkasanBank extends Page implements HasActions
 
     public function getViewData(): array
     {
-        $start = Carbon::parse($this->startDate);
-        $end = Carbon::parse($this->endDate);
-        $today = Carbon::now()->format('d/m/Y');
+        $start = Carbon::parse($this->filters['startDate'] ?? now()->startOfYear()->toDateString());
+        $end = Carbon::parse($this->filters['endDate'] ?? now()->toDateString());
+
+        $dateDisplay = $start->isSameDay($end)
+            ? $start->format('d/m/Y')
+            : $start->format('d/m/Y') . ' &mdash; ' . $end->format('d/m/Y');
 
         // Get all Kas & Bank accounts
         $bankAccounts = Account::where('category', 'Kas & Bank')
@@ -217,9 +264,7 @@ class RingkasanBank extends Page implements HasActions
         }
 
         return [
-            'today' => $today,
-            'startFormatted' => $start->format('d/m/Y'),
-            'endFormatted' => $end->format('d/m/Y'),
+            'dateDisplay' => $dateDisplay,
             'rows' => $rows,
             'totalSaldoAwal' => $totalSaldoAwal,
             'totalMasuk' => $totalMasuk,
@@ -228,3 +273,4 @@ class RingkasanBank extends Page implements HasActions
         ];
     }
 }
+

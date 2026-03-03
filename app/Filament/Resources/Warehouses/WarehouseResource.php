@@ -46,7 +46,7 @@ class WarehouseResource extends Resource
         return $schema
             ->components([
                 TextInput::make('name')
-                    ->label('Nama Gudang')
+                    ->label('Gudang')
                     ->required()
                     ->maxLength(255),
                 TextInput::make('code')
@@ -69,8 +69,11 @@ class WarehouseResource extends Resource
         return $table
             ->recordTitleAttribute('name')
             ->columns([
+                TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('name')
-                    ->label('Nama Gudang')
+                    ->label('Gudang')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('code')

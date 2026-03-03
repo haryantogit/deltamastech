@@ -91,6 +91,9 @@ class TaxResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 TextColumn::make('name')
                     ->searchable()
                     ->label('Nama'),
@@ -113,18 +116,20 @@ class TaxResource extends Resource
                 //
             ])
             ->actions([
-                ActionGroup::make([
-                    ViewAction::make()
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make()
                         ->modalWidth('2xl'),
-                    EditAction::make()
+                    \Filament\Actions\EditAction::make()
                         ->modalWidth('2xl'),
-                    DeleteAction::make(),
-                ]),
+                    \Filament\Actions\DeleteAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 

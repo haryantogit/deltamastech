@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\StockAdjustments\Schemas;
 
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Schemas\Schema;
 
 class StockAdjustmentForm
@@ -69,25 +71,44 @@ class StockAdjustmentForm
                         \Filament\Forms\Components\Repeater::make('items')
                             ->relationship()
                             ->schema([
-                                \Filament\Forms\Components\Select::make('product_id')
-                                    ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
-                                    ->required()
-                                    ->searchable()
-                                    ->preload()
-                                    ->label('Produk')
-                                    ->columnSpan(['md' => 8]),
-
-                                \Filament\Forms\Components\TextInput::make('quantity')
-                                    ->required()
-                                    ->numeric()
-                                    ->step('any')
-                                    ->label('Kuantitas')
-                                    ->suffix(fn($get) => \App\Models\Product::find($get('product_id'))?->unit_name ?? 'pcs')
-                                    ->default(0)
-                                    ->live(onBlur: true)
-                                    ->columnSpan(['md' => 4]),
+                                \Filament\Schemas\Components\Grid::make(12)
+                                    ->schema([
+                                        \Filament\Forms\Components\Select::make('product_id')
+                                            ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
+                                            ->required()
+                                            ->searchable()
+                                            ->preload()
+                                            ->label('Produk')
+                                            ->columnSpan(8)
+                                            ->live()
+                                            ->afterStateUpdated(fn($state, Set $set) => $set('product_id', $state)),
+                                        \Filament\Forms\Components\TextInput::make('quantity')
+                                            ->required()
+                                            ->numeric()
+                                            ->step('any')
+                                            ->label('Kuantitas')
+                                            ->suffix(fn($get) => \App\Models\Product::find($get('product_id'))?->unit_name ?? 'pcs')
+                                            ->default(0)
+                                            ->live(onBlur: true)
+                                            ->columnSpan(4)
+                                            ->suffixAction(function (Get $get, $livewire) {
+                                                $productId = $get('product_id');
+                                                $warehouseId = $get('../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
+                                                if ($productId && $warehouseId) {
+                                                    $stock = \App\Models\Stock::where('product_id', $productId)
+                                                        ->where('warehouse_id', $warehouseId)
+                                                        ->value('quantity') ?? 0;
+                                                    return \Filament\Actions\Action::make('stock')
+                                                        ->label((string) $stock)
+                                                        ->color($stock > 0 ? 'success' : 'danger')
+                                                        ->badge()
+                                                        ->disabled();
+                                                }
+                                                return null;
+                                            }),
+                                    ]),
                             ])
-                            ->columns(12)
+                            ->columnSpanFull()
                             ->addActionLabel('Tambah Item')
                             ->collapsible()
                             ->itemLabel(fn(array $state): ?string => (\App\Models\Product::find($state['product_id'])?->name ?? 'Item') . ($state['quantity'] ? " ({$state['quantity']})" : '')),

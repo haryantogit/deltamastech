@@ -16,4 +16,14 @@ class ViewSalesReturn extends ViewRecord
             EditAction::make(),
         ];
     }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            url('/admin') => 'Beranda',
+            url('/admin/penjualan-page') => 'Penjualan',
+            static::getResource()::getUrl('index') => 'Retur Penjualan',
+            '#' => 'Lihat Retur Penjualan',
+        ];
+    }
 }

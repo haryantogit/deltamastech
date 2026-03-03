@@ -1,72 +1,6 @@
 <x-filament-panels::page>
     <style>
-        .report-content {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .report-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .search-container {
-            position: relative;
-            flex: 1;
-            min-width: 250px;
-            max-width: 400px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 0.5rem 1rem 0.5rem 2.5rem;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            background: white;
-            font-size: 0.875rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .dark .search-input {
-            background: #1e293b;
-            border-color: #334155;
-            color: #f1f5f9;
-        }
-
-        .search-input:focus {
-            border-color: #3b82f6;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 0.75rem; top: 50%; transform: translateY(-50%);
-            color: #94a3b8;
-        }
-
-        .date-display {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            font-size: 0.875rem;
-            color: #64748b;
-            gap: 0.5rem;
-        }
-
-        .dark .date-display {
-            background: #1e293b;
-            border-color: #334155;
-            color: #94a3b8;
-        }
-
-        .asset-section {
+        .delivery-report-container {
             background: white;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
@@ -75,35 +9,9 @@
             margin-bottom: 2rem;
         }
 
-        .dark .asset-section {
+        .dark .delivery-report-container {
             background: #111827;
             border-color: #374151;
-        }
-
-        .asset-header {
-            background: #f8fafc;
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .dark .asset-header {
-            background: #1f2937;
-            border-bottom-color: #374151;
-        }
-
-        .asset-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #2563eb;
-            text-decoration: none;
-        }
-
-        .asset-title:hover {
-            text-decoration: underline;
-        }
-
-        .dark .asset-title {
-            color: #60a5fa;
         }
 
         .report-table {
@@ -112,63 +20,121 @@
         }
 
         .report-table th {
-            padding: 0.75rem 1.25rem;
-            font-size: 0.7rem;
+            padding: 0.875rem 1.25rem;
+            font-size: 0.75rem;
             font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
+            color: #64748b;
+            text-transform: capitalize;
+            background: #f8fafc;
+            border-bottom: 2px solid #f1f5f9;
             text-align: left;
-            border-bottom: 1px solid #f1f5f9;
         }
 
         .dark .report-table th {
+            background: #1f2937;
             border-bottom-color: #374151;
+            color: #94a3b8;
         }
 
         .report-table td {
             padding: 0.75rem 1.25rem;
-            font-size: 0.75rem;
+            font-size: 0.8125rem;
+            border-bottom: 1px solid #f1f5f9;
             color: #1e293b;
-            border-bottom: 1px solid #f8fafc;
         }
 
         .dark .report-table td {
+            border-bottom-color: #374151;
             color: #e2e8f0;
-            border-bottom-color: rgba(255, 255, 255, 0.05);
         }
 
-        .number-col {
-            text-align: right !important;
+        .asset-header {
+            background: #f8fafc;
+            padding: 1.25rem;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dark .asset-header {
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom-color: #374151;
+        }
+
+        .asset-name {
+            font-weight: 800;
+            color: #2563eb;
+            font-size: 0.9375rem;
+            text-decoration: none;
+        }
+
+        .asset-name:hover {
+            text-decoration: underline;
+        }
+
+        .dark .asset-name {
+            color: #60a5fa;
+        }
+
+        .asset-sku {
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.8125rem;
         }
 
         .asset-footer {
-            background: #fcfcfc;
-            padding: 0.75rem 1.25rem;
-            font-weight: 700;
-            font-size: 0.8rem;
-            color: #1e293b;
+            background: #f8fafc;
+            padding: 1rem 1.25rem;
+            font-weight: 800;
+            font-size: 0.875rem;
+            color: #0f172a;
             display: flex;
             justify-content: space-between;
-            border-top: 1px solid #f1f5f9;
+            border-top: 1px solid #e2e8f0;
         }
 
         .dark .asset-footer {
-            background: #111827;
+            background: #1f2937;
             color: #f1f5f9;
             border-top-color: #374151;
         }
 
-        .footer-totals {
+        .number-col {
+            text-align: right !important;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .credit-amt {
+            color: #ef4444;
+        }
+
+        .dark .credit-amt {
+            color: #f87171;
+        }
+
+        .search-row {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #f1f5f9;
             display: flex;
-            gap: 3rem;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dark .search-row {
+            border-color: #374151;
         }
 
         @media print {
-            .report-toolbar, .fi-header-actions {
+
+            .search-row,
+            .fi-header-actions {
                 display: none !important;
             }
-            .asset-section {
+
+            .delivery-report-container {
                 border: 1px solid #000 !important;
+                box-shadow: none !important;
                 break-inside: avoid;
             }
         }
@@ -179,77 +145,95 @@
     @endphp
 
     <div class="report-content">
-        <div class="report-toolbar">
-            <div style="display: flex; gap: 0.75rem; align-items: center; flex: 1;">
-                <button wire:click="mountAction('filter')" class="date-display"
-                    style="cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'"
-                    onmouseout="this.style.opacity='1'">
-                    <x-filament::icon icon="heroicon-m-funnel" class="w-4 h-4" />
-                    Filter
-                </button>
-                <div class="search-container">
-                    <x-filament::icon icon="heroicon-m-magnifying-glass" class="w-5 h-5 search-icon" />
-                    <input type="text" wire:model.live.debounce.500ms="search" placeholder="Cari aset..."
-                        class="search-input">
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 0.75rem; align-items: center;">
+        {{-- Unified search row --}}
+        <div style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem; padding: 1rem 1.25rem;"
+            class="dark:bg-gray-900 dark:border-gray-800 search-row">
+            <div>
                 @if ($categoryId)
                     @php $cat = \App\Models\Category::find($categoryId); @endphp
                     @if ($cat)
-                        <div class="date-display" style="background: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
+                        <div
+                            style="font-size: 0.75rem; font-weight: 700; color: #3b82f6; text-transform: uppercase; background: #eff6ff; padding: 0.25rem 0.75rem; border-radius: 9999px; border: 1px solid #dbeafe; display: inline-block;">
                             Kategori: {{ $cat->name }}
                         </div>
                     @endif
                 @endif
-                <div class="date-display">
-                    <x-filament::icon icon="heroicon-m-calendar" class="w-4 h-4" />
-                    Periode {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} —
-                    {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
-                </div>
+            </div>
+            <div style="position: relative; width: 400px;">
+                <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1.25rem; height: 1.25rem; color: #94a3b8;"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" wire:model.live.debounce.500ms="search"
+                    placeholder="Cari Nama Aset atau Nomor SKU..."
+                    style="width: 100%; padding: 0.625rem 0.75rem 0.625rem 2.5rem; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.875rem; background: white; color: #1e293b; outline: none; transition: all 0.2s;"
+                    class="dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:focus:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10">
             </div>
         </div>
 
         @forelse($data['reportData'] as $asset)
-            <div class="asset-section">
+            <div class="delivery-report-container">
                 <div class="asset-header">
-                    <a href="{{ \App\Filament\Resources\FixedAssetResource::getUrl('view', ['record' => $asset->id]) }}" class="asset-title">
-                        {{ $asset->name }} - {{ $asset->sku }}
+                    <a href="{{ \App\Filament\Resources\FixedAssetResource::getUrl('view', ['record' => $asset->id]) }}"
+                        class="asset-name">
+                        {{ $asset->name }}
                     </a>
+                    <span class="asset-sku">{{ $asset->sku }}</span>
                 </div>
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 150px;">Tanggal</th>
-                            <th>Referensi</th>
-                            <th class="number-col" style="width: 180px;">Debit</th>
-                            <th class="number-col" style="width: 180px;">Kredit</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($asset->ledger as $row)
+                <div style="overflow-x: auto;">
+                    <table class="report-table">
+                        <thead>
                             <tr>
-                                <td style="color: #64748b;">{{ \Carbon\Carbon::parse($row->date)->format('d/m/Y') }}</td>
-                                <td>{{ $row->reference }}</td>
-                                <td class="number-col">{{ $row->debit > 0 ? number_format($row->debit, 0, ',', '.') : '' }}</td>
-                                <td class="number-col" style="color: #ef4444;">{{ $row->credit > 0 ? number_format($row->credit, 0, ',', '.') : '' }}</td>
+                                <th style="width: 180px;">Tanggal</th>
+                                <th>Referensi</th>
+                                <th class="number-col" style="width: 200px;">Debit</th>
+                                <th class="number-col" style="width: 200px;">Kredit</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach($asset->ledger as $row)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                    <td style="color: #64748b;">{{ \Carbon\Carbon::parse($row->date)->format('d/m/Y') }}</td>
+                                    <td style="font-weight: 500;">{{ $row->reference }}</td>
+                                    <td class="number-col" style="font-weight: 600;">
+                                        {{ $row->debit > 0 ? number_format($row->debit, 0, ',', '.') : '' }}</td>
+                                    <td class="number-col credit-amt" style="font-weight: 600;">
+                                        {{ $row->credit > 0 ? number_format($row->credit, 0, ',', '.') : '' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
                 <div class="asset-footer">
-                    <div>Total</div>
-                    <div class="footer-totals">
-                        <div class="number-col" style="width: 120px;">{{ number_format($asset->total_debit, 0, ',', '.') }}</div>
-                        <div class="number-col" style="width: 120px; color: #ef4444;">{{ number_format($asset->total_credit, 0, ',', '.') }}</div>
+                    <span>Total</span>
+                    <div style="display: flex; gap: 0;">
+                        <div class="number-col" style="width: 200px; padding-right: 1.25rem;">
+                            {{ number_format($asset->total_debit, 0, ',', '.') }}
+                        </div>
+                        <div class="number-col credit-amt" style="width: 200px; padding-right: 1.25rem;">
+                            {{ number_format($asset->total_credit, 0, ',', '.') }}
+                        </div>
                     </div>
                 </div>
             </div>
         @empty
-            <div style="text-align: center; color: #94a3b8; padding: 4rem; background: white; border-radius: 12px; border: 1px dashed #e2e8f0;">
-                <x-filament::icon icon="heroicon-o-document-magnifying-glass" class="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p>Tidak ada transaksi aset tetap ditemukan pada periode ini.</p>
+            <div style="padding: 6rem 0; background: white; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center;"
+                class="dark:bg-gray-900 dark:border-gray-800">
+                <svg style="width: 64px; height: 64px; margin-bottom: 1.5rem; opacity: 0.1;" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <div style="text-align: center;">
+                    <h3 style="font-size: 1.125rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;"
+                        class="dark:text-gray-100">
+                        Tidak Ada Data Transaksi
+                    </h3>
+                    <p style="color: #94a3b8; font-size: 0.875rem;">
+                        Tidak ditemukan transaksi aset tetap pada kriteria pencarian atau periode ini.
+                    </p>
+                </div>
             </div>
         @endforelse
     </div>

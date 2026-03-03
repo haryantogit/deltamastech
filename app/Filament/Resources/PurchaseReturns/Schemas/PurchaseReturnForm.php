@@ -85,7 +85,7 @@ class PurchaseReturnForm
                                     ->schema([
                                         Group::make([
                                             Select::make('supplier_id')
-                                                ->relationship('supplier', 'name')
+                                                ->relationship('supplier', 'name', fn($query) => $query->whereIn('type', ['vendor', 'both']))
                                                 ->label('Vendor')
                                                 ->disabled()
                                                 ->dehydrated(),
@@ -126,83 +126,116 @@ class PurchaseReturnForm
                                 Repeater::make('items')
                                     ->relationship()
                                     ->schema([
-                                        Hidden::make('product_id')->dehydrated(),
-                                        Hidden::make('unit_id')->dehydrated(),
+                                        Grid::make(12)
+                                            ->schema([
+                                                Hidden::make('product_id')->dehydrated(),
+                                                Hidden::make('unit_id')->dehydrated(),
 
-                                        TextInput::make('product_name')
-                                            ->label('Produk')
-                                            ->disabled()
-                                            ->dehydrated(false)
-                                            ->columnSpan(3),
+                                                TextInput::make('product_name')
+                                                    ->label('Produk')
+                                                    ->disabled()
+                                                    ->dehydrated()
+                                                    ->afterStateHydrated(function (TextInput $component, $state, $record) {
+                                                        if (!$state && $record && $record->product) {
+                                                            $component->state($record->product->name);
+                                                        }
+                                                    })
+                                                    ->columnSpan(4),
 
-                                        TextInput::make('invoice_qty')
-                                            ->label('Qty Faktur')
-                                            ->numeric()
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(2),
+                                                TextInput::make('invoice_qty')
+                                                    ->label('Qty Faktur')
+                                                    ->numeric()
+                                                    ->disabled()
+                                                    ->dehydrated()
+                                                    ->columnSpan(2),
 
-                                        TextInput::make('returnable_qty')
-                                            ->label('Yang Bisa Diretur')
-                                            ->numeric()
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(2),
+                                                TextInput::make('returnable_qty')
+                                                    ->label('Bisa Diretur')
+                                                    ->numeric()
+                                                    ->disabled()
+                                                    ->dehydrated()
+                                                    ->columnSpan(2),
 
-                                        TextInput::make('return_qty')
-                                            ->label('Qty Retur')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->required()
-                                            ->live(onBlur: true)
-                                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                                $max = (float) $get('returnable_qty');
-                                                $val = (float) $state;
-                                                if ($val > $max) {
-                                                    $set('return_qty', $max);
-                                                } elseif ($val < 0) {
-                                                    $set('return_qty', 0);
-                                                }
-                                                self::calculateLineTotal($get, $set);
-                                            })
-                                            ->columnSpan(2),
+                                                TextInput::make('return_qty')
+                                                    ->label('Qty Retur')
+                                                    ->numeric()
+                                                    ->default(0)
+                                                    ->required()
+                                                    ->live()
+                                                    ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                                                        $max = (float) $get('returnable_qty');
+                                                        $val = (float) $state;
+                                                        if ($val > $max) {
+                                                            $set('return_qty', $max);
+                                                        } elseif ($val < 0) {
+                                                            $set('return_qty', 0);
+                                                        }
+                                                        self::calculateLineTotal($get, $set);
+                                                    })
+                                                    ->suffixAction(function (Get $get, $livewire) {
+                                                        $productId = $get('product_id');
+                                                        $warehouseId = $get('../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
+                                                        if ($productId && $warehouseId) {
+                                                            $stock = \App\Models\Stock::where('product_id', $productId)
+                                                                ->where('warehouse_id', $warehouseId)
+                                                                ->value('quantity') ?? 0;
+                                                            return \Filament\Actions\Action::make('stock')
+                                                                ->label((string) $stock)
+                                                                ->color($stock > 0 ? 'success' : 'danger')
+                                                                ->badge()
+                                                                ->disabled();
+                                                        }
+                                                        return null;
+                                                    })
+                                                    ->columnSpan(2),
 
-                                        TextInput::make('unit_name')
-                                            ->label('Satuan')
-                                            ->disabled()
-                                            ->dehydrated(false)
-                                            ->columnSpan(1),
+                                                TextInput::make('unit_name')
+                                                    ->label('Satuan')
+                                                    ->disabled()
+                                                    ->dehydrated()
+                                                    ->afterStateHydrated(function (TextInput $component, $state, $record) {
+                                                        if (!$state && $record && $record->unit) {
+                                                            $component->state($record->unit->name);
+                                                        }
+                                                    })
+                                                    ->columnSpan(2),
+                                            ]),
 
-                                        TextInput::make('unit_price')
-                                            ->label('Harga')
-                                            ->numeric()
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(2),
+                                        Grid::make(12)
+                                            ->schema([
+                                                TextInput::make('unit_price')
+                                                    ->label('Harga')
+                                                    ->numeric()
+                                                    ->readOnly()
+                                                    ->live()
+                                                    ->dehydrated()
+                                                    ->columnSpan(3),
 
-                                        TextInput::make('discount_percent')
-                                            ->label('Diskon (%)')
-                                            ->numeric()
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(2),
+                                                TextInput::make('discount_percent')
+                                                    ->label('Diskon (%)')
+                                                    ->numeric()
+                                                    ->readOnly()
+                                                    ->live()
+                                                    ->dehydrated()
+                                                    ->columnSpan(3),
 
-                                        TextInput::make('tax_name')
-                                            ->label('Pajak')
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(2),
+                                                TextInput::make('tax_name')
+                                                    ->label('Pajak')
+                                                    ->readOnly()
+                                                    ->live()
+                                                    ->dehydrated()
+                                                    ->columnSpan(3),
 
-                                        Hidden::make('tax_amount')->dehydrated(),
+                                                Hidden::make('tax_amount')->dehydrated(),
 
-                                        TextInput::make('total_price')
-                                            ->label('Jumlah')
-                                            ->numeric()
-                                            ->readOnly()
-                                            ->dehydrated()
-                                            ->columnSpan(2),
+                                                TextInput::make('total_price')
+                                                    ->label('Jumlah')
+                                                    ->numeric()
+                                                    ->readOnly()
+                                                    ->dehydrated()
+                                                    ->columnSpan(3),
+                                            ]),
                                     ])
-                                    ->columns(18)
                                     ->columnSpanFull()
                                     ->live()
                                     ->addable(false)
@@ -282,14 +315,29 @@ class PurchaseReturnForm
 
         $set('tax_amount', round($taxAmount, 2));
         $set('total_price', round($totalPrice, 2));
+
+        self::updateTotals($get, $set);
     }
 
     public static function updateTotals(Get $get, Set $set): void
     {
-        $items = $get('items') ?? [];
+        $items = $get('items');
+        $prefix = '';
+
+        if (!is_array($items)) {
+            $items = $get('../../items');
+            if (is_array($items)) {
+                $prefix = '../../';
+            }
+        }
+
+        if (!is_array($items)) {
+            $items = [];
+        }
+
         $subTotal = 0;
         $totalTax = 0;
-        $taxInclusive = (bool) $get('tax_inclusive');
+        $taxInclusive = (bool) $get($prefix . 'tax_inclusive');
 
         foreach ($items as $item) {
             $qty = (float) ($item['return_qty'] ?? 0);
@@ -319,8 +367,8 @@ class PurchaseReturnForm
 
         $totalAmount = $subTotal + $totalTax;
 
-        $set('sub_total', round($subTotal, 2));
-        $set('tax_amount', round($totalTax, 2));
-        $set('total_amount', round($totalAmount, 2));
+        $set($prefix . 'sub_total', round($subTotal, 2));
+        $set($prefix . 'tax_amount', round($totalTax, 2));
+        $set($prefix . 'total_amount', round($totalAmount, 2));
     }
 }

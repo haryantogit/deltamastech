@@ -58,12 +58,6 @@ class PurchaseReturnObserver
             if ($purchaseReturn->purchase_invoice_id) {
                 $invoice = \App\Models\PurchaseInvoice::find($purchaseReturn->purchase_invoice_id);
                 if ($invoice) {
-                    $invoice->balance_due += $purchaseReturn->total_amount;
-                    if ($invoice->balance_due > 0 && $invoice->payment_status === 'paid') {
-                        $invoice->payment_status = 'partial';
-                    }
-                    $invoice->save();
-
                     // Remove payment
                     $debt = \App\Models\Debt::where('reference', $invoice->number)->first();
                     if ($debt) {
@@ -160,13 +154,6 @@ class PurchaseReturnObserver
         if ($return->purchase_invoice_id) {
             $invoice = \App\Models\PurchaseInvoice::find($return->purchase_invoice_id);
             if ($invoice) {
-                // Determine new balance
-                $invoice->balance_due = max(0, $invoice->balance_due - $return->total_amount);
-                if ($invoice->balance_due == 0) {
-                    $invoice->payment_status = 'paid';
-                }
-                $invoice->save();
-
                 // Update Debt record (Payment against it)
                 $debt = \App\Models\Debt::where('reference', $invoice->number)->first();
                 if ($debt) {

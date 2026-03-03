@@ -86,6 +86,9 @@ class AccountResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('code')
                     ->label('Kode')
                     ->sortable()
@@ -165,15 +168,16 @@ class AccountResource extends Resource
                     ]),
             ])
             ->actions([
-                ActionGroup::make([
-                    EditAction::make(),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\EditAction::make(),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make(),
-                ]),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 

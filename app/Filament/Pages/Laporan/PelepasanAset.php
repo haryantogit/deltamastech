@@ -27,11 +27,15 @@ class PelepasanAset extends Page implements HasActions
     public $endDate;
     public $categoryId;
     public $search = '';
+    public $perPage = 10;
+    public $page = 1;
 
     public function mount()
     {
         $this->startDate = '2026-01-01';
         $this->endDate = '2026-12-31';
+        $this->perPage = 10;
+        $this->page = 1;
     }
 
     public function getBreadcrumbs(): array
@@ -46,6 +50,21 @@ class PelepasanAset extends Page implements HasActions
     public function getMaxContentWidth(): string
     {
         return 'full';
+    }
+
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startFmt = \Carbon\Carbon::parse($this->startDate)->format('d/m/Y');
+        $endFmt = \Carbon\Carbon::parse($this->endDate)->format('d/m/Y');
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Periode Pelepasan ' . $startFmt . ' — ' . $endFmt . '</span>
+            </div>
+        ');
     }
 
     protected function getHeaderActions(): array
@@ -75,10 +94,6 @@ class PelepasanAset extends Page implements HasActions
                     $this->endDate = $data['endDate'];
                     $this->categoryId = $data['categoryId'];
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->icon('heroicon-o-printer')
@@ -110,7 +125,11 @@ class PelepasanAset extends Page implements HasActions
             });
         }
 
-        $assets = $query->get();
+        $totalCount = $query->count();
+
+        $assets = $this->perPage === 'all'
+            ? $query->get()
+            : $query->offset(($this->page - 1) * $this->perPage)->limit($this->perPage)->get();
 
         $reportData = $assets->map(function ($asset) {
             $cost = (float) $asset->purchase_price;
@@ -140,6 +159,7 @@ class PelepasanAset extends Page implements HasActions
             'total_book_value' => $reportData->sum('book_value'),
             'total_sale_price' => $reportData->sum('sale_price'),
             'total_gain_loss' => $reportData->sum('gain_loss'),
+            'totalCount' => $totalCount,
         ];
     }
 }

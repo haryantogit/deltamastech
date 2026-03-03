@@ -8,17 +8,39 @@ use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 
 class LabaRugiStatsWidget extends BaseWidget
 {
+    use \Filament\Widgets\Concerns\InteractsWithPageFilters;
+
     protected int|string|array $columnSpan = 'full';
+
+    protected function getColumns(): int
+    {
+        return 4;
+    }
+
+    public string $statsFilter = 'bulan';
+
+    #[On('updateStatsFilter')]
+    public function updateStatsFilter(string $filter): void
+    {
+        $this->statsFilter = $filter;
+    }
 
     protected function getStats(): array
     {
-        $end = Carbon::now();
-        $start = $end->copy()->startOfMonth();
+        // Check active toggle (left filter) & page filter (right picker)
+        $endDate = $this->filters['endDate'] ?? now()->toDateString();
+        $startDate = $this->filters['startDate'] ?? now()->startOfMonth()->toDateString();
+
+        $end = Carbon::parse($endDate);
+        $start = Carbon::parse($startDate);
+
+        $daysCount = $start->diffInDays($end) + 1;
         $prevEnd = $start->copy()->subDay();
-        $prevStart = $prevEnd->copy()->startOfMonth();
+        $prevStart = $prevEnd->copy()->subDays($daysCount - 1);
 
         $getSum = function (array $categories, Carbon $periodStart, Carbon $periodEnd, bool $isRevenue = true) {
             $accountIds = Account::whereIn('category', $categories)->pluck('id')->toArray();
@@ -53,10 +75,11 @@ class LabaRugiStatsWidget extends BaseWidget
             } else {
                 $pct = round((($current - $previous) / abs($previous)) * 100, 1);
             }
+            $label = 'vs periode sebelumnya';
             return [
                 'icon' => $pct >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down',
                 'color' => $pct >= 0 ? 'success' : 'danger',
-                'desc' => number_format(abs($pct), 1, ',', '.') . '% vs bulan lalu',
+                'desc' => number_format(abs($pct), 1, ',', '.') . '% ' . $label,
             ];
         };
 

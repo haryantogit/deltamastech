@@ -343,3 +343,106 @@ body {
         print-color-adjust: exact !important;
     }
 }
+
+/* ==========================================================================
+   Professional Pagination UI (Filament v3)
+   ========================================================================== */
+
+/* Container & Layout */
+.fi-pagination,
+.fi-ta-pagination {
+    @apply border-t border-gray-100 bg-white px-6 py-5 flex items-center justify-between !important;
+    margin-top: 2rem !important;
+    box-shadow: none !important;
+}
+
+/* Per Page Dropdown & Label */
+.fi-pagination-records-per-page-select,
+.fi-ta-pagination-records-per-page-select {
+    @apply h-9 text-sm border-gray-200 rounded-lg shadow-sm focus:border-primary-500 focus:ring-primary-500 transition-all !important;
+    width: auto !important;
+    min-width: 70px;
+}
+
+.fi-pagination-records-per-page-label,
+.fi-ta-pagination-records-per-page-label {
+    @apply text-sm text-gray-600 font-medium !important;
+}
+
+/* Pagination Buttons */
+.fi-pagination-items,
+.fi-ta-pagination-list {
+    @apply flex items-center gap-1 !important;
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.fi-pagination-item {
+    @apply transition-all duration-200 !important;
+}
+
+.fi-pagination-link,
+.fi-ta-pagination-list button,
+.fi-ta-pagination-list a {
+    @apply h-9 min-w-[36px] px-3 flex items-center justify-center text-sm font-medium border border-gray-200 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all shadow-none !important;
+}
+
+/* Active State */
+.fi-pagination-link.fi-active,
+.fi-pagination-link[aria-current="page"],
+.fi-ta-pagination-list .fi-active {
+    @apply bg-primary-600 text-white border-primary-600 hover:bg-primary-700 !important;
+}
+
+/* Disabled State */
+.fi-pagination-link.fi-disabled,
+.fi-pagination-link[disabled],
+.fi-ta-pagination-list .fi-disabled {
+    @apply opacity-50 cursor-not-allowed bg-gray-50 text-gray-400 border-gray-200 !important;
+}
+
+/* Icons in Pagination */
+.fi-pagination-link svg,
+.fi-ta-pagination-list svg {
+    @apply w-4 h-4 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Compact Pagination Version (ERP/Accounting Style)
+   -------------------------------------------------------------------------- */
+.pagination-compact .fi-pagination,
+.pagination-compact .fi-ta-pagination {
+    @apply py-2 px-3 !important;
+}
+
+.pagination-compact .fi-pagination-records-per-page-select,
+.pagination-compact .fi-ta-pagination-records-per-page-select,
+.pagination-compact .fi-pagination-link,
+.pagination-compact .fi-ta-pagination-list button {
+    @apply h-8 min-w-[32px] text-xs px-2 !important;
+}
+
+.pagination-compact .fi-pagination-records-per-page-label,
+.pagination-compact .fi-ta-pagination-records-per-page-label {
+    @apply text-xs !important;
+}
+
+.pagination-compact .fi-pagination-items,
+.pagination-compact .fi-ta-pagination-list {
+    @apply gap-0.5 !important;
+}
+
+/* Responsiveness */
+@media (max-width: 640px) {
+
+    .fi-pagination,
+    .fi-ta-pagination {
+        @apply flex-col gap-4 items-center !important;
+    }
+
+    .fi-pagination-records-per-page-ctn,
+    .fi-ta-pagination-records-per-page-ctn {
+        @apply order-first !important;
+    }
+}

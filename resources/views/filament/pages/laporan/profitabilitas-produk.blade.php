@@ -1,511 +1,292 @@
 @php
-    $viewData = $this->getViewData();
-    $results = $viewData['results'];
-    $paginator = $viewData['paginator'];
-    $pageStats = $viewData['pageStats'];
+    $data = $this->getViewData();
+    $paginator = $data['paginator'];
+    $summary = $data['summary'];
+    $grandTotals = $data['grandTotals'];
 
     $fmt = function ($num) {
-        if ($num == 0)
-            return '0';
+        if ($num == 0) return '0';
         return number_format($num, 0, ',', '.');
-    };
-
-    $fmtPct = function ($num) {
-        return number_format($num, 2, ',', '.') . '%';
     };
 @endphp
 
 <x-filament-panels::page>
     <style>
-        .profit-report-container {
+        .delivery-report-container {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        }
+
+        .dark .delivery-report-container {
+            background: #111827;
+            border-color: #374151;
+        }
+
+        /* Tab Filters */
+        .custom-tabs-container {
             display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
+            width: 100%;
+            gap: 0.25rem;
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            background-color: white;
+            padding: 0.5rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
         }
 
-        /* Tabs Style */
-        .profit-tabs {
+        .dark .custom-tabs-container {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-tab-item {
             display: flex;
-            gap: 1rem;
-            border-bottom: 2px solid #eef2f6;
-            padding-bottom: 2px;
-        }
-
-        .dark .profit-tabs {
-            border-bottom-color: #2d3748;
-        }
-
-        .profit-tab-item {
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border-radius: 0.5rem;
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
             font-weight: 600;
-            color: #64748b;
+            transition: all 0.2s;
             cursor: pointer;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-        }
-
-        .profit-tab-item:hover {
-            color: #3b82f6;
-        }
-
-        .profit-tab-item.active {
-            color: #3b82f6;
-            border-bottom-color: #3b82f6;
-        }
-
-        .dark .profit-tab-item.active {
-            color: #60a5fa;
-            border-bottom-color: #60a5fa;
-        }
-
-        /* Filter Row */
-        .filter-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .filter-group-left {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .filter-group-right {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .custom-search-container {
-            position: relative;
-            width: 300px;
-        }
-
-        .custom-search-input {
-            width: 100%;
-            height: 38px;
-            padding: 0 1rem 0 2.5rem;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            font-size: 0.8125rem;
-            background: white;
-            transition: all 0.2s;
-        }
-
-        .dark .custom-search-input {
-            background: #111827;
-            border-color: #374151;
-            color: white;
-        }
-
-        .custom-search-input:focus {
-            border-color: #3b82f6;
-            ring: 2px solid rgba(59, 130, 246, 0.1);
-            outline: none;
-        }
-
-        .search-icon-abs {
-            position: absolute;
-            left: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-            width: 16px;
-            height: 16px;
-        }
-
-        .date-picker-box {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 2px 8px;
-            height: 38px;
-        }
-
-        .dark .date-picker-box {
-            background: #111827;
-            border-color: #374151;
-        }
-
-        .date-input-borderless {
+            white-space: nowrap;
             border: none;
-            background: transparent;
-            font-size: 0.8125rem;
-            width: 125px;
-            padding: 0;
-            color: #475569;
-        }
-
-        .dark .date-input-borderless {
-            color: #cbd5e1;
-        }
-
-        .date-input-borderless:focus {
             outline: none;
-            box-shadow: none;
         }
 
-        .filter-btn-fancy {
-            height: 38px;
-            padding: 0 1rem;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: #475569;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
+        .custom-tab-item.active {
+            background-color: #eff6ff !important;
+            color: #2563eb !important;
+            box-shadow: 0 0 0 1px #dbeafe !important;
         }
 
-        .dark .filter-btn-fancy {
-            background: #111827;
-            border-color: #374151;
-            color: #cbd5e1;
+        .dark .custom-tab-item.active {
+            background-color: rgba(59, 130, 246, 0.1) !important;
+            color: #60a5fa !important;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2) !important;
         }
 
-        .filter-btn-fancy:hover {
-            border-color: #cbd5e1;
-            background: #f8fafc;
+        .custom-tab-item.inactive {
+            color: #6b7280;
         }
 
-        /* Table Card */
-        .profit-table-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
+        .custom-tab-item.inactive:hover {
+            color: #374151;
+            background-color: #f9fafb;
         }
 
-        .dark .profit-table-card {
-            background: #111827;
-            border-color: #374151;
+        .dark .custom-tab-item.inactive {
+            color: #9ca3af;
         }
 
-        .profit-main-table {
+        .dark .custom-tab-item.inactive:hover {
+            color: #e5e7eb;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .report-table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 1000px;
         }
 
-        .profit-main-table th {
-            text-align: left;
-            padding: 1rem;
+        .report-table th {
+            padding: 0.875rem 1.25rem;
             font-size: 0.75rem;
             font-weight: 700;
             color: #64748b;
-            text-transform: uppercase;
+            text-transform: capitalize;
             background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 2px solid #f1f5f9;
+            text-align: right;
         }
 
-        .dark .profit-main-table th {
+        .report-table th:first-child, .report-table th:nth-child(2) {
+            text-align: left;
+        }
+
+        .dark .report-table th {
             background: #1f2937;
             border-bottom-color: #374151;
             color: #94a3b8;
         }
 
-        .profit-main-table td {
-            padding: 1rem;
+        .report-table td {
+            padding: 0.75rem 1.25rem;
             font-size: 0.8125rem;
             border-bottom: 1px solid #f1f5f9;
             color: #1e293b;
         }
 
-        .dark .profit-main-table td {
+        .dark .report-table td {
             border-bottom-color: #374151;
             color: #e2e8f0;
         }
 
-        .summary-footer {
+        .number-col {
+            text-align: right !important;
+        }
+
+        .total-row {
+            border-top: 2px solid rgba(128,128,128,0.2);
             background: #f8fafc;
-            font-weight: 800;
-        }
-
-        .dark .summary-footer {
-            background: #1f2937;
-        }
-
-        .summary-footer td {
-            border-top: 2px solid #e2e8f0;
-            color: #0f172a;
-        }
-
-        .dark .summary-footer td {
-            border-top-color: #374151;
-            color: white;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-blue-link {
-            color: #2563eb;
             font-weight: 700;
         }
 
-        .dark .text-blue-link {
-            color: #60a5fa;
+        .dark .total-row {
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .margin-pill {
-            background: #dcfce7;
-            color: #166534;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-style: normal;
-            font-weight: 700;
+        .total-row td {
+            padding: 1rem 1.25rem !important;
         }
 
-        .dark .margin-pill {
-            background: #064e3b;
-            color: #4ade80;
-        }
-
-        .pagination-container {
-            margin-top: 1.5rem;
-            display: flex;
-            justify-content: space-between;
+        .margin-badge {
+            display: inline-flex;
             align-items: center;
-            padding: 1rem 0;
-        }
-
-        .pagination-container {
-            padding: 1rem 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .pagination-status {
-            font-size: 0.8125rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .per-page-capsule {
-            display: flex;
-            align-items: center;
-            background: rgba(128, 128, 128, 0.05);
-            border: 1px solid rgba(128, 128, 128, 0.1);
-            border-radius: 10px;
-            padding: 0 0.75rem;
-            height: 2.25rem;
-            gap: 0;
-        }
-
-        .per-page-label {
+            padding: 0.125rem 0.625rem;
+            border-radius: 9999px;
             font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 500;
-            border-right: 1px solid rgba(128, 128, 128, 0.1);
-            padding-right: 0.75rem;
-            height: 100%;
-            display: flex;
-            align-items: center;
-        }
-
-        .per-page-capsule select {
-            background: transparent;
-            border: none;
-            font-size: 0.8125rem;
             font-weight: 600;
-            color: #1e293b;
-            outline: none;
-            cursor: pointer;
-            padding: 0 0.5rem 0 0.75rem;
-            margin: 0;
-            appearance: none;
-            -webkit-appearance: none;
         }
 
-        .dark .per-page-capsule select {
-            color: #f1f5f9;
+        .badge-success {
+            background-color: #f0fdf4;
+            color: #16a34a;
         }
 
-        .numeric-capsule nav {
-            display: flex;
-            align-items: center;
+        .badge-danger {
+            background-color: #fef2f2;
+            color: #dc2626;
         }
 
-        .numeric-capsule nav>div:first-child,
-        .numeric-capsule nav p,
-        .numeric-capsule [class*="hidden sm:flex-1"] {
-            display: none !important;
-        }
-
-        .numeric-capsule nav div:last-child {
-            display: flex !important;
-            background: rgba(128, 128, 128, 0.05) !important;
-            border: 1px solid rgba(128, 128, 128, 0.1) !important;
-            border-radius: 10px !important;
-            overflow: hidden !important;
-        }
-
-        .numeric-capsule a,
-        .numeric-capsule span {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 2.5rem !important;
-            height: 2.25rem !important;
-            padding: 0 0.75rem !important;
-            font-size: 0.8125rem !important;
-            font-weight: 600 !important;
-            color: #1e293b !important;
-            border: none !important;
-            border-right: 1px solid rgba(128, 128, 128, 0.1) !important;
-            background: transparent !important;
-            transition: all 0.2s !important;
-            text-decoration: none !important;
-        }
-
-        .dark .numeric-capsule a,
-        .dark .numeric-capsule span {
-            color: #f1f5f9 !important;
-        }
-
-        .numeric-capsule div:last-child> :last-child {
-            border-right: none !important;
-        }
-
-        .numeric-capsule a:hover {
-            background: rgba(59, 130, 246, 0.05) !important;
-            color: #3b82f6 !important;
-        }
-
-        .numeric-capsule .active span,
-        .numeric-capsule [aria-current="page"] span {
-            background: rgba(59, 130, 246, 0.1) !important;
-            color: #3b82f6 !important;
-            font-weight: 700 !important;
-        }
-
-        .numeric-capsule svg {
-            width: 1rem !important;
-            height: 1rem !important;
+        @media print {
+            .fi-header-actions, .search-row, .custom-tabs-container {
+                display: none !important;
+            }
+            .delivery-report-container {
+                border: none !important;
+                box-shadow: none !important;
+            }
         }
     </style>
 
-    <div class="profit-report-container">
-        {{-- Header: Tabs and Search --}}
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; border-bottom: 2px solid #eef2f6;"
-            class="dark:border-gray-800">
-            <div class="profit-tabs" style="border-bottom: none;">
-                <div @class(['profit-tab-item', 'active' => $activeTab === 'lacak_stok'])
-                    wire:click="setTab('lacak_stok')">
-                    Produk Lacak Stok
-                </div>
-                <div @class(['profit-tab-item', 'active' => $activeTab === 'tanpa_lacak_stok'])
-                    wire:click="setTab('tanpa_lacak_stok')">
-                    Produk Tanpa Lacak Stok
-                </div>
-                <div @class(['profit-tab-item', 'active' => $activeTab === 'paket']) wire:click="setTab('paket')">
-                    Produk Paket
-                </div>
-            </div>
-
-            <div class="custom-search-container" style="margin-bottom: 8px;">
-                <svg class="search-icon-abs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                <input type="text" wire:model.live.debounce.500ms="search" placeholder="Cari produk"
-                    class="custom-search-input">
-            </div>
+    <div class="report-content">
+        {{-- Custom Tabs --}}
+        <div class="custom-tabs-container">
+            @foreach([
+                'lacak_stok' => 'Produk Lacak Stok',
+                'tanpa_lacak_stok' => 'Produk Tanpa Lacak Stok',
+                'paket' => 'Produk Paket',
+            ] as $key => $label)
+                <button 
+                    wire:click="setTab('{{ $key }}')"
+                    @class([
+                        'custom-tab-item',
+                        'active' => $activeTab === $key,
+                        'inactive' => $activeTab !== $key,
+                    ])
+                >
+                    <span>{{ $label }}</span>
+                </button>
+            @endforeach
         </div>
 
-        {{-- Table --}}
-        <div class="profit-table-card">
-            <table class="profit-main-table">
-                <thead>
-                    <tr>
-                        <th style="min-width: 280px;">Nama Produk</th>
-                        <th>Kode/SKU</th>
-                        <th class="text-right">Qty</th>
-                        <th class="text-right">Total Penjualan</th>
-                        <th class="text-right">Total HPP</th>
-                        <th class="text-right">Total Profit</th>
-                        <th class="text-right">Profit Margin</th>
-                        <th class="text-right">Biaya</th>
-                        <th class="text-right">Jual Rata-Rata</th>
-                        <th class="text-right">HPP Rata-Rata</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($results as $item)
+        <div class="delivery-report-container">
+            {{-- Search row --}}
+            <div style="padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: flex-end;"
+                class="dark:border-gray-800 search-row">
+                <div style="position: relative; width: 280px;">
+                    <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" wire:model.live.debounce.500ms="search" placeholder="Cari"
+                        style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.8125rem; background: white; color: #1e293b; outline: none;"
+                        class="dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100">
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="report-table">
+                    <thead>
                         <tr>
-                            <td class="text-blue-link">{{ $item['name'] }}</td>
-                            <td style="font-family: monospace; font-size: 0.75rem;">{{ $item['sku'] ?? '-' }}</td>
-                            <td class="text-right">{{ $fmt($item['qty']) }}</td>
-                            <td class="text-right">{{ $fmt($item['total_sales']) }}</td>
-                            <td class="text-right">{{ $fmt($item['total_hpp']) }}</td>
-                            <td class="text-right">{{ $fmt($item['total_profit']) }}</td>
-                            <td class="text-right"><i class="margin-pill">{{ $fmtPct($item['profit_margin']) }}</i></td>
-                            <td class="text-right">{{ $fmtPct($item['biaya_percent']) }}</td>
-                            <td class="text-right">{{ $fmt($item['avg_sell_price']) }}</td>
-                            <td class="text-right">{{ $fmt($item['avg_hpp']) }}</td>
+                            <th>Nama Produk</th>
+                            <th>Kode/SKU</th>
+                            <th class="number-col">Qty</th>
+                            <th class="number-col">Total Penjualan</th>
+                            <th class="number-col">Total HPP</th>
+                            <th class="number-col">Total Profit</th>
+                            <th class="number-col">Profit Margin</th>
+                            <th class="number-col">Biaya %</th>
+                            <th class="number-col">Jual Rata-Rata</th>
+                            <th class="number-col">HPP Rata-Rata</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="10" class="text-center py-12" style="color: #94a3b8;">Tidak ada data untuk periode
-                                ini.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-                <tfoot>
-                    <tr class="summary-footer">
-                        <td colspan="2">Total</td>
-                        <td class="text-right">{{ $fmt($pageStats['qty']) }}</td>
-                        <td class="text-right">{{ $fmt($pageStats['total_sales']) }}</td>
-                        <td class="text-right">{{ $fmt($pageStats['total_hpp']) }}</td>
-                        <td class="text-right">{{ $fmt($pageStats['total_profit']) }}</td>
-                        <td colspan="3"></td>
-                        <td class="text-right">
-                            {{ $results->count() > 0 ? $fmt($results->average('avg_sell_price')) : '0' }}
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse($summary as $row)
+                            <tr wire:key="row-{{ $row->id }}" class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                <td style="font-weight: 700; color: #3b82f6;">{{ $row->name }}</td>
+                                <td style="color: #64748b;">{{ $row->sku ?: '-' }}</td>
+                                <td class="number-col">{{ $fmt($row->total_qty) }}</td>
+                                <td class="number-col font-semibold">{{ $fmt($row->total_sales) }}</td>
+                                <td class="number-col">{{ $fmt($row->total_hpp) }}</td>
+                                <td class="number-col font-bold" style="color: #16a34a;">{{ $fmt($row->total_profit) }}</td>
+                                <td class="number-col">
+                                    <span @class([
+                                        'margin-badge',
+                                        'badge-success' => $row->profit_margin >= 0,
+                                        'badge-danger' => $row->profit_margin < 0,
+                                    ])>
+                                        {{ number_format($row->profit_margin, 2, ',', '.') }}%
+                                    </span>
+                                </td>
+                                <td class="number-col">{{ number_format($row->biaya_percent, 2, ',', '.') }}%</td>
+                                <td class="number-col">{{ $fmt($row->avg_sell_price) }}</td>
+                                <td class="number-col">{{ $fmt($row->avg_hpp) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" style="text-align: center; color: #94a3b8; padding: 4rem;">
+                                    <div class="flex flex-col items-center">
+                                        <svg style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.2;"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
+                                        <span style="font-size: 0.875rem; font-weight: 500;">Tidak ada data profitabilitas untuk periode ini.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+
+                        @if(count($summary) > 0)
+                            <tr class="total-row">
+                                <td colspan="2">Total</td>
+                                <td class="number-col">{{ $fmt($grandTotals['qty']) }}</td>
+                                <td class="number-col">{{ $fmt($grandTotals['sales']) }}</td>
+                                <td class="number-col">{{ $fmt($grandTotals['hpp']) }}</td>
+                                <td class="number-col font-bold" style="color: #3b82f6;">{{ $fmt($grandTotals['profit']) }}</td>
+                                <td colspan="4"></td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        {{-- Pagination Footer --}}
-        <div class="pagination-container">
-            <div class="pagination-status">
-                Total {{ number_format($totalCount, 0, ',', '.') }} data
+        @if ($paginator && ($paginator->hasPages() || count([5, 10, 20, 50, 100, 'all']) > 1))
+            <div style="margin-top: 1.5rem; margin-bottom: 1rem;">
+                <x-filament::pagination :paginator="$paginator" :page-options="[5, 10, 20, 50, 100, 'all']"
+                    current-page-option-property="perPage" />
             </div>
-
-            <div class="per-page-capsule">
-                <span class="per-page-label">per halaman</span>
-                <select wire:model.live="perPage">
-                    <option value="15">15</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="500">500</option>
-                </select>
-                <svg style="width: 1rem; height: 1rem; color: #64748b; margin-left: -0.25rem;" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-            </div>
-
-            <div class="numeric-capsule">
-                {{ $paginator->links() }}
-            </div>
-        </div>
+        @endif
     </div>
 </x-filament-panels::page>

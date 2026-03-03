@@ -56,7 +56,7 @@ class PurchaseInvoiceResource extends Resource
                                     ->schema([
                                         Group::make([
                                             Select::make('supplier_id_select')
-                                                ->relationship('supplier', 'name', modifyQueryUsing: fn($query) => $query->where('type', 'vendor'))
+                                                ->relationship('supplier', 'name', modifyQueryUsing: fn($query) => $query->whereIn('type', ['vendor', 'both']))
                                                 ->label('Vendor')
                                                 ->searchable()
                                                 ->preload()
@@ -288,156 +288,160 @@ class PurchaseInvoiceResource extends Resource
                                 Repeater::make('items')
                                     ->relationship()
                                     ->schema([
-                                        Select::make('product_id_select')
-                                            ->label('Produk')
-                                            ->relationship('product', 'name', modifyQueryUsing: function ($query, Get $get) {
-                                                $query->active();
-                                                $warehouseId = $get('../../warehouse_id');
-                                                if ($warehouseId) {
-                                                    $query->whereHas('stocks', fn($q) => $q->where('warehouse_id', $warehouseId));
-                                                }
-                                            })
-                                            ->getOptionLabelFromRecordUsing(function ($record, Get $get) {
-                                                $warehouseId = $get('../../warehouse_id');
-                                                $stock = 0;
-                                                if ($warehouseId) {
-                                                    $stock = $record->stocks()->where('warehouse_id', $warehouseId)->value('quantity') ?? 0;
-                                                }
-                                                $stock = (float) $stock;
-                                                return "<div class='flex justify-between items-center w-full'><span>{$record->name}</span> <span class='text-xs font-medium px-2 py-0.5 rounded bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-400'>Stok: " . number_format($stock) . "</span></div>";
-                                            })
-                                            ->allowHtml()
-                                            ->searchable()
-                                            ->preload()
-                                            ->required()
-                                            ->disabled(fn(Get $get) => filled($get('../../purchase_order_id')))
-                                            ->columnSpan(3)
-                                            ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('../../purchase_order_id')))
-                                            ->dehydrated(false)
-                                            ->live()
-                                            ->afterStateUpdated(function ($state, Set $set, Get $get, $component) {
-                                                $set('product_id', $state);
-                                                if ($product = \App\Models\Product::with('unit')->find($state)) {
-                                                    $set('product_name', $product->name);
-                                                    $set('description', $product->description);
-                                                    $set('unit_id', $product->unit_id);
-                                                    $set('unit_id_select', $product->unit_id);
-                                                    $set('unit_name', $product->unit?->name ?? '');
-                                                    $set('unit_price', $product->cost_price ?? $product->buy_price ?? $product->price ?? 0);
-                                                    $set('quantity', 1);
-
-                                                    // Auto-populate tax
-                                                    $taxName = null;
-                                                    if ($product->purchase_tax_id) {
-                                                        if (is_numeric($product->purchase_tax_id)) {
-                                                            $tax = \App\Models\Tax::find($product->purchase_tax_id);
-                                                            $taxName = $tax ? $tax->name : null;
-                                                        } else {
-                                                            $taxName = $product->purchase_tax_id;
+                                        Grid::make(12)
+                                            ->schema([
+                                                Select::make('product_id_select')
+                                                    ->label('Produk')
+                                                    ->relationship('product', 'name', modifyQueryUsing: function ($query, Get $get) {
+                                                        $query->active();
+                                                        $warehouseId = $get('../../warehouse_id');
+                                                        if ($warehouseId) {
+                                                            $query->whereHas('stocks', fn($q) => $q->where('warehouse_id', $warehouseId));
                                                         }
-                                                    }
-                                                    $set('tax_name', $taxName);
-
-                                                    self::calculateLineTotal($get, $set, $component);
-                                                }
-                                            }),
-                                        TextInput::make('product_name')
-                                            ->label('Produk')
-                                            ->readOnly(fn(Get $get) => filled($get('../../purchase_order_id')))
-                                            ->dehydrated(false)
-                                            ->columnSpan(3)
-                                            ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('../../purchase_order_id'))),
-                                        Hidden::make('product_id')
-                                            ->dehydrated(),
-
-                                        TextInput::make('description')
-                                            ->label('Deskripsi')
-                                            ->columnSpan(2),
-                                        TextInput::make('quantity')
-                                            ->label('Kuantitas')
-                                            ->numeric()
-                                            ->default(1)
-                                            ->required()
-                                            ->readOnly(fn(Get $get) => filled($get('../../purchase_order_id')))
-                                            ->live(onBlur: true)
-                                            ->suffixAction(
-                                                Action::make('checkStock')
-                                                    ->button()
-                                                    ->size('sm')
-                                                    ->color(function (Get $get, $state) {
-                                                        $productId = $get('product_id');
-                                                        $warehouseId = $get('../../warehouse_id');
-                                                        if (!$productId || !$warehouseId)
-                                                            return 'gray';
-                                                        $product = \App\Models\Product::find($productId);
-                                                        if (!$product || !$product->track_inventory)
-                                                            return 'gray';
-                                                        $stock = (float) $product->getStockForWarehouse($warehouseId);
-                                                        $requestedQty = (float) $state;
-                                                        return ($stock < $requestedQty || $stock <= 0) ? 'danger' : 'success';
                                                     })
-                                                    ->label(function (Get $get) {
-                                                        $productId = $get('product_id');
+                                                    ->getOptionLabelFromRecordUsing(function ($record, Get $get) {
                                                         $warehouseId = $get('../../warehouse_id');
-                                                        if (!$productId || !$warehouseId)
-                                                            return '0';
-                                                        $product = \App\Models\Product::find($productId);
-                                                        if (!$product || !$product->track_inventory)
-                                                            return '0';
-                                                        $stock = $product->getStockForWarehouse($warehouseId);
-                                                        return number_format($stock);
+                                                        $stock = 0;
+                                                        if ($warehouseId) {
+                                                            $stock = $record->stocks()->where('warehouse_id', $warehouseId)->value('quantity') ?? 0;
+                                                        }
+                                                        $stock = (float) $stock;
+                                                        return "<div class='flex justify-between items-center w-full'><span>{$record->name}</span> <span class='text-xs font-medium px-2 py-0.5 rounded bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-400'>Stok: " . number_format($stock) . "</span></div>";
                                                     })
-                                            )
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
-                                            ->columnSpan(2),
+                                                    ->allowHtml()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->required()
+                                                    ->disabled(fn(Get $get) => filled($get('../../purchase_order_id')))
+                                                    ->columnSpan(4)
+                                                    ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('../../purchase_order_id')))
+                                                    ->dehydrated(false)
+                                                    ->live()
+                                                    ->afterStateUpdated(function ($state, Set $set, Get $get, $component) {
+                                                        $set('product_id', $state);
+                                                        if ($product = \App\Models\Product::with('unit')->find($state)) {
+                                                            $set('product_name', $product->name);
+                                                            $set('description', $product->description);
+                                                            $set('unit_id', $product->unit_id);
+                                                            $set('unit_id_select', $product->unit_id);
+                                                            $set('unit_name', $product->unit?->name ?? '');
+                                                            $set('unit_price', $product->cost_price ?? $product->buy_price ?? $product->price ?? 0);
+                                                            $set('quantity', 1);
 
-                                        Select::make('unit_id_select')
-                                            ->label('Satuan')
-                                            ->placeholder('Pilih')
-                                            ->relationship('unit', 'name')
-                                            ->searchable()
-                                            ->preload()
-                                            ->disabled(fn(Get $get) => filled($get('../../purchase_order_id')))
-                                            ->columnSpan(1)
-                                            ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('../../purchase_order_id')))
-                                            ->dehydrated(false)->live()->afterStateUpdated(fn($state, Set $set) => $set('unit_id', $state)),
-                                        TextInput::make('unit_name')
-                                            ->label('Satuan')
-                                            ->readOnly(fn(Get $get) => filled($get('../../purchase_order_id')))
-                                            ->dehydrated(false)
-                                            ->columnSpan(1)
-                                            ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('../../purchase_order_id'))),
-                                        Hidden::make('unit_id')
-                                            ->dehydrated(),
+                                                            // Auto-populate tax
+                                                            $taxName = 'Bebas Pajak';
+                                                            if ($product->purchase_tax_id) {
+                                                                if (is_numeric($product->purchase_tax_id)) {
+                                                                    $tax = \App\Models\Tax::find($product->purchase_tax_id);
+                                                                    $taxName = $tax ? $tax->name : 'Bebas Pajak';
+                                                                } else {
+                                                                    $taxName = $product->purchase_tax_id;
+                                                                }
+                                                            }
+                                                            $set('tax_name', $taxName);
 
-                                        TextInput::make('discount_percent')
-                                            ->label('Diskon (%)')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->live(onBlur: true)
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component)),
-                                        TextInput::make('unit_price')
-                                            ->label('Harga')
-                                            ->numeric()
-                                            ->required()
-                                            ->readOnly()
-                                            ->live(onBlur: true)
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component)),
-                                        Select::make('tax_name')
-                                            ->label('Pajak')
-                                            ->options(fn() => \App\Models\Tax::pluck('name', 'name')->toArray())
-                                            ->placeholder('Pilih')
-                                            ->disabled(fn(Get $get) => filled($get('../../purchase_order_id')))
-                                            ->dehydrated()
-                                            ->live()
-                                            ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component)),
-                                        TextInput::make('total_price')
-                                            ->label('Total')
-                                            ->numeric()
-                                            ->readOnly()
-                                            ->dehydrated(),
+                                                            self::calculateLineTotal($get, $set, $component);
+                                                        }
+                                                    }),
+                                                TextInput::make('product_name')
+                                                    ->label('Produk')
+                                                    ->readOnly(fn(Get $get) => filled($get('../../purchase_order_id')))
+                                                    ->dehydrated(false)
+                                                    ->columnSpan(4)
+                                                    ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('../../purchase_order_id'))),
+                                                Hidden::make('product_id')
+                                                    ->dehydrated(),
+
+                                                TextInput::make('description')
+                                                    ->label('Deskripsi')
+                                                    ->columnSpan(4),
+
+                                                TextInput::make('quantity')
+                                                    ->label('Kuantitas')
+                                                    ->numeric()
+                                                    ->default(1)
+                                                    ->required()
+                                                    ->readOnly(fn(Get $get) => filled($get('../../purchase_order_id')))
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->suffixAction(function (Get $get, $livewire) {
+                                                        $productId = $get('product_id');
+                                                        $warehouseId = $get('../../warehouse_id') ?? $livewire->data['warehouse_id'] ?? null;
+                                                        if ($productId && $warehouseId) {
+                                                            $stock = \App\Models\Stock::where('product_id', $productId)
+                                                                ->where('warehouse_id', $warehouseId)
+                                                                ->value('quantity') ?? 0;
+                                                            return \Filament\Actions\Action::make('stock')
+                                                                ->label((string) $stock)
+                                                                ->color($stock > 0 ? 'success' : 'danger')
+                                                                ->badge()
+                                                                ->disabled();
+                                                        }
+                                                        return null;
+                                                    })
+                                                    ->columnSpan(2),
+
+                                                Select::make('unit_id_select')
+                                                    ->label('Satuan')
+                                                    ->placeholder('Pilih')
+                                                    ->relationship('unit', 'name')
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->disabled(fn(Get $get) => filled($get('../../purchase_order_id')))
+                                                    ->columnSpan(2)
+                                                    ->hidden(fn(Get $get, string $operation) => $operation === 'create' && filled($get('../../purchase_order_id')))
+                                                    ->dehydrated(false)->live()->afterStateUpdated(fn($state, Set $set) => $set('unit_id', $state)),
+                                                TextInput::make('unit_name')
+                                                    ->label('Satuan')
+                                                    ->readOnly(fn(Get $get) => filled($get('../../purchase_order_id')))
+                                                    ->dehydrated(false)
+                                                    ->columnSpan(2)
+                                                    ->hidden(fn(Get $get, string $operation) => $operation !== 'create' || !filled($get('../../purchase_order_id'))),
+                                                Hidden::make('unit_id')
+                                                    ->dehydrated(),
+                                            ]),
+
+                                        Grid::make(12)
+                                            ->schema([
+                                                TextInput::make('unit_price')
+                                                    ->label('Harga')
+                                                    ->numeric()
+                                                    ->required()
+                                                    ->readOnly()
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->columnSpan(3),
+
+                                                TextInput::make('discount_percent')
+                                                    ->label('Diskon (%)')
+                                                    ->numeric()
+                                                    ->default(0)
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->columnSpan(3),
+
+                                                Select::make('tax_name')
+                                                    ->label('Pajak')
+                                                    ->options(function () {
+                                                        $taxes = \App\Models\Tax::pluck('name', 'name')->toArray();
+                                                        return ['Bebas Pajak' => 'Bebas Pajak'] + $taxes;
+                                                    })
+                                                    ->default('Bebas Pajak')
+                                                    ->selectablePlaceholder(false)
+                                                    ->disabled(fn(Get $get) => filled($get('../../purchase_order_id')))
+                                                    ->dehydrated()
+                                                    ->live()
+                                                    ->afterStateUpdated(fn(Set $set, Get $get, $component) => self::calculateLineTotal($get, $set, $component))
+                                                    ->columnSpan(3),
+
+                                                TextInput::make('total_price')
+                                                    ->label('Total')
+                                                    ->numeric()
+                                                    ->readOnly()
+                                                    ->dehydrated()
+                                                    ->columnSpan(3),
+                                            ]),
                                     ])
-                                    ->columns(12)
                                     ->columnSpanFull()
                                     ->live()
                                     ->afterStateUpdated(fn(Set $set, Get $get) => self::updateTotals($get, $set))
@@ -648,12 +652,16 @@ class PurchaseInvoiceResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('no')
+                    ->label('No.')
+                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('number')
                     ->label('Nomor')
                     ->searchable()
                     ->sortable()
                     ->color('primary')
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->url(fn($record) => self::getUrl('view', ['record' => $record])),
                 Tables\Columns\TextColumn::make('supplier.name')
                     ->label('Vendor')
                     ->sortable()
@@ -665,7 +673,7 @@ class PurchaseInvoiceResource extends Resource
                     ->sortable()
                     ->placeholder('-'),
                 Tables\Columns\TextColumn::make('purchaseOrder.number')
-                    ->label('Nomor PO')
+                    ->label('No. Pesanan')
                     ->searchable()
                     ->sortable()
                     ->placeholder('-'),
@@ -687,7 +695,7 @@ class PurchaseInvoiceResource extends Resource
                     ->sortable(query: fn(Builder $query, string $direction) => $query->orderBy('shipping_date', $direction))
                     ->placeholder('-'),
                 Tables\Columns\TextColumn::make('payment_date')
-                    ->label('Tgl. Pelunasan')
+                    ->label('Tgl. Pembayaran')
                     ->getStateUsing(function ($record) {
                         if ($record->status !== 'paid' && $record->payment_status !== 'paid')
                             return null;
@@ -759,7 +767,16 @@ class PurchaseInvoiceResource extends Resource
             ])
             ->defaultSort('date', 'desc')
             ->actions([
-                ActionGroup::make([ViewAction::make(), EditAction::make()]),
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make(),
+                    \Filament\Actions\EditAction::make()
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
+            ])
+            ->bulkActions([
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ]),
             ]);
     }
 

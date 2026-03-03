@@ -19,7 +19,10 @@ class SalesQuotationsTable
                 \Filament\Tables\Columns\TextColumn::make('number')
                     ->searchable()
                     ->sortable()
-                    ->label('Nomor'),
+                    ->label('Nomor')
+                    ->color('primary')
+                    ->weight('bold')
+                    ->url(fn($record) => route('filament.admin.resources.sales-quotations.view', $record)),
                 \Filament\Tables\Columns\TextColumn::make('contact.name')
                     ->label('Pelanggan')
                     ->searchable()
@@ -53,15 +56,23 @@ class SalesQuotationsTable
                     ->formatStateUsing(fn(string $state): string => match (strtolower($state)) {
                         'draft' => 'Draf',
                         'approved' => 'Disetujui',
+                        'accepted' => 'Disetujui',
                         'rejected' => 'Ditolak',
                         'finished' => 'Selesai',
+                        'sent' => 'Terkirim',
+                        'expired' => 'Kedaluwarsa',
+                        'cancelled' => 'Dibatalkan',
                         default => ucfirst($state),
                     })
                     ->color(fn(string $state): string => match (strtolower($state)) {
                         'draft' => 'gray',
                         'approved' => 'success',
+                        'accepted' => 'success',
                         'rejected' => 'danger',
                         'finished' => 'info',
+                        'sent' => 'primary',
+                        'expired' => 'warning',
+                        'cancelled' => 'danger',
                         default => 'gray',
                     })
                     ->label('Status'),
@@ -74,21 +85,6 @@ class SalesQuotationsTable
                     ->money('IDR')
                     ->sortable()
                     ->label('Total'),
-            ])
-            ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('contact_id')
-                    ->relationship('contact', 'name', modifyQueryUsing: fn($query) => $query->where('type', 'customer'))
-                    ->label('Pelanggan')
-                    ->searchable()
-                    ->preload(),
-                \Filament\Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'draft' => 'Draf',
-                        'approved' => 'Disetujui',
-                        'rejected' => 'Ditolak',
-                        'finished' => 'Selesai',
-                    ])
-                    ->label('Status'),
             ])
             ->actions([
                 \Filament\Actions\ActionGroup::make([
@@ -138,13 +134,14 @@ class SalesQuotationsTable
                         })
                         ->visible(fn($record) => $record->status === 'approved')
                         ->requiresConfirmation(),
-                    EditAction::make(),
+                    \Filament\Actions\EditAction::make(),
                 ])->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ])
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ]);
     }
 }

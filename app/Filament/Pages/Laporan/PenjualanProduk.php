@@ -26,12 +26,12 @@ class PenjualanProduk extends Page implements HasActions
     public $startDate;
     public $endDate;
     public $search = '';
-    public $perPage = 15;
+    public $perPage = 10;
 
     public function mount()
     {
-        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $this->startDate = Carbon::now()->startOfYear()->format('Y-m-d');
+        $this->endDate = Carbon::now()->format('Y-m-d');
     }
 
     public function getBreadcrumbs(): array
@@ -51,6 +51,27 @@ class PenjualanProduk extends Page implements HasActions
     public function updatedSearch()
     {
         $this->resetPage();
+    }
+
+    public function getSubheading(): \Illuminate\Contracts\Support\Htmlable|string|null
+    {
+        $startDate = $this->startDate ?? now()->startOfYear()->toDateString();
+        $endDate = $this->endDate ?? now()->toDateString();
+        $startFmt = Carbon::parse($startDate)->format('d/m/Y');
+        $endFmt = Carbon::parse($endDate)->format('d/m/Y');
+
+        $dateDisplay = $startFmt === $endFmt
+            ? $startFmt
+            : $startFmt . ' &mdash; ' . $endFmt;
+
+        return new \Illuminate\Support\HtmlString('
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: #f8fafc; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.875rem; font-weight: 600; color: #475569;" class="dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                <svg style="width: 1.25rem; height: 1.25rem; opacity: 0.7;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>' . $dateDisplay . '</span>
+            </div>
+        ');
     }
 
     protected function getHeaderActions(): array
@@ -75,10 +96,6 @@ class PenjualanProduk extends Page implements HasActions
                     $this->endDate = $data['endDate'];
                     $this->resetPage();
                 }),
-            Action::make('ekspor')
-                ->label('Ekspor')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('gray'),
             Action::make('print')
                 ->label('Print')
                 ->icon('heroicon-o-printer')
@@ -120,7 +137,8 @@ class PenjualanProduk extends Page implements HasActions
             ->orderByDesc('sales_agg.total_pendapatan')
             ->orderByDesc('sales_agg.jumlah_terjual');
 
-        $paginator = $query->paginate($this->perPage);
+        $perPage = $this->perPage === 'all' ? max(1, $query->count()) : $this->perPage;
+        $paginator = $query->paginate($perPage);
 
         // Map data to results
         $results = collect($paginator->items())->map(function ($product) {
@@ -173,3 +191,5 @@ class PenjualanProduk extends Page implements HasActions
         ];
     }
 }
+
+
