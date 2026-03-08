@@ -477,9 +477,12 @@
             <x-filament::button color="gray" size="sm" icon="heroicon-o-share">
                 Bagikan
             </x-filament::button>
-            <x-filament::button color="gray" size="sm" icon="heroicon-o-printer" onclick="window.print()">
-                Print
+            @can('pembelian.delivery.print')
+            <x-filament::button color="gray" size="sm" icon="heroicon-o-printer" tag="a"
+                href="{{ route('print.purchase-delivery', $record->id) }}" target="_blank">
+                Cetak
             </x-filament::button>
+            @endcan
         </div>
     </div>
 

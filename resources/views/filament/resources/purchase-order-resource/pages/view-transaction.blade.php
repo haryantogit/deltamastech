@@ -615,9 +615,12 @@
                 <x-filament::button color="gray" size="sm" icon="heroicon-o-share">
                     Bagikan
                 </x-filament::button>
-                <x-filament::button color="gray" size="sm" icon="heroicon-o-printer" onclick="window.print()">
-                    Print
-                </x-filament::button>
+                @can('pembelian.order.print')
+                    <x-filament::button color="gray" size="sm" icon="heroicon-o-printer" tag="a"
+                        href="{{ route('print.purchase-order', $record->id) }}" target="_blank">
+                        Cetak
+                    </x-filament::button>
+                @endcan
                 @if($record->status === 'draft')
                     {{ $this->approve }}
                     {{ $this->reject }}

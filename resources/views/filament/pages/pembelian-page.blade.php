@@ -188,20 +188,22 @@
         @endif
 
         {{-- Lainnya --}}
-        <div class="hub-section">
-            <div class="hub-section-title"><svg style="color:#6366f1" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>Lainnya</div>
-            <div class="hub-grid">
-                <a href="{{ \App\Filament\Pages\PurchaseOverview::getUrl() }}" class="hub-card">
-                    <div class="hub-card-icon" style="background:#e0e7ff"><svg style="color:#4338ca" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg></div><span class="hub-card-title">Ringkasan</span>
-                </a>
+        @can('pembelian.summary.view')
+            <div class="hub-section">
+                <div class="hub-section-title"><svg style="color:#6366f1" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>Lainnya</div>
+                <div class="hub-grid">
+                    <a href="{{ \App\Filament\Pages\PurchaseOverview::getUrl() }}" class="hub-card">
+                        <div class="hub-card-icon" style="background:#e0e7ff"><svg style="color:#4338ca" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg></div><span class="hub-card-title">Ringkasan</span>
+                    </a>
+                </div>
             </div>
-        </div>
+        @endcan
     </div>
 </x-filament-panels::page>

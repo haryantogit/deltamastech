@@ -23,7 +23,7 @@ class PurchaseOverview extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('view_hub_pembelian');
+        return auth()->user()->can('pembelian.summary.view');
     }
 
     public function getMaxContentWidth(): string

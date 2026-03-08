@@ -135,6 +135,12 @@ class SalesQuotationsTable
                         ->visible(fn($record) => $record->status === 'approved')
                         ->requiresConfirmation(),
                     \Filament\Actions\EditAction::make(),
+                    TableAction::make('print')
+                        ->label('Cetak')
+                        ->icon('heroicon-o-printer')
+                        ->color('info')
+                        ->url(fn($record) => route('print.sales-quotation', $record))
+                        ->openUrlInNewTab(),
                 ])->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([

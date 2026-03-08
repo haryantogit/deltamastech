@@ -376,9 +376,11 @@
             <x-filament::button color="gray" size="sm" icon="heroicon-o-share">
                 Bagikan
             </x-filament::button>
-            <x-filament::button color="gray" size="sm" icon="heroicon-o-printer" onclick="window.print()">
-                Print
+            <x-filament::button color="gray" size="sm" icon="heroicon-o-printer" tag="a"
+                href="{{ route('print.sales-quotation', $record->id) }}" target="_blank">
+                Cetak
             </x-filament::button>
+
             @if(in_array(strtolower($record->status), ['draft', 'sent']))
                 <x-filament::button color="success" size="sm" icon="heroicon-o-check" wire:click="approve"
                     wire:confirm="Apakah Anda yakin ingin menyetujui penawaran ini?">

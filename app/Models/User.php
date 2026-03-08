@@ -29,6 +29,7 @@ class User extends Authenticatable implements HasAvatar
         'role_id',
         'avatar_url',
         'phone',
+        'job_title',
         'is_active',
     ];
 

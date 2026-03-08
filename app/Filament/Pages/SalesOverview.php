@@ -23,7 +23,7 @@ class SalesOverview extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('view_hub_penjualan');
+        return auth()->user()->can('penjualan.summary.view');
     }
 
     public function getMaxContentWidth(): string

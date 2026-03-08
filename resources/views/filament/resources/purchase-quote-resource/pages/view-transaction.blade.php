@@ -376,9 +376,13 @@
             <x-filament::button color="gray" size="sm" icon="heroicon-o-share">
                 Bagikan
             </x-filament::button>
-            <x-filament::button color="gray" size="sm" icon="heroicon-o-printer" onclick="window.print()">
-                Print
-            </x-filament::button>
+            @can('pembelian.quote.print')
+                <x-filament::button color="gray" size="sm" icon="heroicon-o-printer" tag="a"
+                    href="{{ route('print.purchase-quote', $record->id) }}" target="_blank">
+                    Cetak
+                </x-filament::button>
+            @endcan
+
             @if($record->status === 'draft')
                 <x-filament::button color="success" size="sm" icon="heroicon-o-check" wire:click="approve"
                     wire:confirm="Apakah Anda yakin ingin menyetujui penawaran ini?">

@@ -44,6 +44,11 @@ class ProductionOrderResource extends Resource
     protected static ?string $pluralModelLabel = 'Produksi';
     protected static ?int $navigationSort = 6;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_produksi');
+    }
+
     public static function form(Schema $form): Schema
     {
         return $form

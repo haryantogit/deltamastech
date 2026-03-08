@@ -13,6 +13,11 @@ class PembelianPage extends Page
 
     protected static ?string $title = 'Halaman Pembelian';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_pembelian');
+    }
+
     public function getMaxContentWidth(): string
     {
         return 'full';

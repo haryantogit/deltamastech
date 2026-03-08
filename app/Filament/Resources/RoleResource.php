@@ -53,26 +53,23 @@ class RoleResource extends Resource
                             'penjualan' => [
                                 'label' => 'Penjualan',
                                 'submodules' => [
-                                    'quote' => ['label' => 'Penawaran Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'approve' => 'Setujui', 'reject' => 'Tolak']],
-                                    'order' => ['label' => 'Pesanan Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
-                                    'delivery' => ['label' => 'Pengiriman Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
-                                    'invoice' => ['label' => 'Tagihan Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'payment' => 'Pembayaran', 'return' => 'Retur', 'void' => 'Void']],
-                                    'return' => ['label' => 'Retur Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'quote' => ['label' => 'Penawaran Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'approve' => 'Setujui', 'reject' => 'Tolak', 'print' => 'Cetak']],
+                                    'order' => ['label' => 'Pesanan Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak']],
+                                    'delivery' => ['label' => 'Pengiriman Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak']],
+                                    'invoice' => ['label' => 'Tagihan Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'payment' => 'Pembayaran', 'return' => 'Retur', 'void' => 'Void', 'print' => 'Cetak']],
+                                    'return' => ['label' => 'Retur Penjualan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak']],
+                                    'summary' => ['label' => 'Ringkasan', 'actions' => ['view' => 'Lihat', 'print' => 'Cetak']],
                                 ],
-                                'globals' => [
-                                    'access_other_users' => 'Akses Milik User Lain',
-                                    'view_price' => 'Lihat Harga',
-                                    'view_other_sales_person' => 'Tampilkan Data Milik Sales Person Lain',
-                                ]
                             ],
                             'pembelian' => [
                                 'label' => 'Pembelian',
                                 'submodules' => [
-                                    'quote' => ['label' => 'Penawaran Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'approve' => 'Setujui', 'reject' => 'Tolak']],
-                                    'order' => ['label' => 'Pesanan Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
-                                    'delivery' => ['label' => 'Penerimaan Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
-                                    'invoice' => ['label' => 'Tagihan Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'payment' => 'Pembayaran', 'return' => 'Retur', 'void' => 'Void']],
-                                    'return' => ['label' => 'Retur Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'quote' => ['label' => 'Penawaran Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'approve' => 'Setujui', 'reject' => 'Tolak', 'print' => 'Cetak']],
+                                    'order' => ['label' => 'Pesanan Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak']],
+                                    'delivery' => ['label' => 'Penerimaan Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak']],
+                                    'invoice' => ['label' => 'Tagihan Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'payment' => 'Pembayaran', 'return' => 'Retur', 'void' => 'Void', 'print' => 'Cetak']],
+                                    'return' => ['label' => 'Retur Pembelian', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak']],
+                                    'summary' => ['label' => 'Ringkasan', 'actions' => ['view' => 'Lihat', 'print' => 'Cetak']],
                                 ]
                             ],
                             'produk' => [
@@ -93,21 +90,21 @@ class RoleResource extends Resource
                             'produksi' => [
                                 'label' => 'Produksi',
                                 'submodules' => [
-                                    'order' => ['label' => 'Konversi Produk', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'confirm' => 'Konfirmasi']],
-                                    'result' => ['label' => 'Laporan Produksi', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'order' => ['label' => 'Produksi', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak']],
                                 ]
                             ],
                             'laporan' => [
                                 'label' => 'Laporan',
                                 'submodules' => [
-                                    'financial' => ['label' => 'Laporan Keuangan', 'actions' => ['view' => 'Lihat']],
-                                    'accounting' => ['label' => 'Laporan Akuntansi', 'actions' => ['view' => 'Lihat']],
-                                    'sales' => ['label' => 'Laporan Penjualan', 'actions' => ['view' => 'Lihat']],
-                                    'purchase' => ['label' => 'Laporan Pembelian', 'actions' => ['view' => 'Lihat']],
-                                    'tax' => ['label' => 'Laporan Pajak', 'actions' => ['view' => 'Lihat']],
-                                    'expense' => ['label' => 'Laporan Biaya', 'actions' => ['view' => 'Lihat']],
-                                    'fixed_asset' => ['label' => 'Laporan Aset', 'actions' => ['view' => 'Lihat']],
-                                    'inventory' => ['label' => 'Laporan Inventori', 'actions' => ['view' => 'Lihat']],
+                                    'financial' => ['label' => 'Finansial', 'actions' => ['view' => 'Lihat', 'neraca' => 'Neraca', 'arus_kas' => 'Arus Kas', 'laba_rugi' => 'Laba Rugi', 'perubahan_modal' => 'Perubahan Modal', 'ringkasan_eksekutif' => 'Ringkasan Eksekutif', 'hutang_piutang' => 'Hutang Piutang per Kontak']],
+                                    'accounting' => ['label' => 'Akuntansi', 'actions' => ['view' => 'Lihat', 'ringkasan_bank' => 'Ringkasan Bank', 'buku_besar' => 'Buku Besar', 'jurnal_umum' => 'Jurnal Umum', 'trial_balance' => 'Trial Balance']],
+                                    'sales' => ['label' => 'Penjualan', 'actions' => ['view' => 'Lihat', 'pengiriman' => 'Pengiriman Penjualan', 'ongkos_kirim' => 'Ongkos Kirim per Ekspedisi', 'detail' => 'Detail Penjualan', 'profitabilitas_produk' => 'Profitabilitas Produk', 'profitabilitas_tagihan' => 'Profitabilitas Tagihan', 'pendapatan_pelanggan' => 'Pendapatan per Pelanggan', 'per_produk' => 'Penjualan per Produk', 'pemesanan_produk' => 'Pemesanan per Produk', 'per_kategori' => 'Penjualan per Kategori', 'pelunasan_tagihan' => 'Pelunasan Pembayaran Tagihan', 'produk_per_pelanggan' => 'Penjualan Produk per Pelanggan', 'per_periode' => 'Penjualan per Periode', 'per_region' => 'Penjualan per Region']],
+                                    'purchase' => ['label' => 'Pembelian', 'actions' => ['view' => 'Lihat', 'detail' => 'Detail Pembelian', 'per_produk' => 'Pembelian per Produk', 'pemesanan_per_produk' => 'Pemesanan Pembelian per Produk', 'per_vendor' => 'Pembelian per Vendor', 'pengiriman' => 'Pengiriman Pembelian', 'pelunasan' => 'Pelunasan Pembayaran', 'produk_per_vendor' => 'Pembelian Produk per Vendor', 'per_periode' => 'Pembelian per Periode', 'per_region' => 'Pembelian per Region']],
+                                    'tax' => ['label' => 'Perpajakan', 'actions' => ['view' => 'Lihat', 'pajak_penjualan' => 'Pajak Penjualan']],
+                                    'expense' => ['label' => 'Biaya', 'actions' => ['view' => 'Lihat', 'biaya_per_kontak' => 'Biaya per Kontak']],
+                                    'inventory' => ['label' => 'Inventori', 'actions' => ['view' => 'Lihat', 'ringkasan' => 'Ringkasan Inventori', 'pergerakan_stok_gudang' => 'Pergerakan Stok Gudang', 'ringkasan_stok_gudang' => 'Ringkasan Stok Gudang', 'pergerakan_stok_inventori' => 'Pergerakan Stok Inventori', 'produksi' => 'Laporan Produksi', 'penyesuaian_stok' => 'Penyesuaian Stok', 'transfer_gudang' => 'Transfer Gudang', 'perputaran_persediaan' => 'Perputaran Persediaan']],
+                                    'fixed_asset' => ['label' => 'Aset Tetap', 'actions' => ['view' => 'Lihat', 'ringkasan' => 'Ringkasan Aset Tetap', 'detail' => 'Detail Aset Tetap', 'pelepasan' => 'Pelepasan Aset']],
+                                    'pos' => ['label' => 'POS & Lainnya', 'actions' => ['view' => 'Lihat', 'aktivitas_tim' => 'Laporan Aktivitas Tim']],
                                 ]
                             ],
                             'akuntansi' => [

@@ -13,6 +13,11 @@ class PenjualanPage extends Page
 
     protected static ?string $title = 'Halaman Penjualan';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_penjualan');
+    }
+
     public function getMaxContentWidth(): string
     {
         return 'full';

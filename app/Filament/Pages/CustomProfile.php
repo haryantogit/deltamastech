@@ -62,6 +62,9 @@ class CustomProfile extends Page implements HasForms
                                     ->required(),
                                 TextInput::make('phone')
                                     ->label('Nomor telepon'),
+                                TextInput::make('job_title')
+                                    ->label('Jabatan')
+                                    ->placeholder('Contoh: Purchasing, Direktur, dll'),
                             ])->columnSpan(1),
 
                         Section::make('Ganti Password')
@@ -105,6 +108,7 @@ class CustomProfile extends Page implements HasForms
             'email' => $data['email'],
             'name' => $data['name'],
             'phone' => $data['phone'],
+            'job_title' => $data['job_title'],
             'avatar_url' => $data['avatar_url'],
         ]);
 

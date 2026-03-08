@@ -13,6 +13,11 @@ class InventoriPage extends Page
 
     protected static ?string $title = 'Halaman Inventori';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_inventaris');
+    }
+
     public function getBreadcrumbs(): array
     {
         return [

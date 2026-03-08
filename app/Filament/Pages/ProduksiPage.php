@@ -14,6 +14,11 @@ class ProduksiPage extends Page
 
     protected static ?string $title = 'Halaman Produksi';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_produksi');
+    }
+
     public function getBreadcrumbs(): array
     {
         return [

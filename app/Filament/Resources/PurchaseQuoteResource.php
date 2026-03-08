@@ -700,6 +700,12 @@ class PurchaseQuoteResource extends Resource
                             return redirect(\App\Filament\Resources\PurchaseOrderResource::getUrl('edit', ['record' => $order]));
                         })
                         ->visible(fn($record) => $record->status === 'approved'),
+                    TablesAction::make('print')
+                        ->label('Cetak')
+                        ->icon('heroicon-o-printer')
+                        ->color('info')
+                        ->url(fn($record) => route('print.purchase-quote', $record))
+                        ->openUrlInNewTab(),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])

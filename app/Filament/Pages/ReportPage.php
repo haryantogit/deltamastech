@@ -12,6 +12,11 @@ class ReportPage extends Page
 
     protected static ?string $title = 'Halaman Laporan';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_laporan');
+    }
+
     public function getBreadcrumbs(): array
     {
         return [
