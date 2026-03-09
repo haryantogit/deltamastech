@@ -194,6 +194,9 @@ class RoleResource extends Resource
                                 $label = $moduleKey === 'akuntansi' ? 'Akun' : ucwords($moduleKey);
                                 return $perm ? [$perm->id => 'Aktifkan Menu ' . $label] : [];
                             })
+                                ->default(function () use ($moduleKey) {
+                                return \App\Models\Permission::where('name', "view_hub_{$moduleKey}")->pluck('id')->toArray();
+                            })
                                 ->afterStateHydrated(function ($component, $record) use ($moduleKey) {
                                 if (!$record)
                                     return;
@@ -216,6 +219,9 @@ class RoleResource extends Resource
                                                 ->options(function () use ($moduleKey, $subKey) {
                                                     $perm = \App\Models\Permission::where('name', "{$moduleKey}.{$subKey}.view")->first();
                                                     return $perm ? [$perm->id => 'Aktif'] : [];
+                                                })
+                                                ->default(function () use ($moduleKey, $subKey) {
+                                                    return \App\Models\Permission::where('name', "{$moduleKey}.{$subKey}.view")->pluck('id')->toArray();
                                                 })
                                                 ->afterStateHydrated(function ($component, $record) use ($moduleKey, $subKey) {
                                                     if (!$record)
@@ -242,6 +248,15 @@ class RoleResource extends Resource
                                                         }
                                                     }
                                                     return $options;
+                                                })
+                                                ->default(function () use ($moduleKey, $subKey, $subData) {
+                                                    $names = [];
+                                                    foreach ($subData['actions'] as $actionKey => $label) {
+                                                        if ($actionKey === 'view')
+                                                            continue;
+                                                        $names[] = "{$moduleKey}.{$subKey}.{$actionKey}";
+                                                    }
+                                                    return \App\Models\Permission::whereIn('name', $names)->pluck('id')->toArray();
                                                 })
                                                 ->afterStateHydrated(function ($component, $record) use ($moduleKey, $subKey, $subData) {
                                                     if (!$record)
@@ -283,6 +298,13 @@ class RoleResource extends Resource
                                                 }
                                                 return $options;
                                             })
+                                            ->default(function () use ($moduleKey, $moduleData) {
+                                                $names = [];
+                                                foreach ($moduleData['globals'] as $globalKey => $label) {
+                                                    $names[] = "{$moduleKey}.global.{$globalKey}";
+                                                }
+                                                return \App\Models\Permission::whereIn('name', $names)->pluck('id')->toArray();
+                                            })
                                             ->afterStateHydrated(function ($component, $record) use ($moduleKey, $moduleData) {
                                                 if (!$record)
                                                     return;
@@ -319,6 +341,11 @@ class RoleResource extends Resource
                             return \App\Models\Permission::whereIn('name', ['view_dashboard', 'manage_settings'])
                                 ->pluck('name', 'id')
                                 ->map(fn($name) => ucwords(str_replace('_', ' ', $name)));
+                        })
+                                    ->default(function () {
+                            return \App\Models\Permission::whereIn('name', ['view_dashboard', 'manage_settings'])
+                                ->pluck('id')
+                                ->toArray();
                         })
                                     ->afterStateHydrated(function ($component, $record) {
                             if (!$record)
