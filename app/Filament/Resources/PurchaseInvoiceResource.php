@@ -37,6 +37,11 @@ class PurchaseInvoiceResource extends Resource
 {
     protected static ?string $model = PurchaseInvoice::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pembelian');
+    }
+
     protected static string|null $navigationLabel = 'Tagihan Pembelian';
     protected static ?string $pluralModelLabel = 'Tagihan Pembelian';
     protected static bool $shouldRegisterNavigation = false;

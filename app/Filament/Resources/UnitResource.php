@@ -18,13 +18,17 @@ use Filament\Schemas\Schema;
 class UnitResource extends Resource
 {
     protected static ?string $model = Unit::class;
-
     protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
     protected static bool $shouldRegisterNavigation = false;
     protected static ?int $navigationSort = 4;
     protected static string|null $navigationLabel = 'Satuan';
     protected static ?string $pluralModelLabel = 'Satuan';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-scale';
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pengaturan') && auth()->user()->can('pengaturan.satuan.view');
+    }
 
     public static function form(Schema $form): Schema
     {

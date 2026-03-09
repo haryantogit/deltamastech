@@ -12,6 +12,11 @@ class Pengaturan extends Page
 
     protected static ?string $title = 'Pengaturan';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_pengaturan');
+    }
+
     public function getBreadcrumbs(): array
     {
         return [

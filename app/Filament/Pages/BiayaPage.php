@@ -15,6 +15,11 @@ class BiayaPage extends Page
 
     protected static ?string $title = 'Halaman Biaya';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_biaya');
+    }
+
     public function getMaxContentWidth(): string
     {
         return 'full';

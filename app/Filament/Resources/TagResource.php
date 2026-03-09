@@ -19,13 +19,17 @@ use Filament\Tables\Columns\TextColumn; // Added for clarity, though not strictl
 class TagResource extends Resource
 {
     protected static ?string $model = Tag::class;
-
     protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
     protected static bool $shouldRegisterNavigation = false;
     protected static ?int $navigationSort = 6;
     protected static string|null $navigationLabel = 'Tag';
     protected static ?string $pluralModelLabel = 'Tag';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-tag';
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pengaturan') && auth()->user()->can('pengaturan.tags.view');
+    }
 
     public static function form(\Filament\Schemas\Schema $form): \Filament\Schemas\Schema
     {

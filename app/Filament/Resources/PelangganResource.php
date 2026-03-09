@@ -9,9 +9,14 @@ use Filament\Tables;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 
-class PelangganResource extends ContactResource
+class PelangganResource extends Resource
 {
     protected static ?string $model = Contact::class;
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_penjualan');
+    }
 
     protected static bool $shouldRegisterNavigation = false;
 

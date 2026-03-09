@@ -15,7 +15,7 @@ class InventoriPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('view_hub_inventaris');
+        return auth()->user()->can('view_hub_inventori');
     }
 
     public function getBreadcrumbs(): array

@@ -19,6 +19,11 @@ class PurchaseReturnResource extends Resource
 {
     protected static ?string $model = PurchaseReturn::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pembelian');
+    }
+
     protected static bool $shouldRegisterNavigation = false;
     protected static ?string $modelLabel = 'Retur Pembelian';
     protected static string|null $navigationLabel = 'Retur Pembelian';

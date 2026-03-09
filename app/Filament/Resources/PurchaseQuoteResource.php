@@ -36,6 +36,11 @@ class PurchaseQuoteResource extends Resource
 {
     protected static ?string $model = PurchaseQuote::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pembelian');
+    }
+
     protected static string|null $navigationLabel = 'Penawaran Pembelian';
     protected static ?string $pluralModelLabel = 'Penawaran Pembelian';
     protected static bool $shouldRegisterNavigation = false;

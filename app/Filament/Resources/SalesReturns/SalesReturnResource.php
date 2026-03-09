@@ -18,6 +18,11 @@ class SalesReturnResource extends Resource
 {
     protected static ?string $model = SalesReturn::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_penjualan');
+    }
+
     protected static bool $shouldRegisterNavigation = false;
     protected static ?string $modelLabel = 'Retur Penjualan';
     protected static string|null $navigationLabel = 'Retur Penjualan';

@@ -33,6 +33,11 @@ class ContactResource extends Resource
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_kontak');
+    }
+
     protected static string|\UnitEnum|null $navigationGroup = null;
     protected static ?string $navigationLabel = 'Kontak';
     protected static ?string $modelLabel = 'Kontak';
@@ -317,8 +322,7 @@ class ContactResource extends Resource
                     \Filament\Actions\Action::make('print')
                         ->label('Cetak')
                         ->icon('heroicon-o-printer')
-                        ->url(fn(Contact $record) => static::getUrl('view', ['record' => $record])
-                    ->icon('heroicon-m-ellipsis-vertical'))
+                        ->url(fn(Contact $record) => static::getUrl('view', ['record' => $record]))
                         ->openUrlInNewTab(),
                     \Filament\Actions\EditAction::make()
                         ->label('Ubah'),
@@ -334,7 +338,7 @@ class ContactResource extends Resource
                         ->icon('heroicon-o-printer')
                         ->action(fn() => null)
                         ->extraAttributes(['onclick' => 'window.print(); return false;'])
-                    ->icon('heroicon-m-ellipsis-vertical'),
+                        ->icon('heroicon-m-ellipsis-vertical'),
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

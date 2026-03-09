@@ -23,6 +23,11 @@ class JournalEntryResource extends Resource
 {
     protected static ?string $model = JournalEntry::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_kas_bank');
+    }
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-book-open';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Menu Utama';

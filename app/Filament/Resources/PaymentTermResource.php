@@ -26,6 +26,11 @@ class PaymentTermResource extends Resource
     protected static ?string $pluralModelLabel = 'Termin Pembayaran';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clock';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pengaturan') && auth()->user()->can('pengaturan.termin.view');
+    }
+
     public static function form(Schema $form): Schema
     {
         return $form

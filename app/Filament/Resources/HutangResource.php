@@ -40,6 +40,12 @@ class HutangResource extends Resource
     protected static ?string $navigationLabel = 'Hutang';
     protected static string|\UnitEnum|null $navigationGroup = 'Kontak';
     protected static bool $shouldRegisterNavigation = false;
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_kontak');
+    }
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-minus';
     protected static ?int $navigationSort = 2;
     protected static ?string $slug = 'hutang';

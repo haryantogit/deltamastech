@@ -17,6 +17,11 @@ class SalesQuotationResource extends Resource
 {
     protected static ?string $model = SalesQuotation::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_penjualan');
+    }
+
     protected static string|null $navigationLabel = 'Penawaran Penjualan';
     protected static ?string $pluralModelLabel = 'Penawaran Penjualan';
     protected static bool $shouldRegisterNavigation = false;

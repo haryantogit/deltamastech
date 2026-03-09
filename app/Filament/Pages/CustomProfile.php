@@ -24,6 +24,11 @@ class CustomProfile extends Page implements HasForms
 
     protected string $view = 'filament.pages.auth.custom-profile';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('pengaturan.profilku.view');
+    }
+
     protected static ?string $slug = 'profile';
 
     protected static bool $shouldRegisterNavigation = false;

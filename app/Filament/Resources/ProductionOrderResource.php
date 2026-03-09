@@ -36,6 +36,11 @@ class ProductionOrderResource extends Resource
 {
     protected static ?string $model = ProductionOrder::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_produksi');
+    }
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog';
     protected static string|\UnitEnum|null $navigationGroup = null;
     protected static bool $shouldRegisterNavigation = true;
@@ -43,11 +48,6 @@ class ProductionOrderResource extends Resource
     protected static ?string $modelLabel = 'Produksi';
     protected static ?string $pluralModelLabel = 'Produksi';
     protected static ?int $navigationSort = 6;
-
-    public static function canViewAny(): bool
-    {
-        return auth()->user()->can('view_hub_produksi');
-    }
 
     public static function form(Schema $form): Schema
     {

@@ -25,6 +25,11 @@ class UserResource extends Resource
     protected static ?string $pluralModelLabel = 'Pengguna';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('pengaturan.user.view');
+    }
+
     public static function form(Schema $form): Schema
     {
         return $form

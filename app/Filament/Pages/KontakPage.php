@@ -13,6 +13,11 @@ class KontakPage extends Page
 
     protected static ?string $title = 'Halaman Kontak';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_kontak');
+    }
+
     public function getBreadcrumbs(): array
     {
         return [

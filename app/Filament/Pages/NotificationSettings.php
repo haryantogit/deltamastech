@@ -26,6 +26,11 @@ class NotificationSettings extends Page implements HasForms
 
     protected string $view = 'filament.pages.notification-settings';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('pengaturan.notifikasi.view');
+    }
+
     public ?array $data = [];
 
     public function mount(): void

@@ -36,6 +36,11 @@ class PurchaseOrderResource extends Resource
 {
     protected static ?string $model = PurchaseOrder::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pembelian');
+    }
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shopping-cart';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Pembelian';

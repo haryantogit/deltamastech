@@ -28,6 +28,11 @@ class PenomoranOtomatis extends Page
 
     protected string $view = 'filament.pages.penomoran-otomatis';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('pengaturan.penomoran_otomatis.view');
+    }
+
     protected static ?string $title = 'Penomoran Otomatis';
 
     protected static bool $shouldRegisterNavigation = false;

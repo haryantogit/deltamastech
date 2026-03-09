@@ -23,6 +23,11 @@ class OutletResource extends Resource
 {
     protected static ?string $model = Outlet::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pos');
+    }
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-storefront';
 
     protected static string|null $navigationLabel = 'Outlet';

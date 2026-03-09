@@ -31,6 +31,11 @@ class RoleResource extends Resource
     protected static ?string $navigationLabel = 'Peran';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('pengaturan.role.view');
+    }
+
     public static function form(Schema $form): Schema
     {
         return $form
@@ -97,7 +102,7 @@ class RoleResource extends Resource
                                 'label' => 'Laporan',
                                 'submodules' => [
                                     'financial' => ['label' => 'Finansial', 'actions' => ['view' => 'Lihat', 'neraca' => 'Neraca', 'arus_kas' => 'Arus Kas', 'laba_rugi' => 'Laba Rugi', 'perubahan_modal' => 'Perubahan Modal', 'ringkasan_eksekutif' => 'Ringkasan Eksekutif', 'hutang_piutang' => 'Hutang Piutang per Kontak']],
-                                    'accounting' => ['label' => 'Akuntansi', 'actions' => ['view' => 'Lihat', 'ringkasan_bank' => 'Ringkasan Bank', 'buku_besar' => 'Buku Besar', 'jurnal_umum' => 'Jurnal Umum', 'trial_balance' => 'Trial Balance']],
+                                    'accounting' => ['label' => 'Akun', 'actions' => ['view' => 'Lihat', 'ringkasan_bank' => 'Ringkasan Bank', 'buku_besar' => 'Buku Besar', 'jurnal_umum' => 'Jurnal Umum', 'trial_balance' => 'Trial Balance']],
                                     'sales' => ['label' => 'Penjualan', 'actions' => ['view' => 'Lihat', 'pengiriman' => 'Pengiriman Penjualan', 'ongkos_kirim' => 'Ongkos Kirim per Ekspedisi', 'detail' => 'Detail Penjualan', 'profitabilitas_produk' => 'Profitabilitas Produk', 'profitabilitas_tagihan' => 'Profitabilitas Tagihan', 'pendapatan_pelanggan' => 'Pendapatan per Pelanggan', 'per_produk' => 'Penjualan per Produk', 'pemesanan_produk' => 'Pemesanan per Produk', 'per_kategori' => 'Penjualan per Kategori', 'pelunasan_tagihan' => 'Pelunasan Pembayaran Tagihan', 'produk_per_pelanggan' => 'Penjualan Produk per Pelanggan', 'per_periode' => 'Penjualan per Periode', 'per_region' => 'Penjualan per Region']],
                                     'purchase' => ['label' => 'Pembelian', 'actions' => ['view' => 'Lihat', 'detail' => 'Detail Pembelian', 'per_produk' => 'Pembelian per Produk', 'pemesanan_per_produk' => 'Pemesanan Pembelian per Produk', 'per_vendor' => 'Pembelian per Vendor', 'pengiriman' => 'Pengiriman Pembelian', 'pelunasan' => 'Pelunasan Pembayaran', 'produk_per_vendor' => 'Pembelian Produk per Vendor', 'per_periode' => 'Pembelian per Periode', 'per_region' => 'Pembelian per Region']],
                                     'tax' => ['label' => 'Perpajakan', 'actions' => ['view' => 'Lihat', 'pajak_penjualan' => 'Pajak Penjualan']],
@@ -108,10 +113,9 @@ class RoleResource extends Resource
                                 ]
                             ],
                             'akuntansi' => [
-                                'label' => 'Akuntansi',
+                                'label' => 'Akun',
                                 'submodules' => [
-                                    'journal' => ['label' => 'Jurnal Umum', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'post' => 'Post/Confirm']],
-                                    'account' => ['label' => 'Daftar Akun', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'account' => ['label' => 'Akun', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak']],
                                 ]
                             ],
                             'fixed_asset' => [
@@ -136,28 +140,37 @@ class RoleResource extends Resource
                                 'submodules' => [
                                     'user' => ['label' => 'Pengguna', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
                                     'role' => ['label' => 'Peran', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
-                                    'general_settings' => ['label' => 'Pengaturan Umum', 'actions' => ['view' => 'Lihat', 'edit' => 'Ubah']],
+                                    'data_perusahaan' => ['label' => 'Perusahaan', 'actions' => ['view' => 'Lihat', 'edit' => 'Ubah']],
+                                    'notifikasi' => ['label' => 'Notifikasi', 'actions' => ['view' => 'Lihat', 'edit' => 'Ubah']],
+                                    'termin' => ['label' => 'Termin', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'pajak' => ['label' => 'Pajak', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'satuan' => ['label' => 'Satuan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'ekspedisi' => ['label' => 'Ekspedisi', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'tags' => ['label' => 'Tag', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'penomoran_otomatis' => ['label' => 'Penomoran Otomatis', 'actions' => ['view' => 'Lihat', 'edit' => 'Ubah']],
+                                    'backup' => ['label' => 'Backup Database', 'actions' => ['view' => 'Lihat', 'edit' => 'Ubah']],
+                                    'biaya_transaksi' => ['label' => 'Biaya Transaksi', 'actions' => ['view' => 'Lihat', 'edit' => 'Ubah']],
+                                    'invoice_layout' => ['label' => 'Tata Letak Invoice', 'actions' => ['view' => 'Lihat', 'edit' => 'Ubah']],
+                                    'profilku' => ['label' => 'Profilku', 'actions' => ['view' => 'Lihat', 'edit' => 'Ubah']],
+                                    'audit' => ['label' => 'Audit Log', 'actions' => ['view' => 'Lihat']],
                                 ]
                             ],
                             'biaya' => [
                                 'label' => 'Biaya',
                                 'submodules' => [
-                                    'list' => ['label' => 'Daftar Biaya', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
-                                    'approval' => ['label' => 'Persetujuan', 'actions' => ['view' => 'Lihat', 'approve' => 'Setujui', 'reject' => 'Tolak']],
-                                    'schedule' => ['label' => 'Penjadwalan', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
+                                    'list' => ['label' => 'Biaya', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'approve' => 'Setujui', 'reject' => 'Tolak']],
                                 ]
                             ],
                             'kas_bank' => [
                                 'label' => 'Kas & Bank',
                                 'submodules' => [
-                                    'kas_bank' => ['label' => 'Daftar Kas & Bank', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'connect' => 'Bank Connect']],
+                                    'kas_bank' => ['label' => 'Kas & Bank', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'connect' => 'Bank Connect']],
                                 ]
                             ],
                             'anggaran' => [
                                 'label' => 'Anggaran',
                                 'submodules' => [
-                                    'management' => ['label' => 'Manajemen Anggaran', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus']],
-                                    'report' => ['label' => 'Laporan Anggaran', 'actions' => ['view' => 'Lihat']],
+                                    'management' => ['label' => 'Anggaran', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'report' => 'Laporan']],
                                 ]
                             ],
                             'pos' => [
@@ -178,7 +191,8 @@ class RoleResource extends Resource
                                 ->hiddenLabel()
                                 ->options(function () use ($moduleKey) {
                                 $perm = \App\Models\Permission::where('name', "view_hub_{$moduleKey}")->first();
-                                return $perm ? [$perm->id => 'Aktifkan Menu ' . ucwords($moduleKey)] : [];
+                                $label = $moduleKey === 'akuntansi' ? 'Akun' : ucwords($moduleKey);
+                                return $perm ? [$perm->id => 'Aktifkan Menu ' . $label] : [];
                             })
                                 ->afterStateHydrated(function ($component, $record) use ($moduleKey) {
                                 if (!$record)

@@ -19,6 +19,11 @@ class StockAdjustmentResource extends Resource
 {
     protected static ?string $model = StockAdjustment::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_inventori');
+    }
+
     protected static bool $shouldRegisterNavigation = false;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';

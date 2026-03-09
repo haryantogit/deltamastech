@@ -140,7 +140,7 @@
         </style>
 
         {{-- Daftar Menu Anggaran --}}
-        @if(auth()->user()->can('anggaran.management.view') || auth()->user()->can('anggaran.report.view'))
+        @if(auth()->user()->can('anggaran.management.view') || auth()->user()->can('anggaran.management.report'))
             <div class="anggaran-section">
                 <div class="anggaran-section-title">
                     <svg style="color:#db2777" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +161,7 @@
                             <span class="anggaran-card-title">Manajemen Anggaran</span>
                         </a>
                     @endcan
-                    @can('anggaran.report.view')
+                    @can('anggaran.management.report')
                         <a href="{{ \App\Filament\Pages\Laporan\AnggaranLabaRugi::getUrl() }}" class="anggaran-card">
                             <div class="anggaran-card-icon" style="background:#fef3c7">
                                 <svg style="color:#d97706" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,7 +177,7 @@
         @endif
 
         {{-- Laporan --}}
-        @can('anggaran.report.view')
+        @can('anggaran.management.report')
             <div class="anggaran-section">
                 <div class="anggaran-section-title">
                     <svg style="color:#22c55e" fill="none" stroke="currentColor" viewBox="0 0 24 24">

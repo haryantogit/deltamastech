@@ -49,7 +49,8 @@ class ListAccounts extends ListRecords
                 ->color('gray')
                 ->outlined()
                 ->size('sm')
-                ->extraAttributes(['onclick' => 'window.print(); return false;']),
+                ->extraAttributes(['onclick' => 'window.print(); return false;'])
+                ->visible(fn() => auth()->user()->can('akuntansi.account.print')),
         ];
     }
 

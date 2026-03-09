@@ -27,6 +27,11 @@ class AccountResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = null;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_akuntansi');
+    }
+
     public static function form(\Filament\Schemas\Schema $form): \Filament\Schemas\Schema
     {
         return $form
@@ -170,6 +175,7 @@ class AccountResource extends Resource
             ->actions([
                 \Filament\Actions\ActionGroup::make([
                     \Filament\Actions\EditAction::make(),
+                    \Filament\Actions\DeleteAction::make(),
                 ])
                     ->icon('heroicon-m-ellipsis-vertical'),
             ])

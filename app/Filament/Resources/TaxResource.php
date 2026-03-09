@@ -40,6 +40,11 @@ class TaxResource extends Resource
     protected static ?string $modelLabel = 'Pajak';
     protected static ?string $pluralModelLabel = 'Pajak';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pengaturan') && auth()->user()->can('pengaturan.pajak.view');
+    }
+
     public static function form(Schema $form): Schema
     {
         return $form

@@ -18,13 +18,17 @@ use Filament\Schemas\Schema;
 class ShippingMethodResource extends Resource
 {
     protected static ?string $model = ShippingMethod::class;
-
     protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
     protected static bool $shouldRegisterNavigation = false;
     protected static ?int $navigationSort = 5;
     protected static string|null $navigationLabel = 'Ekspedisi';
     protected static ?string $pluralModelLabel = 'Ekspedisi';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pengaturan') && auth()->user()->can('pengaturan.ekspedisi.view');
+    }
 
     public static function form(Schema $form): Schema
     {

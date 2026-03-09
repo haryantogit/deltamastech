@@ -36,6 +36,12 @@ class ExpenseResource extends Resource
 {
     protected static ?string $model = Expense::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_biaya');
+    }
+
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
     protected static string|\UnitEnum|null $navigationGroup = null;
     protected static ?int $navigationSort = 30;

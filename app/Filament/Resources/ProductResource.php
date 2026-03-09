@@ -41,6 +41,11 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_produk');
+    }
+
     protected static ?int $navigationSort = 4;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cube';

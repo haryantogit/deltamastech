@@ -10,16 +10,15 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 
 class BudgetResource extends Resource
 {
     protected static ?string $model = Budget::class;
 
-    protected static bool $shouldRegisterNavigation = false;
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_anggaran');
+    }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calculator';
 

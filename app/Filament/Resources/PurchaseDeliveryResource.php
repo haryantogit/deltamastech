@@ -40,6 +40,11 @@ class PurchaseDeliveryResource extends Resource
 {
     protected static ?string $model = PurchaseDelivery::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pembelian');
+    }
+
     protected static string|null $navigationLabel = 'Pengiriman Pembelian';
     protected static ?string $pluralModelLabel = 'Pengiriman Pembelian';
     protected static bool $shouldRegisterNavigation = false;

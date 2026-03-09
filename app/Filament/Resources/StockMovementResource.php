@@ -15,6 +15,11 @@ class StockMovementResource extends Resource
 {
     protected static ?string $model = StockMovement::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_inventori');
+    }
+
     protected static string|null $navigationLabel = 'Riwayat Stok';
     protected static string|\UnitEnum|null $navigationGroup = 'Inventori';
     protected static bool $shouldRegisterNavigation = false;

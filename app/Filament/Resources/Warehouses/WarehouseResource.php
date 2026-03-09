@@ -22,6 +22,11 @@ class WarehouseResource extends Resource
 {
     protected static ?string $model = Warehouse::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_inventori');
+    }
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-storefront'; // Updated icon to look like a warehouse
 
     protected static string|null $navigationLabel = 'Gudang';

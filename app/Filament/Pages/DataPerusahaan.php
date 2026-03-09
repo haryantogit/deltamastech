@@ -24,6 +24,11 @@ class DataPerusahaan extends Page implements HasForms
 
     protected string $view = 'filament.pages.data-perusahaan';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('pengaturan.data_perusahaan.view');
+    }
+
     public ?array $data = [];
 
     public function mount(): void

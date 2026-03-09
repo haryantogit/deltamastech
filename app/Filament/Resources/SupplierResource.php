@@ -9,9 +9,14 @@ use Filament\Tables;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 
-class SupplierResource extends ContactResource
+class SupplierResource extends Resource
 {
     protected static ?string $model = Contact::class;
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_pembelian');
+    }
 
     protected static bool $shouldRegisterNavigation = false;
 

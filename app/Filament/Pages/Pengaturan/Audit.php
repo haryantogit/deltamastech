@@ -16,6 +16,11 @@ class Audit extends Page
 
     protected string $view = 'filament.pages.pengaturan.audit';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('pengaturan.audit.view');
+    }
+
     protected static ?string $title = 'Audit';
 
     protected static ?string $slug = 'audit';

@@ -37,6 +37,11 @@ class SalesInvoiceResource extends Resource
 {
     protected static ?string $model = SalesInvoice::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_penjualan');
+    }
+
     protected static string|null $navigationLabel = 'Tagihan Penjualan';
     protected static ?string $pluralModelLabel = 'Tagihan Penjualan';
     protected static bool $shouldRegisterNavigation = false;

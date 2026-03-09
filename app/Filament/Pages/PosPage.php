@@ -8,6 +8,11 @@ class PosPage extends Page
 {
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-computer-desktop';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_pos');
+    }
+
     protected string $view = 'filament.pages.pos-page';
 
     public string $feature = 'POS';

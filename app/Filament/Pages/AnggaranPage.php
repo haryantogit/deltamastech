@@ -10,6 +10,11 @@ class AnggaranPage extends Page
 {
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calculator';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_anggaran');
+    }
+
     protected string $view = 'filament.pages.anggaran-page';
 
     protected static ?string $title = 'Anggaran';

@@ -12,6 +12,11 @@ use Livewire\Attributes\On;
 
 class KasBankPage extends Page
 {
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_hub_kas_bank');
+    }
+
     public array $filters = [];
 
     public function mount(): void

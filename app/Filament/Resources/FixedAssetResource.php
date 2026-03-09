@@ -40,6 +40,11 @@ class FixedAssetResource extends Resource
 {
     protected static ?string $model = Product::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_fixed_asset');
+    }
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
 
     protected static ?string $navigationLabel = 'Aset Tetap';
@@ -487,7 +492,7 @@ class FixedAssetResource extends Resource
                         ->icon('heroicon-m-check-circle')
                         ->visible(fn($record) => $record->status === 'draft')
                         ->action(fn($record) => $record->update(['status' => 'registered'])
-                    ->icon('heroicon-m-ellipsis-vertical')),
+                            ->icon('heroicon-m-ellipsis-vertical')),
                     \Filament\Actions\Action::make('sync_to_product')
                         ->label(fn($record) => $record->show_in_products ? 'Nonaktifkan di Produk' : 'Aktifkan di Produk')
                         ->icon(fn($record) => $record->show_in_products ? 'heroicon-m-eye-slash' : 'heroicon-m-eye')
@@ -519,7 +524,7 @@ class FixedAssetResource extends Resource
                         ->icon('heroicon-o-printer')
                         ->action(fn() => null)
                         ->extraAttributes(['onclick' => 'window.print(); return false;'])
-                    ->icon('heroicon-m-ellipsis-vertical'),
+                        ->icon('heroicon-m-ellipsis-vertical'),
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

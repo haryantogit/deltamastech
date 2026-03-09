@@ -28,6 +28,11 @@ class InvoiceLayoutSettings extends Page implements HasForms
 
     protected string $view = 'filament.pages.invoice-layout-settings';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('pengaturan.invoice_layout.view');
+    }
+
     public ?array $data = [];
 
     public function mount(): void

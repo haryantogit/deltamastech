@@ -36,6 +36,11 @@ class SalesDeliveryResource extends Resource
 {
     protected static ?string $model = SalesDelivery::class;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_hub_penjualan');
+    }
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
     protected static string|\UnitEnum|null $navigationGroup = 'Penjualan';
     protected static ?int $navigationSort = 30;
