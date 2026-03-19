@@ -8,7 +8,6 @@
     <style>
         @page {
             size: A4;
-            margin: 15mm 20mm;
         }
 
         * {
@@ -111,7 +110,7 @@
         .detail-table td {
             padding: 10px 15px;
             font-size: 9pt;
-            border-bottom: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             vertical-align: top;
         }
 
@@ -182,10 +181,6 @@
         @media print {
             .no-print {
                 display: none !important;
-            }
-
-            body {
-                padding: 0;
             }
         }
 
@@ -292,6 +287,10 @@
             <div class="sig-title">Diterima Oleh</div>
             <div class="sig-line">(..........................)</div>
         </div>
+    </div>
+
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; font-size: 8px; color: #64748b; text-align: left; padding: 5px 0;">
+        Dicetak: {{ now('Asia/Jakarta')->format('d/m/Y H:i') }} oleh {{ auth()->user()->name ?? 'System' }}
     </div>
 </body>
 

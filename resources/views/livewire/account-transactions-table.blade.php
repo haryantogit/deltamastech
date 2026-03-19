@@ -74,7 +74,9 @@
             <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
                 <thead class="bg-gray-200 dark:bg-gray-700">
                     <tr>
-                        @php $thBase = 'padding: 0.6rem 0.75rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #4b5563; text-align: left;'; @endphp
+                        @php 
+                            $thBase = 'padding: 0.6rem 0.75rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #4b5563; text-align: left;'; 
+                        @endphp
                         <th style="{{ $thBase }}" class="dark:text-gray-200">Tanggal</th>
                         <th style="{{ $thBase }}" class="dark:text-gray-200">Sumber</th>
                         <th style="{{ $thBase }}" class="dark:text-gray-200">Deskripsi</th>
@@ -112,7 +114,7 @@
                     @endif
 
                     <!-- Transactions -->
-                    @forelse ($transactions as $transaction)
+                    @forelse($transactions as $transaction)
                         <tr style="border-bottom: 1px solid rgba(128,128,128,0.1);"
                             class="hover:bg-gray-50 dark:hover:bg-white/5">
                             <td style="padding: 0.75rem; font-size: 0.875rem;" class="text-gray-900 dark:text-gray-200">

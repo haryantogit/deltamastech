@@ -1,17 +1,15 @@
 <div class="space-y-6">
     @php
-        // Fetch activities here or pass them from the Action
-        // If passed from Action, it's likely in $record->activities or similar if eager loaded
-        // But for a custom view in a modal, we might need to access the record.
-        // The record is passed to the view variables. 
-        // Let's assume $record is passed.
-        $activities = \Spatie\Activitylog\Models\Activity::where('subject_type', $record->getMorphClass())
-            ->where('subject_id', $record->id)
-            ->latest()
-            ->get();
+        $record = $record ?? null;
+        $activities = $record 
+            ? \Spatie\Activitylog\Models\Activity::where('subject_type', $record->getMorphClass())
+                ->where('subject_id', $record->id)
+                ->latest()
+                ->get()
+            : collect();
     @endphp
 
-    @forelse ($activities as $activity)
+    @forelse($activities as $activity)
         <div class="relative pl-8 sm:pl-12">
             <!-- Timeline line -->
             <div class="absolute left-2 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
@@ -39,18 +37,18 @@
                     </div>
                     <div class="text-sm font-medium text-gray-900 dark:text-white">
                         {{ ucfirst($activity->description) }} oleh <span
-                            class="font-bold">{{ $activity->causer->name ?? 'System' }}</span>
+                            class="font-bold">{{ $activity->causer?->name ?? 'System' }}</span>
                     </div>
 
                     {{-- Details --}}
                     <div class="mt-1 text-xs text-gray-500">
                         <div class="flex flex-col gap-1">
-                            @if($activity->properties['attributes'] ?? false)
+                            @if(isset($activity->properties['attributes']) && is_array($activity->properties['attributes']))
                                 @foreach($activity->properties['attributes'] as $key => $value)
                                     @if($key !== 'updated_at')
                                         <div>
                                             <span class="font-semibold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
-                                            {{ is_array($value) ? json_encode($value) : $value }}
+                                            {{ is_iterable($value) ? json_encode($value) : $value }}
                                         </div>
                                     @endif
                                 @endforeach

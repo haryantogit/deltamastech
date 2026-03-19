@@ -8,6 +8,10 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\Action as TableAction;
 use Filament\Tables\Table;
+use Filament\Tables;
+use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class SalesQuotationsTable
 {
@@ -64,7 +68,7 @@ class SalesQuotationsTable
                         'cancelled' => 'Dibatalkan',
                         default => ucfirst($state),
                     })
-                    ->color(fn(string $state): string => match (strtolower($state)) {
+                    ->color(fn($state): string => match (strtolower($state)) {
                         'draft' => 'gray',
                         'approved' => 'success',
                         'accepted' => 'success',
@@ -85,6 +89,38 @@ class SalesQuotationsTable
                     ->money('IDR')
                     ->sortable()
                     ->label('Total'),
+            ])
+            ->filters([
+                Tables\Filters\Filter::make('date')
+                    ->form([
+                        DatePicker::make('from')
+                            ->label('Dari')
+                            ->default(now()->subMonths(3)),
+                        DatePicker::make('until')
+                            ->label('Sampai')
+                            ->default(now()),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['from'] ?? null) {
+                            $indicators[] = 'Dari ' . \Illuminate\Support\Carbon::parse($data['from'])->format('d/m/Y');
+                        }
+                        if ($data['until'] ?? null) {
+                            $indicators[] = 'Sampai ' . \Illuminate\Support\Carbon::parse($data['until'])->format('d/m/Y');
+                        }
+                        return $indicators;
+                    }),
             ])
             ->actions([
                 \Filament\Actions\ActionGroup::make([

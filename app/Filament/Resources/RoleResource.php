@@ -95,7 +95,7 @@ class RoleResource extends Resource
                             'produksi' => [
                                 'label' => 'Produksi',
                                 'submodules' => [
-                                    'order' => ['label' => 'Produksi', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak']],
+                                    'order' => ['label' => 'Produksi', 'actions' => ['view' => 'Lihat', 'add' => 'Tambah', 'edit' => 'Ubah', 'delete' => 'Hapus', 'print' => 'Cetak', 'view_hpp' => 'Lihat HPP & Jumlah']],
                                 ]
                             ],
                             'laporan' => [

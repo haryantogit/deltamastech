@@ -24,6 +24,7 @@ class ViewTransaction extends ViewRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/penjualan-page') => 'Penjualan',
             SalesDeliveryResource::getUrl('index') => 'Pengiriman Penjualan',
             '#' => 'Detil Pengiriman',

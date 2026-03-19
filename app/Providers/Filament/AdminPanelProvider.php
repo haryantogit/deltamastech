@@ -192,43 +192,80 @@ class AdminPanelProvider extends PanelProvider
 
                     /* --- PRINT OPTIMIZATION --- */
                     @media print {
+                        @page {
+                            margin: 2.5mm !important; /* Physical paper margin */
+                        }
+
+                        /* Reset everything to white background and black text */
+                        html, body, main, div, section, article, table, td, th, p, span, h1, h2, h3, h4, h5, h6 {
+                            background-color: white !important;
+                            background-image: none !important;
+                            color: black !important;
+                            box-shadow: none !important;
+                            text-shadow: none !important;
+                        }
+
+                        /* Aggressively override dark mode styles */
+                        .dark * {
+                            background-color: transparent !important;
+                            color: black !important;
+                            border-color: #e5e7eb !important; /* light gray border */
+                        }
+
+                        /* Table specific overrides */
+                        table, th, td {
+                            border: 1px solid #e5e7eb !important;
+                        }
+                        
+                        th {
+                            background-color: #f9fafb !important;
+                            font-weight: bold !important;
+                        }
+
+                        /* Hide UI elements */
                         .fi-sidebar,
                         .fi-sidebar-active,
                         .fi-topbar,
-                        .fi-header,
                         .fi-header-actions,
-                        .fi-breadcrumbs,
                         .fi-footer,
                         .fi-sidebar-header,
                         .fi-sidebar-footer,
                         .fi-wi-dashboard-filter,
-                        aside, nav, header, footer, button, .fi-btn, .fi-ac-actions,
+                        aside, nav, footer, button, .fi-btn, .fi-ac-actions,
                         .custom-topbar-buttons,
                         [role="navigation"],
-                        [data-sidebar] {
+                        [data-sidebar],
+                        .fi-ta-actions,
+                        .fi-ta-header-actions,
+                        .fi-ta-actions-ctn,
+                        .fi-ta-bulk-actions-ctn {
                             display: none !important;
                         }
 
-                        main, .fi-main {
+                        /* Ensure main container and all nested wrappers have fixed padding */
+                        main, .fi-main, .fi-main-ctn, .fi-page, .fi-section, .fi-ta-ctn, .fi-header, .fi-page-header {
                             margin: 0 !important;
-                            margin-inline-start: 0 !important;
-                            padding: 0 !important;
+                            padding: 0 2.5mm !important; /* Removed vertical padding to tighten gap */
                             width: 100% !important;
+                            max-width: none !important;
                             display: block !important;
                         }
 
-                        .fi-main-ctn, .fi-page, body {
-                            background: white !important;
+                        /* Specifically target the inner content to ensure it moves away from edges */
+                        .fi-page-header, .fi-ta-header, .fi-ta-content, .fi-breadcrumbs {
+                            margin-bottom: 5mm !important;
+                            display: block !important;
                         }
 
-                        .fi-wi-chart, .fi-wi-stats-overview, .fi-wi-widget {
+                        /* Prevent unwanted page breaks */
+                        .fi-wi-chart, .fi-wi-stats-overview, .fi-wi-widget, .fi-ta-content {
                             page-break-inside: avoid;
                             break-inside: avoid;
-                            margin-bottom: 20px !important;
-                            box-shadow: none !important;
+                            margin-bottom: 10px !important;
                             border: none !important;
                         }
 
+                        /* Force background colors if desired (e.g. for highlights) */
                         * {
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;

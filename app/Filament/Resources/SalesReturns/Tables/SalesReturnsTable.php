@@ -9,6 +9,10 @@ use Filament\Actions\ViewAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Table;
+use Filament\Tables;
+use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class SalesReturnsTable
 {
@@ -60,6 +64,38 @@ class SalesReturnsTable
                     }),
             ])
             ->defaultSort('created_at', 'desc')
+            ->filters([
+                Tables\Filters\Filter::make('date')
+                    ->form([
+                        DatePicker::make('from')
+                            ->label('Dari')
+                            ->default(now()->subMonths(3)),
+                        DatePicker::make('until')
+                            ->label('Sampai')
+                            ->default(now()),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['from'] ?? null) {
+                            $indicators[] = 'Dari ' . \Illuminate\Support\Carbon::parse($data['from'])->format('d/m/Y');
+                        }
+                        if ($data['until'] ?? null) {
+                            $indicators[] = 'Sampai ' . \Illuminate\Support\Carbon::parse($data['until'])->format('d/m/Y');
+                        }
+                        return $indicators;
+                    }),
+            ])
             ->actions([
                 \Filament\Actions\ActionGroup::make([
                     \Filament\Actions\ViewAction::make()->label('Lihat'),

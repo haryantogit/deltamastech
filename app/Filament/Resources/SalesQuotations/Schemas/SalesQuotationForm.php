@@ -165,120 +165,142 @@ class SalesQuotationForm
                                     ->extraAttributes(['class' => 'mt-8']),
                             ]),
 
-                        Repeater::make('items')
-                            ->relationship()
-                            ->label(null)
+                         Group::make()
                             ->schema([
-                                Grid::make(12)
+                                Repeater::make('items')
+                                    ->relationship()
+                                    ->label(null)
                                     ->schema([
-                                        Select::make('product_id')
-                                            ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
-                                            ->getOptionLabelFromRecordUsing(function ($record) {
-                                                $stock = $record->stocks()->sum('quantity') ?? 0;
-                                                $stock = (float) $stock;
-                                                return "<div class='flex justify-between items-center w-full'><span>{$record->name}</span> <span class='text-xs font-medium px-2 py-0.5 rounded bg-primary-50 text-primary-700 dark:bg-primary-400/10 dark:text-primary-400'>Stok: " . number_format($stock) . "</span></div>";
-                                            })
-                                            ->allowHtml()
-                                            ->label('Produk')
-                                            ->required()
-                                            ->searchable()
-                                            ->preload()
-                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                                if ($product = \App\Models\Product::find($state)) {
-                                                    $set('unit_price', $product->sell_price);
-                                                    $set('description', $product->description);
-                                                    $set('unit_id', $product->unit_id);
+                                        Grid::make(24)
+                                            ->schema([
+                                                Select::make('product_id')
+                                                    ->relationship('product', 'name', modifyQueryUsing: fn($query) => $query->active())
+                                                    ->getOptionLabelFromRecordUsing(function ($record) {
+                                                        return "<div>
+                                                                    <div class='font-medium'>{$record->name}</div>
+                                                                    <div class='text-xs text-gray-500'>{$record->sku}</div>
+                                                                </div>";
+                                                    })
+                                                    ->getOptionLabelUsing(function ($value) {
+                                                        $product = \App\Models\Product::find($value);
+                                                        return $product ? "{$product->sku} - {$product->name}" : null;
+                                                    })
+                                                    ->allowHtml()
+                                                    ->label('Produk')
+                                                    ->required()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                        if ($product = \App\Models\Product::find($state)) {
+                                                            $set('unit_price', number_format($product->sell_price, 0, ',', '.'));
+                                                            $set('description', $product->description);
+                                                            $set('unit_id', $product->unit_id);
+                                                            $set('quantity', 1);
 
-                                                    // Auto-populate tax
-                                                    $taxName = 'Bebas Pajak';
-                                                    if ($product->sales_tax_id) {
-                                                        if (is_numeric($product->sales_tax_id)) {
-                                                            $tax = \App\Models\Tax::find($product->sales_tax_id);
-                                                            $taxName = $tax ? $tax->name : 'Bebas Pajak';
-                                                        } else {
-                                                            $taxName = $product->sales_tax_id;
+                                                            // Auto-populate tax
+                                                            $taxName = 'Bebas Pajak';
+                                                            if ($product->sales_tax_id) {
+                                                                if (is_numeric($product->sales_tax_id)) {
+                                                                    $tax = \App\Models\Tax::find($product->sales_tax_id);
+                                                                    $taxName = $tax ? $tax->name : 'Bebas Pajak';
+                                                                } else {
+                                                                    $taxName = $product->sales_tax_id;
+                                                                }
+                                                            }
+                                                            $set('tax_name', $taxName);
+
+                                                            self::calculateItemTotal($set, $get);
                                                         }
-                                                    }
-                                                    $set('tax_name', $taxName);
+                                                    })
+                                                    ->columnSpan(6),
+                                                Textarea::make('description')
+                                                    ->label('Deskripsi')
+                                                    ->rows(1)
+                                                    ->autosize()
+                                                    ->columnSpan(3),
+                                                TextInput::make('quantity')
+                                                    ->label('Kuantitas')
+                                                    ->numeric()
+                                                    ->default(1)
+                                                    ->required()
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
+                                                    ->extraAlpineAttributes([
+                                                        'x-mask:dynamic' => '$money($input, ".", ",", 0)',
+                                                    ])
+                                                    ->suffixAction(function (Get $get) {
+                                                        $productId = $get('product_id');
+                                                        if ($productId) {
+                                                            $stock = \App\Models\Stock::where('product_id', $productId)->sum('quantity') ?? 0;
+                                                            return \Filament\Actions\Action::make('stock')
+                                                                ->label(number_format($stock, 0, ',', '.'))
+                                                                ->color($stock > 0 ? 'success' : 'danger')
+                                                                ->badge()
+                                                                ->disabled();
+                                                        }
+                                                        return null;
+                                                    })
+                                                    ->columnSpan(3),
+                                                Select::make('unit_id')
+                                                    ->label('Satuan')
+                                                    ->relationship('unit', 'name')
+                                                    ->placeholder('Pilih')
+                                                    ->disabled()
+                                                    ->dehydrated()
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->columnSpan(2)
+                                                    ->live(),
 
-                                                    self::calculateItemTotal($set, $get);
-                                                }
-                                            })
-                                            ->columnSpan(4),
-                                        TextInput::make('description')
-                                            ->label('Deskripsi')
-                                            ->columnSpan(4),
-                                        TextInput::make('quantity')
-                                            ->label('Kuantitas')
-                                            ->numeric()
-                                            ->default(1)
-                                            ->required()
-                                            ->live(onBlur: true)
-                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
-                                            ->suffixAction(function (Get $get) {
-                                                $productId = $get('product_id');
-                                                if ($productId) {
-                                                    $stock = \App\Models\Stock::where('product_id', $productId)->sum('quantity') ?? 0;
-                                                    return \Filament\Actions\Action::make('stock')
-                                                        ->label((string) $stock)
-                                                        ->color($stock > 0 ? 'success' : 'danger')
-                                                        ->badge()
-                                                        ->disabled();
-                                                }
-                                                return null;
-                                            })
-                                            ->columnSpan(2),
-                                        Select::make('unit_id')
-                                            ->label('Satuan')
-                                            ->relationship('unit', 'name')
-                                            ->placeholder('Pilih')
-                                            ->searchable()
-                                            ->preload()
-                                            ->columnSpan(2)
-                                            ->live(),
-                                    ]),
-
-                                Grid::make(12)
-                                    ->schema([
-                                        TextInput::make('unit_price')
-                                            ->label('Harga')
-                                            ->numeric()
-                                            ->required()
-                                            ->readOnly()
-                                            ->live()
-                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
-                                            ->columnSpan(3),
-                                        TextInput::make('discount_percent')
-                                            ->label('Diskon (%)')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->suffix('%')
-                                            ->live()
-                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
-                                            ->columnSpan(3),
-                                        Select::make('tax_name')
-                                            ->label('Pajak')
-                                            ->options(function () {
-                                                $taxes = \App\Models\Tax::pluck('name', 'name')->toArray();
-                                                return ['Bebas Pajak' => 'Bebas Pajak'] + $taxes;
-                                            })
-                                            ->default('Bebas Pajak')
-                                            ->selectablePlaceholder(false)
-                                            ->live()
-                                            ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
-                                            ->columnSpan(3),
-                                        Hidden::make('tax_amount'),
-                                        TextInput::make('total_price')
-                                            ->label('Total')
-                                            ->numeric()
-                                            ->readOnly()
-                                            ->columnSpan(3),
-                                    ]),
-                            ])
-                            ->columnSpanFull()
-                            ->live()
-                            ->afterStateUpdated(fn(Get $get, Set $set) => self::updateTotal($get, $set))
-                            ->addActionLabel('Tambah Item'),
+                                                TextInput::make('unit_price')
+                                                    ->label('Harga')
+                                                    ->required()
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                        $cleanValue = str_replace(['.', ','], '', $state);
+                                                        if (is_numeric($cleanValue)) {
+                                                            $set('unit_price', number_format((float) $cleanValue, 0, ',', '.'));
+                                                        }
+                                                        self::calculateItemTotal($set, $get);
+                                                    })
+                                                    ->extraAlpineAttributes([
+                                                        'x-mask:dynamic' => '$money($input, ".", ",", 0)',
+                                                    ])
+                                                    ->columnSpan(3),
+                                                TextInput::make('discount_percent')
+                                                    ->label('Diskon (%)')
+                                                    ->numeric()
+                                                    ->default(0)
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
+                                                    ->columnSpan(2),
+                                                Select::make('tax_name')
+                                                    ->label('Pajak')
+                                                    ->options(function () {
+                                                        $taxes = \App\Models\Tax::pluck('name', 'name')->toArray();
+                                                        return ['Bebas Pajak' => '...'] + $taxes;
+                                                    })
+                                                    ->getOptionLabelFromRecordUsing(fn($record) => $record->name === 'Bebas Pajak' ? '...' : $record->name)
+                                                    ->default('Bebas Pajak')
+                                                    ->selectablePlaceholder(false)
+                                                    ->live()
+                                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateItemTotal($set, $get))
+                                                    ->columnSpan(2),
+                                                TextInput::make('total_price')
+                                                    ->label('Total')
+                                                    ->readOnly()
+                                                    ->dehydrated()
+                                                    ->extraAlpineAttributes([
+                                                        'x-mask:dynamic' => '$money($input, ".", ",", 0)',
+                                                    ])
+                                                    ->columnSpan(3),
+                                            ]),
+                                    ])
+                                    ->columnSpanFull()
+                                    ->live()
+                                    ->afterStateUpdated(fn(Get $get, Set $set) => self::updateTotal($get, $set))
+                                    ->addActionLabel('Tambah Item'),
+                            ])->extraAttributes(['class' => 'w-full overflow-y-visible border rounded-xl bg-gray-50/50 dark:bg-white/5']),
                     ]),
 
                 Grid::make(2)
@@ -300,10 +322,11 @@ class SalesQuotationForm
                             ->schema([
                                 TextInput::make('sub_total')
                                     ->label('Sub Total')
-                                    ->numeric()
                                     ->readOnly()
                                     ->default(0)
-                                    ->prefix('Rp'),
+                                    ->extraAlpineAttributes([
+                                        'x-mask:dynamic' => '$money($input, ".", ",", 0)',
+                                    ]),
 
                                 Toggle::make('has_discount_amount')
                                     ->label('Tambahan Diskon')
@@ -318,11 +341,12 @@ class SalesQuotationForm
                                     }),
                                 TextInput::make('discount_amount')
                                     ->label('Nominal Diskon')
-                                    ->numeric()
                                     ->default(0)
                                     ->live(debounce: 500)
                                     ->afterStateUpdated(fn(Get $get, Set $set) => self::updateTotal($get, $set))
-                                    ->prefix('Rp')
+                                    ->extraAlpineAttributes([
+                                        'x-mask:dynamic' => '$money($input, ".", ",", 0)',
+                                    ])
                                     ->hidden(fn(Get $get) => !$get('has_discount_amount')),
 
                                 Toggle::make('has_shipping_cost')
@@ -338,11 +362,12 @@ class SalesQuotationForm
                                     }),
                                 TextInput::make('shipping_cost')
                                     ->label('Nominal Pengiriman')
-                                    ->numeric()
                                     ->default(0)
                                     ->live(debounce: 500)
                                     ->afterStateUpdated(fn(Get $get, Set $set) => self::updateTotal($get, $set))
-                                    ->prefix('Rp')
+                                    ->extraAlpineAttributes([
+                                        'x-mask:dynamic' => '$money($input, ".", ",", 0)',
+                                    ])
                                     ->hidden(fn(Get $get) => !$get('has_shipping_cost')),
 
                                 Toggle::make('has_other_cost')
@@ -358,31 +383,44 @@ class SalesQuotationForm
                                     }),
                                 TextInput::make('other_cost')
                                     ->label('Nominal Biaya Lain')
-                                    ->numeric()
                                     ->default(0)
                                     ->live(debounce: 500)
                                     ->afterStateUpdated(fn(Get $get, Set $set) => self::updateTotal($get, $set))
-                                    ->prefix('Rp')
+                                    ->extraAlpineAttributes([
+                                        'x-mask:dynamic' => '$money($input, ".", ",", 0)',
+                                    ])
                                     ->hidden(fn(Get $get) => !$get('has_other_cost')),
 
                                 TextInput::make('total_amount')
                                     ->label('Total')
-                                    ->numeric()
                                     ->readOnly()
                                     ->default(0)
-                                    ->prefix('Rp')
-                                    ->extraAttributes(['class' => 'font-bold text-lg']),
+                                    ->extraAlpineAttributes([
+                                        'x-mask:dynamic' => '$money($input, ".", ",", 0)',
+                                    ])
+                                    ->extraAttributes(['class' => 'font-bold text-lg text-primary-600']),
                             ])->columnSpan(1),
                     ]),
 
             ]);
     }
 
+    private static function parseNumber($value): float
+    {
+        if (is_numeric($value)) return (float) $value;
+        if (empty($value)) return 0;
+
+        $cleanValue = str_replace('.', '', $value);
+        $cleanValue = str_replace(',', '.', $cleanValue);
+
+        return (float) $cleanValue;
+    }
+
     public static function calculateItemTotal(Set $set, Get $get): void
     {
-        $qty = (float) $get('quantity');
-        $price = (float) $get('unit_price');
-        $discount = (float) $get('discount_percent');
+        $qty = self::parseNumber($get('quantity'));
+        $price = self::parseNumber($get('unit_price'));
+        $discount = self::parseNumber($get('discount_percent'));
         $taxName = $get('tax_name');
 
         $taxRate = 0;
@@ -397,11 +435,11 @@ class SalesQuotationForm
         if ($get('../../tax_inclusive')) {
             $taxAmount = $discounted - ($discounted / (1 + $taxRate));
             $set('tax_amount', $taxAmount);
-            $set('total_price', $discounted);
+            $set('total_price', number_format($discounted, 0, ',', '.'));
         } else {
             $taxAmount = $discounted * $taxRate;
             $set('tax_amount', $taxAmount);
-            $set('total_price', $discounted + $taxAmount);
+            $set('total_price', number_format($discounted + $taxAmount, 0, ',', '.'));
         }
 
         self::updateTotal($get, $set);
@@ -436,9 +474,9 @@ class SalesQuotationForm
         $taxInclusive = (bool) $get($prefix . 'tax_inclusive');
 
         foreach ($items as $item) {
-            $qty = (float) ($item['quantity'] ?? 0);
-            $price = (float) ($item['unit_price'] ?? 0);
-            $discount = (float) ($item['discount_percent'] ?? 0);
+            $qty = self::parseNumber($item['quantity'] ?? 0);
+            $price = self::parseNumber($item['unit_price'] ?? 0);
+            $discount = self::parseNumber($item['discount_percent'] ?? 0);
             $taxName = $item['tax_name'] ?? 'Tanpa Pajak';
 
             $taxRate = (isset($taxes[$taxName])) ? ($taxes[$taxName] / 100) : 0;
@@ -456,14 +494,14 @@ class SalesQuotationForm
             }
         }
 
-        $set($prefix . 'sub_total', $subtotal);
+        $set($prefix . 'sub_total', number_format($subtotal, 0, ',', '.'));
 
-        $discountAmount = (float) ($get($prefix . 'discount_amount') ?? 0);
-        $shipping = (float) ($get($prefix . 'shipping_cost') ?? 0);
-        $other = (float) ($get($prefix . 'other_cost') ?? 0);
+        $discountAmount = self::parseNumber($get($prefix . 'discount_amount') ?? 0);
+        $shipping = self::parseNumber($get($prefix . 'shipping_cost') ?? 0);
+        $other = self::parseNumber($get($prefix . 'other_cost') ?? 0);
 
         $total = $subtotal + $totalTax - $discountAmount + $shipping + $other;
 
-        $set($prefix . 'total_amount', $total);
+        $set($prefix . 'total_amount', number_format($total, 0, ',', '.'));
     }
 }

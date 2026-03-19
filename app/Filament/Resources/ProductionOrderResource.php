@@ -297,13 +297,15 @@ class ProductionOrderResource extends Resource
                                             ->numeric()
                                             ->disabled()
                                             ->dehydrated()
-                                            ->columnSpan(2),
+                                            ->columnSpan(2)
+                                            ->visible(fn() => auth()->user()->can('produksi.order.view_hpp')),
                                         TextInput::make('total_price')
                                             ->label('Jumlah')
                                             ->numeric()
                                             ->disabled()
                                             ->dehydrated()
-                                            ->columnSpan(2),
+                                            ->columnSpan(2)
+                                            ->visible(fn() => auth()->user()->can('produksi.order.view_hpp')),
                                     ]),
                             ])
                             ->live()
@@ -322,6 +324,22 @@ class ProductionOrderResource extends Resource
                                     ->content(fn(Get $get) => collect($get('items'))->sum('quantity'))
                                     ->columnSpan(2)
                                     ->extraAttributes(['class' => 'font-bold text-center pt-4']),
+                                Placeholder::make('total_unit_placeholder')
+                                    ->hiddenLabel()
+                                    ->content('')
+                                    ->columnSpan(2),
+                                Placeholder::make('total_hpp_final')
+                                    ->hiddenLabel()
+                                    ->content(fn(Get $get) => number_format(collect($get('items'))->sum(fn($i) => ($i['quantity'] ?? 0) * ($i['unit_price'] ?? 0)), 2))
+                                    ->columnSpan(2)
+                                    ->extraAttributes(['class' => 'font-bold text-center pt-4'])
+                                    ->visible(fn() => auth()->user()->can('produksi.order.view_hpp')),
+                                Placeholder::make('total_amount_sum_final')
+                                    ->hiddenLabel()
+                                    ->content(fn(Get $get) => number_format(collect($get('items'))->sum('total_price'), 2))
+                                    ->columnSpan(2)
+                                    ->extraAttributes(['class' => 'font-bold text-center pt-4'])
+                                    ->visible(fn() => auth()->user()->can('produksi.order.view_hpp')),
                             ]),
                     ]),
 
@@ -371,21 +389,27 @@ class ProductionOrderResource extends Resource
                             ->afterStateUpdated(fn(Set $set, Get $get) => static::updateTotalCost($set, $get('items'), $get('costs'), $get('quantity'))),
                         Grid::make(12)
                             ->schema([
-                                Placeholder::make('placeholder_1')
+                                 Placeholder::make('placeholder_1')
+                                    ->hiddenLabel()
                                     ->label('')
-                                    ->columnSpan(4),
-                                Placeholder::make('total_label')
-                                    ->label('')
+                                    ->columnSpan(6),
+                                 Placeholder::make('total_label_cost')
+                                    ->hiddenLabel()
                                     ->content(new \Illuminate\Support\HtmlString('<strong>Total</strong>'))
+                                    ->extraAttributes(['class' => 'pt-4 text-right'])
                                     ->columnSpan(2),
-                                Placeholder::make('total_multiplier')
+                                 Placeholder::make('total_multiplier')
+                                    ->hiddenLabel()
                                     ->label('')
                                     ->content(fn(Get $get) => collect($get('costs'))->sum('multiplier'))
+                                    ->extraAttributes(['class' => 'pt-4 text-center'])
                                     ->columnSpan(2),
-                                Placeholder::make('total_amount_sum')
+                                 Placeholder::make('total_amount_sum')
+                                    ->hiddenLabel()
                                     ->label('')
                                     ->content(fn(Get $get) => 'Rp ' . number_format(collect($get('costs'))->sum('amount'), 2, ',', '.'))
-                                    ->columnSpan(4),
+                                    ->extraAttributes(['class' => 'pt-4 text-center'])
+                                    ->columnSpan(2),
                             ])
                             ->visible(fn(Get $get) => count($get('costs') ?? []) > 0),
                     ]),
@@ -398,10 +422,12 @@ class ProductionOrderResource extends Resource
                                     ->label('Biaya total konversi')
                                     ->numeric()
                                     ->readOnly()
-                                    ->prefix('Rp'),
+                                    ->prefix('Rp')
+                                    ->visible(fn() => auth()->user()->can('produksi.order.view_hpp')),
                                 Placeholder::make('cost_per_unit')
                                     ->label('Biaya per unit')
-                                    ->content(fn(Get $get) => 'Rp ' . number_format($get('quantity') > 0 ? (float) $get('total_cost') / (float) $get('quantity') : 0, 2)),
+                                    ->content(fn(Get $get) => 'Rp ' . number_format($get('quantity') > 0 ? (float) $get('total_cost') / (float) $get('quantity') : 0, 2))
+                                    ->visible(fn() => auth()->user()->can('produksi.order.view_hpp')),
                             ]),
                         Textarea::make('notes')
                             ->label('Keterangan'),
@@ -440,7 +466,8 @@ class ProductionOrderResource extends Resource
                     ->numeric(),
                 TextColumn::make('total_cost')
                     ->label('Total Biaya')
-                    ->money('IDR'),
+                    ->money('IDR')
+                    ->visible(fn() => auth()->user()->can('produksi.order.view_hpp')),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()

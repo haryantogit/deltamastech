@@ -8,7 +8,6 @@
     <style>
         @page {
             size: A4;
-            margin: 15mm 20mm;
         }
 
         * {
@@ -113,23 +112,22 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 5px;
-            border: 1px solid #2d3748;
+            border: 1px solid #cbd5e1;
         }
 
         .items-table thead th {
-            background-color: #2d3748;
-            color: #fff;
+            background-color: #f1f5f9; color: #334155;
             font-size: 8.5pt;
             font-weight: 600;
             padding: 7px 10px;
             text-align: left;
-            border: 1px solid #2d3748;
+            border: 1px solid #cbd5e1;
         }
 
         .items-table tbody td {
             font-size: 9pt;
             padding: 7px 10px;
-            border-bottom: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             vertical-align: top;
         }
 
@@ -270,10 +268,6 @@
         @media print {
             .no-print {
                 display: none !important;
-            }
-
-            body {
-                padding: 0;
             }
         }
 
@@ -483,6 +477,10 @@
     </div>
     <div style="clear:both;"></div>
 
+
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; font-size: 8px; color: #64748b; text-align: left; padding: 5px 0;">
+        Dicetak: {{ now('Asia/Jakarta')->format('d/m/Y H:i') }} oleh {{ auth()->user()->name ?? 'System' }}
+    </div>
 </body>
 
 </html>

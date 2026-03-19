@@ -77,6 +77,7 @@ class ListPurchaseOrders extends ListRecords
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/pembelian-page') => 'Pembelian',
             '#' => 'Pesanan Pembelian',
         ];

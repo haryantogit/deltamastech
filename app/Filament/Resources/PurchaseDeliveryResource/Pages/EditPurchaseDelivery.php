@@ -15,6 +15,7 @@ class EditPurchaseDelivery extends EditRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/pembelian-page') => 'Pembelian',
             PurchaseDeliveryResource::getUrl('index') => 'Pengiriman Pembelian',
             '#' => 'Edit Pengiriman',

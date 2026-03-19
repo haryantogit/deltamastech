@@ -63,7 +63,7 @@ class PermissionSeeder extends Seeder
             'produksi' => [
                 'label' => 'Produksi',
                 'submodules' => [
-                    'order' => ['label' => 'Konversi Produk', 'actions' => ['view', 'add', 'edit', 'delete', 'confirm']],
+                    'order' => ['label' => 'Konversi Produk', 'actions' => ['view', 'add', 'edit', 'delete', 'confirm', 'view_hpp']],
                     'result' => ['label' => 'Laporan Produksi', 'actions' => ['view', 'add', 'edit', 'delete']],
                 ]
             ],

@@ -32,7 +32,7 @@ class DashboardFilter extends Widget implements HasForms
 
     public function updatedFilters(): void
     {
-        $this->dispatch('filtersUpdated', filters: $this->filters);
+        $this->dispatch('filtersUpdated', $this->filters);
     }
 
     public function form(Schema $form): Schema

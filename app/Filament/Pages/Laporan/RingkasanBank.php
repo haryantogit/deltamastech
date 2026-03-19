@@ -36,7 +36,7 @@ class RingkasanBank extends Page implements HasForms
         $this->statsFilter = 'bulan';
         $this->filters['startDate'] = now()->startOfYear()->toDateString();
         $this->filters['endDate'] = now()->toDateString();
-        $this->dispatch('updateStatsFilter', filter: 'bulan');
+        $this->dispatch('updateStatsFilter', 'bulan');
     }
 
     public function setFilterTahun(): void
@@ -44,7 +44,7 @@ class RingkasanBank extends Page implements HasForms
         $this->statsFilter = 'tahun';
         $this->filters['startDate'] = now()->startOfYear()->toDateString();
         $this->filters['endDate'] = now()->toDateString();
-        $this->dispatch('updateStatsFilter', filter: 'tahun');
+        $this->dispatch('updateStatsFilter', 'tahun');
     }
 
     public function mount(): void

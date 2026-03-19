@@ -276,73 +276,7 @@ body {
     }
 }
 
-/* Print Optimization: Targeted only on charts and main content */
-@media print {
-
-    /* Hide all navigation, sidebars, topbars, headers, and UI controls */
-    .fi-sidebar,
-    .fi-sidebar-active,
-    .fi-sidebar-header,
-    .fi-topbar,
-    .fi-header,
-    .fi-header-actions,
-    .fi-breadcrumbs,
-    .fi-footer,
-    .fi-wi-dashboard-filter,
-    aside,
-    nav,
-    header,
-    footer,
-    button,
-    .fi-btn,
-    .fi-ac-actions,
-    [role="navigation"],
-    [data-sidebar] {
-        display: none !important;
-    }
-
-    /* Force the main content area to occupy full width and remove offsets */
-    main,
-    .fi-main {
-        margin: 0 !important;
-        margin-inline-start: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        max-width: none !important;
-        display: block !important;
-        background: white !important;
-    }
-
-    /* Remove specific Filament background colors and shadows for cleaner print */
-    .fi-page,
-    .fi-main-ctn,
-    body {
-        background: white !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    /* Ensure chart cards are visible and break properly */
-    .fi-wi-chart,
-    .fi-wi-widget {
-        page-break-inside: avoid;
-        break-inside: avoid;
-        margin-bottom: 30px !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
-
-    .fi-wi-chart canvas {
-        max-width: 100% !important;
-        height: auto !important;
-    }
-
-    /* Force colors to print (important for chart colors) */
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-}
+/* Print Optimization handled in AdminPanelProvider.php for better Filament integration */
 
 /* ==========================================================================
    Professional Pagination UI (Filament v3)

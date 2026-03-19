@@ -634,6 +634,10 @@
                     size="sm">
                     Kembali
                 </x-filament::button>
+                <x-filament::button color="warning" size="sm" icon="heroicon-o-arrow-path-rounded-square" tag="a"
+                    :href="\App\Filament\Resources\PurchaseReturns\PurchaseReturnResource::getUrl('create', ['purchase_invoice_id' => $record->id])">
+                    Retur
+                </x-filament::button>
                 <x-filament::button color="gray" size="sm" icon="heroicon-o-share">
                     Bagikan
                 </x-filament::button>

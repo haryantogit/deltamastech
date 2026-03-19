@@ -31,6 +31,7 @@ class CreateSalesDelivery extends CreateRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/penjualan-page') => 'Penjualan',
             SalesDeliveryResource::getUrl('index') => 'Pengiriman Penjualan',
             '#' => 'Buat Pengiriman',

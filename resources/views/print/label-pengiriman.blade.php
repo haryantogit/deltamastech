@@ -8,7 +8,6 @@
     <style>
         @page {
             size: A5 landscape;
-            margin: 10mm;
         }
 
         * {
@@ -84,8 +83,7 @@
         }
 
         .items-table thead th {
-            background-color: #2d3748;
-            color: #fff;
+            background-color: #f1f5f9; color: #334155;
             font-size: 8pt;
             font-weight: 600;
             padding: 5px 8px;
@@ -95,7 +93,7 @@
         .items-table tbody td {
             font-size: 8.5pt;
             padding: 5px 8px;
-            border-bottom: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
         }
 
         .text-center {
@@ -109,10 +107,6 @@
         @media print {
             .no-print {
                 display: none !important;
-            }
-
-            body {
-                padding: 0;
             }
         }
 
@@ -221,6 +215,10 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; font-size: 8px; color: #64748b; text-align: left; padding: 5px 0;">
+        Dicetak: {{ now('Asia/Jakarta')->format('d/m/Y H:i') }} oleh {{ auth()->user()->name ?? 'System' }}
     </div>
 </body>
 

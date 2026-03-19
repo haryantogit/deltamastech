@@ -26,6 +26,7 @@ class CreatePurchaseOrder extends CreateRecord
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/pembelian-page') => 'Pembelian',
             PurchaseOrderResource::getUrl('index') => 'Pesanan Pembelian',
             '#' => 'Buat Pesanan',

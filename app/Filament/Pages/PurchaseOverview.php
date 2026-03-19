@@ -59,14 +59,14 @@ class PurchaseOverview extends Page
                     ->color(fn() => $this->filter === 'month' ? 'primary' : 'gray')
                     ->action(function () {
                         $this->filter = 'month';
-                        $this->dispatch('update-purchase-overview-filter', filter: 'month');
+                        $this->dispatch('update-purchase-overview-filter', 'month');
                     }),
                 Actions\Action::make('tahun')
                     ->label('Tahun')
                     ->color(fn() => $this->filter === 'year' ? 'primary' : 'gray')
                     ->action(function () {
                         $this->filter = 'year';
-                        $this->dispatch('update-purchase-overview-filter', filter: 'year');
+                        $this->dispatch('update-purchase-overview-filter', 'year');
                     }),
             ])->label('Periode')
                 ->icon('heroicon-m-calendar')

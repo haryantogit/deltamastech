@@ -82,6 +82,7 @@ class ListSalesOrders extends ListRecords
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/penjualan-page') => 'Penjualan',
             '#' => 'Pesanan Penjualan',
         ];

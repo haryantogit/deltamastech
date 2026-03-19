@@ -27,6 +27,7 @@ class ViewTransaction extends ViewRecord implements HasForms
     public function getBreadcrumbs(): array
     {
         return [
+            url('/admin') => 'Beranda',
             url('/admin/pembelian-page') => 'Pembelian',
             PurchaseInvoiceResource::getUrl('index') => 'Tagihan Pembelian',
             '#' => 'Detail Tagihan',

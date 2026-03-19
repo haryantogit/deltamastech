@@ -524,6 +524,10 @@
                 </span>
             </div>
             <div style="display: flex; gap: 8px;">
+                <x-filament::button color="warning" size="sm" icon="heroicon-o-arrow-path-rounded-square" tag="a"
+                    :href="\App\Filament\Resources\SalesReturns\SalesReturnResource::getUrl('create', ['sales_invoice_id' => $record->id])">
+                    Retur
+                </x-filament::button>
                 <x-filament::button color="gray" size="sm" icon="heroicon-o-share">
                     Bagikan
                 </x-filament::button>
